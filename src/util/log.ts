@@ -1,20 +1,42 @@
+import pino from "pino";
+
+const pinoLogger = pino({
+  level: process.env.LOG_LEVEL || "info",
+  transport:
+    process.env.NODE_ENV !== "production"
+      ? {
+          target: "pino-pretty",
+          options: {
+            colorize: true,
+            translateTime: "SYS:standard",
+          },
+        }
+      : undefined,
+});
+
 /**
- * Minimal structured logger.
- * Jinx can replace this with something fancier via evolution.
+ * Structured logger using Pino, maintaining the (msg, data) signature.
  */
-
-function ts(): string {
-  return new Date().toISOString();
-}
-
 export const log = {
   info(msg: string, data?: Record<string, unknown>): void {
-    console.log(JSON.stringify({ level: "info", ts: ts(), msg, ...data }));
+    if (data) {
+      pinoLogger.info(data, msg);
+    } else {
+      pinoLogger.info(msg);
+    }
   },
   warn(msg: string, data?: Record<string, unknown>): void {
-    console.warn(JSON.stringify({ level: "warn", ts: ts(), msg, ...data }));
+    if (data) {
+      pinoLogger.warn(data, msg);
+    } else {
+      pinoLogger.warn(msg);
+    }
   },
   error(msg: string, data?: Record<string, unknown>): void {
-    console.error(JSON.stringify({ level: "error", ts: ts(), msg, ...data }));
+    if (data) {
+      pinoLogger.error(data, msg);
+    } else {
+      pinoLogger.error(msg);
+    }
   },
 };
