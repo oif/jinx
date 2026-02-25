@@ -76,6 +76,13 @@ const fetchWebpageParams = Type.Object({
   url: Type.String({ description: "URL to fetch and convert to Markdown" }),
 });
 
+const createPrParams = Type.Object({
+  title: Type.String({ description: "PR title" }),
+  body: Type.String({ description: "PR body/description" }),
+  head: Type.Optional(Type.String({ description: "Branch to merge from (default: dev)" })),
+  base: Type.Optional(Type.String({ description: "Branch to merge into (default: main)" })),
+});
+
 // ── Tools ──────────────────────────────────────────────────────────
 
 /**
@@ -322,6 +329,79 @@ export const fetchWebpageTool: ToolDefinition = {
   },
 };
 
+/**
+ * Open a GitHub Pull Request from dev to main.
+ */
+export const createPrTool: ToolDefinition = {
+  name: "github_create_pr",
+  label: "Create GitHub PR",
+  description:
+    "Open a GitHub Pull Request from dev to main. " +
+    "Requires GITHUB_TOKEN environment variable. " +
+    "Use this when confident in a series of evolutions.",
+  parameters: createPrParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const token = process.env.GITHUB_TOKEN;
+      if (!token) {
+        return textResult("Error: GITHUB_TOKEN environment variable is not set.");
+      }
+
+      // Extract repo name from git remote
+      const remotes = shell("git remote -v", { cwd: process.cwd() });
+      const match = remotes.match(/github\.com[:\/](.+?\/.+?)\.git/);
+      if (!match) {
+        return textResult("Error: Could not extract GitHub repository name from git remote.");
+      }
+      const repo = match[1];
+
+      const head = (params.head as string) || "dev";
+      const base = (params.base as string) || "main";
+      const title = params.title as string;
+      const body = params.body as string;
+
+      const response = await fetch(`https://api.github.com/repos/${repo}/pulls`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/vnd.github.v3+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+          "User-Agent": "Jinx Bot / pi-coding-agent"
+        },
+        body: JSON.stringify({
+          title,
+          body,
+          head,
+          base,
+        }),
+      });
+
+      const data = (await response.json()) as any;
+
+      if (!response.ok) {
+        // If PR already exists, GitHub returns a specific error code
+        const isExists = data.errors?.some((e: any) => e.message?.includes("A pull request already exists"));
+        if (isExists) {
+          return textResult(`A pull request already exists for ${head} into ${base}.`);
+        }
+        return textResult(`Failed to create PR: HTTP ${response.status} - ${data.message || JSON.stringify(data)}`);
+      }
+
+      return textResult(`Successfully created Pull Request #${data.number}: ${data.html_url}`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error creating PR: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -332,4 +412,5 @@ export const jinxTools: ToolDefinition[] = [
   updateStateTool,
   knowledgeWriteTool,
   fetchWebpageTool,
+  createPrTool,
 ];

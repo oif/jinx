@@ -1,11 +1,24 @@
-import { describe, it, expect, vi } from "vitest";
-import { fetchWebpageTool } from "../src/agent/tools.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fetchWebpageTool, createPrTool } from "../src/agent/tools.js";
+import * as child_process from "node:child_process";
 
 // Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+vi.mock("node:child_process", async () => {
+  const actual = await vi.importActual<typeof import("node:child_process")>("node:child_process");
+  return {
+    ...actual,
+    execSync: vi.fn(),
+  };
+});
+
 describe("fetch_webpage_tool", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should extract markdown from simple html", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -59,5 +72,47 @@ describe("fetch_webpage_tool", () => {
     } else {
       expect.fail("Result content is not text");
     }
+  });
+});
+
+describe("github_create_pr_tool", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.GITHUB_TOKEN = "fake_token";
+  });
+
+  it("should return error if GITHUB_TOKEN is missing", async () => {
+    delete process.env.GITHUB_TOKEN;
+    const result = await createPrTool.execute("id", { title: "Test", body: "Test body" });
+    expect((result.content[0] as any).text).toContain("Error: GITHUB_TOKEN environment variable is not set.");
+  });
+
+  it("should successfully create PR", async () => {
+    vi.mocked(child_process.execSync).mockReturnValue("origin\tgit@github.com:oif/jinx.git (fetch)\n" as any);
+    
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        number: 42,
+        html_url: "https://github.com/oif/jinx/pull/42",
+      })
+    });
+
+    const result = await createPrTool.execute("id", { title: "Test PR", body: "A great feature" });
+    const content = (result.content[0] as any).text;
+    
+    expect(content).toContain("Successfully created Pull Request #42");
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://api.github.com/repos/oif/jinx/pulls",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          title: "Test PR",
+          body: "A great feature",
+          head: "dev",
+          base: "main"
+        })
+      })
+    );
   });
 });
