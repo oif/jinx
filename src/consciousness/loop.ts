@@ -130,9 +130,14 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
   }
 }
 
+import { recordHealthSnapshot } from "../health/history.js";
+
 async function runConsciousnessCheck(promptFn: PromptFn): Promise<void> {
   log.info("Consciousness check");
   try {
+    // Record health stats quietly in the background
+    await recordHealthSnapshot();
+
     await promptFn(
       "Wake up. Briefly check your state: " +
       "read identity.md and scratchpad.md, " +

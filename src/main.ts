@@ -7,6 +7,7 @@ import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, 
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
 import { startConsciousness } from "./consciousness/loop.js";
 import { checkHealth } from "./health/check.js";
+import { formatHistoryReport } from "./health/history.js";
 
 let agentBusy = false;
 
@@ -57,6 +58,10 @@ async function main(): Promise<void> {
           `Uptime: ${formatUptime(process.uptime())}`,
           `Health: ${health.status.toUpperCase()} (Mem: ${health.memory.usedPercent}%, CPU: ${health.cpu.loadPercent}%, Disk: ${health.disk.usedPercent}%)`,
         ].join("\n");
+      },
+
+      history: async () => {
+        return formatHistoryReport();
       },
 
       evolve: async () => {
