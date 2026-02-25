@@ -8,7 +8,7 @@ Jinx 住在一台 Linux 服务器上。它用 Pi 思考，用 Claude Code 建造
 ## 架构
 
 ```
-Jinx = Pi (大脑) + Claude Code (双手) + Telegram (嘴) + Supervisor (心跳)
+Jinx = Pi (大脑) + Claude Code (双手) + Telegram (嘴) + Supervisor (心跳) + … (自我扩展)
 ```
 
 ```
@@ -80,6 +80,7 @@ systemd 保证 PM2 活着，PM2 保证 Jinx 活着。两层守护。
 | Pi 内置工具 | read, write, edit, bash, grep |
 | Telegram Bot | 与创造者通信 |
 | Git | 版本管理、安全网 |
+| 自定义工具 / 子 agent | Jinx 自行创建和管理 |
 
 ## 运行
 
@@ -99,9 +100,71 @@ systemd 保证 PM2 活着，PM2 保证 Jinx 活着。两层守护。
 TG_BOT_TOKEN=           # Telegram Bot Token
 OWNER_ID=               # 创造者的 Telegram User ID
 
-# LLM
+# LLM (直接用 Anthropic 时)
 ANTHROPIC_API_KEY=      # Anthropic API Key
-JINX_MODEL=             # Pi agent 使用的模型 (default: anthropic/claude-sonnet-4)
+```
+
+### 自定义模型（OpenAI 兼容 API）
+
+如果使用第三方代理或自建 API，在 `~/.pi/agent/models.json` 中配置：
+
+```json
+{
+  "providers": {
+    "my-proxy": {
+      "baseUrl": "https://your-api.example.com/v1",
+      "apiKey": "CUSTOM_API_KEY",
+      "api": "openai-completions",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "claude-sonnet-4",
+          "name": "Claude Sonnet 4 (Proxy)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 200000,
+          "maxTokens": 16384
+        }
+      ]
+    }
+  }
+}
+```
+
+然后在 `.env` 中设置对应的 API Key：
+
+```bash
+CUSTOM_API_KEY=sk-your-actual-key
+```
+
+**`apiKey` 支持三种格式：**
+
+| 格式 | 含义 | 示例 |
+|------|------|------|
+| `ENV_VAR_NAME` | 环境变量名（推荐） | `"CUSTOM_API_KEY"` |
+| `!command` | 执行 shell 命令取 stdout | `"!cat /run/secrets/key"` |
+| 字面量 | 直接写 key（不推荐） | `"sk-xxx"` |
+
+**`api` 类型：**
+
+| 你的 API 兼容 | 用 |
+|--------------|-----|
+| `/chat/completions` | `"openai-completions"` |
+| `/responses` | `"openai-responses"` |
+
+**可选字段：** `reasoning`（默认 false）、`contextWindow`（默认 128000）、`maxTokens`（默认 16384）、`cost`（默认全 0）。
+
+**兼容性微调：** 如果代理有兼容问题，可加 `compat` 字段：
+
+```json
+{
+  "compat": {
+    "supportsDeveloperRole": false,
+    "supportsStore": false,
+    "maxTokensField": "max_tokens",
+    "requiresThinkingAsText": true
+  }
+}
 ```
 
 ### 启动
@@ -129,6 +192,7 @@ Jinx 的宪法。定义了它是谁、它守护什么、它如何成长。
 - **P4: 与创造者沟通** — 行动，汇报，不刷屏
 - **P5: 适应约束** — 资源有限，动态调整
 - **P6: 极简主义** — 少即是多
+- **P7: 扩展自我** — 可创建工具和子 agent，作为个体成长
 
 ## License
 
