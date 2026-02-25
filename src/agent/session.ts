@@ -109,12 +109,12 @@ export function getSession(): AgentSession | null {
  * `session.prompt()` returns `Promise<void>`. We capture the assistant's
  * response by subscribing to events and collecting text from message_end.
  */
-export async function prompt(message: string): Promise<string> {
+export async function prompt(message: string, images?: any[]): Promise<string> {
   if (!currentSession) {
     throw new Error("Agent session not started");
   }
 
-  log.info(`Prompt: ${message.slice(0, 100)}${message.length > 100 ? "..." : ""}`);
+  log.info(`Prompt: ${message.slice(0, 100)}${message.length > 100 ? "..." : ""}`, { hasImages: !!images?.length });
 
   return new Promise<string>((resolve, reject) => {
     const session = currentSession!;
@@ -140,7 +140,7 @@ export async function prompt(message: string): Promise<string> {
       }
     });
 
-    session.prompt(message).catch((e) => {
+    session.prompt(message, { images }).catch((e) => {
       unsubscribe();
       const err = e as Error;
       log.error(`Prompt failed: ${err.message}`);

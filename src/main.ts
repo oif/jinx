@@ -26,10 +26,15 @@ async function main(): Promise<void> {
 
   const tg = createTelegramBot(
     // onMessage: forward to agent
-    async (text) => {
+    async (text, images) => {
       agentBusy = true;
       try {
-        return await agentPrompt(text);
+        const imageContents = images?.map(img => ({
+          type: "image" as const,
+          mimeType: img.mimeType,
+          data: img.data,
+        }));
+        return await agentPrompt(text, imageContents);
       } finally {
         agentBusy = false;
       }

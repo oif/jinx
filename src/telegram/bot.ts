@@ -14,7 +14,12 @@ export interface TelegramBot {
   stop: () => Promise<void>;
 }
 
-export type MessageHandler = (text: string) => Promise<string | void>;
+export interface ImageAttachment {
+  data: string; // base64
+  mimeType: string;
+}
+
+export type MessageHandler = (text: string, images?: ImageAttachment[]) => Promise<string | void>;
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -125,9 +130,47 @@ export function createTelegramBot(
     }
   });
 
-  // ── Photo/document messages ──
+  // ── Photo messages ──
   bot.on("message:photo", async (ctx) => {
-    await ctx.reply("Photo received. (Image processing not yet implemented — I'll add this via evolution.)");
+    try {
+      await ctx.replyWithChatAction("typing");
+
+      const photo = ctx.message.photo;
+      // Get the highest resolution version
+      const fileId = photo[photo.length - 1].file_id;
+      const file = await ctx.api.getFile(fileId);
+      
+      if (!file.file_path) {
+        await ctx.reply("Error: Cannot get file path from Telegram.");
+        return;
+      }
+
+      const fileUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+      const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const base64Data = Buffer.from(buffer).toString("base64");
+      
+      // Determine basic MIME from extension
+      const mimeType = file.file_path.toLowerCase().endsWith("png") ? "image/png" : "image/jpeg";
+      
+      const images: ImageAttachment[] = [{ data: base64Data, mimeType }];
+      
+      const text = ctx.message.caption || "Please analyze this image.";
+      log.info("TG photo received", { caption: text, size: buffer.byteLength });
+
+      const reply = await onMessage(text, images);
+      if (reply) {
+        await sendLong(bot, ownerId, reply);
+      }
+    } catch (e) {
+      const err = e as Error;
+      log.error("Photo handler failed", { error: err.message });
+      await ctx.reply(`Error processing photo: ${err.message}`);
+    }
   });
 
   bot.on("message:document", async (ctx) => {
