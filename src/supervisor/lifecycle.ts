@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { execSync } from "node:child_process";
 import { safePull, rebuild, rollbackToMain, getCurrentSha } from "./git-ops.js";
 import { log } from "../util/log.js";
+import { markIntentionalRestart } from "./recovery.js";
 
 const DATA_DIR = join(process.cwd(), "data");
 const RESTART_MARKER = join(DATA_DIR, ".restart_requested");
@@ -72,6 +73,7 @@ async function handleRestart(req: RestartRequest): Promise<void> {
 
   setTimeout(() => {
     try {
+      markIntentionalRestart();
       execSync("pm2 restart jinx", { timeout: 30_000, stdio: "pipe" });
     } catch (e) {
       // If pm2 restart fails, try a hard process exit — PM2 will auto-restart

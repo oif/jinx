@@ -9,10 +9,14 @@ import { startConsciousness } from "./consciousness/loop.js";
 import { checkHealth } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
 import { cleanupOldSessions } from "./supervisor/cleanup.js";
+import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
 
 let agentBusy = false;
 
 async function main(): Promise<void> {
+  // Step 0: Emergency crash loop detection
+  checkCrashLoopAndRecover();
+
   log.info("Jinx starting", {
     version: readVersion(),
     sha: getCurrentSha(),
