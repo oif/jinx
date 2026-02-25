@@ -1,0 +1,20 @@
+{
+  "providers": {
+    "zenmux": {
+      "baseUrl": "https://zenmux.ai/api/v1",
+      "apiKey": "ZENMUX_API_KEY",
+      "api": "openai-completions",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "google/gemini-3.1-pro-preview",
+          "name": "Gemini 3.1 Pro Preview (ZenMux)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 1000000,
+          "maxTokens": 65536
+        }
+      ]
+    }
+  }
+}
