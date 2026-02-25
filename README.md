@@ -171,8 +171,8 @@ CUSTOM_API_KEY=sk-your-actual-key
 
 ```bash
 # 首次部署
-npm install
-npm run build
+pnpm install
+pnpm run build
 pm2 start ecosystem.config.cjs
 sudo systemctl enable jinx
 

@@ -19,8 +19,8 @@ When performing an evolution cycle, follow this exact protocol:
 10. For simple changes, use Pi's built-in `write`/`edit` tools
 
 ## Verification
-11. Run `npm run build` — must pass
-12. Run `npm test` — must pass
+11. Run `pnpm run build` — must pass
+12. Run `pnpm test` — must pass
 13. If tests exist for your change, ensure they pass
 
 ## Commit

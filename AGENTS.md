@@ -33,6 +33,6 @@
 ## 注意事项
 
 - 在 `dev` 分支工作，绝不碰 `main`
-- commit 前跑 `npm run build` 确认编译通过
+- commit 前跑 `pnpm run build` 确认编译通过
 - 保持代码极简 — 你以后需要看懂自己
 - Claude Code 有速率限制，被限流就用 Pi 内置工具

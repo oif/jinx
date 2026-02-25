@@ -119,11 +119,11 @@ export function verifyImport(): boolean {
 }
 
 /**
- * Rebuild the project (npm install + tsc).
+ * Rebuild the project (pnpm install + tsc).
  */
 export function rebuild(): boolean {
   try {
-    execSync("npm install --omit=dev && npm run build", {
+    execSync("pnpm install --prod && pnpm run build", {
       cwd: REPO_DIR,
       encoding: "utf-8",
       timeout: 120_000,

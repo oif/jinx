@@ -37,7 +37,7 @@ async function notify(msg: string): Promise<void> {
  * Handle a restart request:
  * 1. Pull new code from origin/dev
  * 2. Verify SHA matches expectation
- * 3. Rebuild (npm install + tsc)
+ * 3. Rebuild (pnpm install + tsc)
  * 4. Trigger PM2 restart
  *
  * On failure → rollback to main, notify owner.

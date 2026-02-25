@@ -1,6 +1,7 @@
 node_modules/
 dist/
 *.js.map
+package-lock.json
 
 # Data — sessions are too large for git
 data/sessions/
