@@ -67,16 +67,18 @@ async function handleRestart(req: RestartRequest): Promise<void> {
   }
 
   // Step 4: Restart via PM2
-  log.info("Restarting via PM2");
+  log.info("Restarting via PM2 in 5 seconds to allow graceful agent loop completion");
   await notify(`🔄 Restarting: ${req.reason}`);
 
-  try {
-    execSync("pm2 restart jinx", { timeout: 30_000, stdio: "pipe" });
-  } catch (e) {
-    // If pm2 restart fails, try a hard process exit — PM2 will auto-restart
-    log.error("PM2 restart failed, exiting process for auto-restart");
-    process.exit(0);
-  }
+  setTimeout(() => {
+    try {
+      execSync("pm2 restart jinx", { timeout: 30_000, stdio: "pipe" });
+    } catch (e) {
+      // If pm2 restart fails, try a hard process exit — PM2 will auto-restart
+      log.error("PM2 restart failed, exiting process for auto-restart");
+      process.exit(0);
+    }
+  }, 5000);
 }
 
 async function handleRollback(reason: string): Promise<void> {
