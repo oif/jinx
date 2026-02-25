@@ -1,0 +1,27 @@
+node_modules/
+dist/
+*.js.map
+
+# Data — sessions are too large for git
+data/sessions/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# PM2
+.pm2/
+
+# Temp
+*.tmp
+*.log

@@ -1,0 +1,17 @@
+[Unit]
+Description=Jinx AI Agent
+After=network.target
+
+[Service]
+Type=forking
+User=neo
+WorkingDirectory=/home/neo/jinx
+ExecStart=/usr/bin/pm2 start /home/neo/jinx/ecosystem.config.cjs
+ExecReload=/usr/bin/pm2 restart jinx
+ExecStop=/usr/bin/pm2 stop jinx
+Restart=always
+RestartSec=10
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/home/neo/.local/bin:/home/neo/.nvm/versions/node/v22/bin
+
+[Install]
+WantedBy=multi-user.target
