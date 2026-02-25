@@ -123,7 +123,7 @@ export function verifyImport(): boolean {
  */
 export function rebuild(): boolean {
   try {
-    execSync("pnpm install --prod && pnpm run build", {
+    execSync("pnpm install && pnpm run build", {
       cwd: REPO_DIR,
       encoding: "utf-8",
       timeout: 120_000,
