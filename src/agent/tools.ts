@@ -1,6 +1,8 @@
 import { execSync, type ExecSyncOptions } from "node:child_process";
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import * as cheerio from "cheerio";
+import TurndownService from "turndown";
 import { Type } from "@sinclair/typebox";
 import type {
   ToolDefinition,
@@ -68,6 +70,10 @@ const stateParams = Type.Object({
 const knowledgeParams = Type.Object({
   slug: Type.String({ description: "Filename slug (e.g. 'git-rebase-tips')" }),
   content: Type.String({ description: "Knowledge content (markdown)" }),
+});
+
+const fetchWebpageParams = Type.Object({
+  url: Type.String({ description: "URL to fetch and convert to Markdown" }),
 });
 
 // ── Tools ──────────────────────────────────────────────────────────
@@ -254,6 +260,68 @@ export const knowledgeWriteTool: ToolDefinition = {
   },
 };
 
+/**
+ * Fetch and parse a webpage into Markdown.
+ */
+export const fetchWebpageTool: ToolDefinition = {
+  name: "fetch_webpage",
+  label: "Fetch Webpage",
+  description:
+    "Fetch a webpage from the internet and extract its main content as Markdown. " +
+    "Useful for reading documentation, articles, or API references.",
+  parameters: fetchWebpageParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const url = params.url as string;
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "Jinx Bot / pi-coding-agent (Linux x86_64)",
+          "Accept": "text/html,application/xhtml+xml",
+        },
+      });
+
+      if (!response.ok) {
+        return textResult(`Failed to fetch ${url}: HTTP ${response.status} ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      // Remove noise
+      $("script, style, nav, footer, header, noscript, iframe, svg").remove();
+
+      // Extract main content heuristically
+      let mainHtml = "";
+      if ($("main").length > 0) {
+        mainHtml = $("main").html() || "";
+      } else if ($("article").length > 0) {
+        mainHtml = $("article").html() || "";
+      } else if ($("#content, .content, .main").length > 0) {
+        mainHtml = $("#content, .content, .main").html() || "";
+      } else {
+        mainHtml = $("body").html() || "";
+      }
+
+      const turndown = new TurndownService({
+        headingStyle: "atx",
+        codeBlockStyle: "fenced",
+      });
+
+      const markdown = turndown.turndown(mainHtml);
+      return textResult(`Content of ${url}:\n\n${markdown.slice(0, 100000)}`); // limit to 100k chars
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error fetching webpage: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -263,4 +331,5 @@ export const jinxTools: ToolDefinition[] = [
   updateScratchpadTool,
   updateStateTool,
   knowledgeWriteTool,
+  fetchWebpageTool,
 ];
