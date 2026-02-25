@@ -8,6 +8,7 @@ import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/g
 import { startConsciousness } from "./consciousness/loop.js";
 import { checkHealth } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
+import { cleanupOldSessions } from "./supervisor/cleanup.js";
 
 let agentBusy = false;
 
@@ -19,8 +20,9 @@ async function main(): Promise<void> {
     pid: process.pid,
   });
 
-  // Step 1: Ensure we're on dev branch
+  // Step 1: Ensure we're on dev branch & clean up old files
   ensureDevBranch();
+  cleanupOldSessions();
 
   // Step 2: Create Telegram bot (before agent, so we can inject sendToOwner)
   const consciousness = { handle: null as ReturnType<typeof startConsciousness> | null };
