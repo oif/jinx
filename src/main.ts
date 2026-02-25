@@ -6,6 +6,7 @@ import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
 import { startConsciousness } from "./consciousness/loop.js";
+import { checkHealth } from "./health/check.js";
 
 let agentBusy = false;
 
@@ -41,6 +42,7 @@ async function main(): Promise<void> {
         const state = readState();
         const branch = getCurrentBranch();
         const sha = getCurrentSha().slice(0, 8);
+        const health = await checkHealth();
         return [
           `Version: ${state.version}`,
           `Branch: ${branch} (${sha})`,
@@ -48,6 +50,7 @@ async function main(): Promise<void> {
           `Evolution: ${state.evolutionEnabled ? "ON" : "OFF"}`,
           `PID: ${process.pid}`,
           `Uptime: ${formatUptime(process.uptime())}`,
+          `Health: ${health.status.toUpperCase()} (Mem: ${health.memory.usedPercent}%, CPU: ${health.cpu.loadPercent}%, Disk: ${health.disk.usedPercent}%)`,
         ].join("\n");
       },
 
