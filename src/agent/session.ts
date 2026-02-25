@@ -116,37 +116,61 @@ export async function prompt(message: string, images?: any[]): Promise<string> {
 
   log.info(`Prompt: ${message.slice(0, 100)}${message.length > 100 ? "..." : ""}`, { hasImages: !!images?.length });
 
-  return new Promise<string>((resolve, reject) => {
-    const session = currentSession!;
-    let responseText = "";
+  const session = currentSession;
 
-    const unsubscribe = session.subscribe((event) => {
-      // Collect text from assistant message_end events
-      if (event.type === "message_end") {
-        const msg = (event as any).message;
-        if (msg?.role === "assistant" && msg?.content) {
-          for (const block of msg.content) {
-            if (block.type === "text") {
-              responseText += block.text;
+  // Helper to wait for a complete agent turn and collect text
+  const waitForResponse = (promptMsg: string, isFollowUp = false): Promise<string> => {
+    return new Promise<string>((resolve, reject) => {
+      let text = "";
+      let errorMsg = "";
+      const unsubscribe = session.subscribe((event) => {
+        // Collect text from assistant message_end events
+        if (event.type === "message_end") {
+          const msg = (event as any).message;
+          if (msg?.role === "assistant" && msg?.content) {
+            for (const block of msg.content) {
+              if (block.type === "text") {
+                text += block.text;
+              }
             }
           }
+          // Capture API errors (e.g., quota limit)
+          if (msg?.errorMessage) {
+            errorMsg = msg.errorMessage;
+          }
         }
-      }
 
-      // Agent finished processing
-      if (event.type === "agent_end") {
+        // Agent finished processing
+        if (event.type === "agent_end") {
+          unsubscribe();
+          // Return error if present, otherwise return collected text
+          resolve(errorMsg || text);
+        }
+      });
+
+      session.prompt(promptMsg, { images: isFollowUp ? undefined : images }).catch((e) => {
         unsubscribe();
-        resolve(responseText || "(No response)");
-      }
+        reject(e);
+      });
     });
+  };
 
-    session.prompt(message, { images }).catch((e) => {
-      unsubscribe();
-      const err = e as Error;
-      log.error(`Prompt failed: ${err.message}`);
-      reject(err);
-    });
-  });
+  try {
+    // First attempt
+    let responseText = await waitForResponse(message);
+
+    // If no text response, send follow-up
+    if (!responseText.trim()) {
+      log.info("No text response from agent, sending follow-up prompt");
+      responseText = await waitForResponse("请用文本形式简要汇报你刚才做了什么或发现了什么。", true);
+    }
+
+    return responseText || "(No response)";
+  } catch (e) {
+    const err = e as Error;
+    log.error(`Prompt failed: ${err.message}`);
+    throw err;
+  }
 }
 
 /**

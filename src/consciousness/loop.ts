@@ -111,7 +111,17 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
   log.info(`Evolution cycle #${cycle} starting`);
 
   try {
-    const result = await promptFn(`EVOLUTION #${cycle}`);
+    const result = await promptFn(
+      `这是你第 ${cycle} 次进化循环。\n\n` +
+      `按照 BORN.md 中的进化循环执行：\n` +
+      `1. 评估 —— 查看 codebase，找出最有价值的改进\n` +
+      `2. 选择 —— 选一件事（只选一件）\n` +
+      `3. 实现 —— 完整实现 + 测试\n` +
+      `4. 提交 —— git commit，版本递增\n` +
+      `5. 汇报 —— 告诉我你做了什么\n\n` +
+      `重要：执行完成后，你必须发送一条文本消息汇报结果（即使只是说明为什么这次没有改动）。` +
+      `不要只调用工具而不发送最终文本消息。`
+    );
 
     saveState({
       cycle,
