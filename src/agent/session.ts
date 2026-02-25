@@ -2,6 +2,7 @@ import {
   createAgentSession,
   SessionManager,
   codingTools,
+  DefaultResourceLoader,
   type AgentSession,
   type CreateAgentSessionOptions,
   type ToolDefinition,
@@ -72,8 +73,13 @@ export async function startAgent(): Promise<AgentSession> {
   const tgSendTool = buildTgSendTool(tgSend);
   const allCustomTools: ToolDefinition[] = [...jinxTools, tgSendTool];
 
+  const resourceLoader = new DefaultResourceLoader({
+    systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
+  });
+
   const options: CreateAgentSessionOptions = {
     sessionManager,
+    resourceLoader,
     thinkingLevel: "high",
     tools: codingTools,
     customTools: allCustomTools,
