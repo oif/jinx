@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "jinx",
       script: "./dist/main.js",
-      cwd: "/home/neo/jinx",
+      cwd: __dirname,
       node_args: "--env-file=.env --max-old-space-size=4096",
       autorestart: true,
       max_restarts: 10,

@@ -1,17 +1,19 @@
+# Jinx systemd unit — paths need to match your deployment
+# Copy to /etc/systemd/system/jinx.service and adjust User/paths
 [Unit]
 Description=Jinx AI Agent
 After=network.target
 
 [Service]
 Type=forking
-User=neo
-WorkingDirectory=/home/neo/jinx
-ExecStart=/usr/bin/pm2 start /home/neo/jinx/ecosystem.config.cjs
+User=root
+WorkingDirectory=/root/jinx
+ExecStart=/usr/bin/pm2 start /root/jinx/ecosystem.config.cjs
 ExecReload=/usr/bin/pm2 restart jinx
 ExecStop=/usr/bin/pm2 stop jinx
 Restart=always
 RestartSec=10
-Environment=PATH=/usr/local/bin:/usr/bin:/bin:/home/neo/.local/bin:/home/neo/.nvm/versions/node/v22/bin
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/root/.local/bin
 
 [Install]
 WantedBy=multi-user.target
