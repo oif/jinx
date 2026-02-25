@@ -9,22 +9,24 @@
     "dev": "tsx src/main.ts",
     "start": "node --env-file=.env dist/main.js",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'no tests yet' && exit 0"
+    "test": "echo 'no tests yet' && exit 0",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@mariozechner/pi-coding-agent": "^0.52.12",
-    "@mariozechner/pi-ai": "^0.52.12",
     "@mariozechner/pi-agent-core": "^0.52.12",
+    "@mariozechner/pi-ai": "^0.52.12",
+    "@mariozechner/pi-coding-agent": "^0.52.12",
     "@sinclair/typebox": "^0.34.41",
     "grammy": "^1.35.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "husky": "^9.1.7",
     "tsx": "^4.19.0",
-    "@types/node": "^22.0.0"
+    "typescript": "^5.7.0"
   },
   "private": true
 }
