@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const DATA_DIR = join(process.cwd(), "data");
@@ -14,6 +14,31 @@ function safeRead(path: string): string {
   return "";
 }
 
+function loadKnowledge(): string {
+  const knowledgeDir = join(DATA_DIR, "knowledge");
+  if (!existsSync(knowledgeDir)) {
+    return "";
+  }
+
+  try {
+    const files = readdirSync(knowledgeDir);
+    const entries: string[] = [];
+
+    for (const file of files) {
+      if (file.endsWith(".md")) {
+        const content = safeRead(join(knowledgeDir, file));
+        if (content) {
+          entries.push(`### ${file}\n${content}`);
+        }
+      }
+    }
+
+    return entries.length > 0 ? entries.join("\n\n") : "";
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Build Jinx's system prompt by appending BORN.md + runtime context
  * to Pi's default system prompt.
@@ -26,6 +51,7 @@ export function buildJinxSystemPrompt(defaultPrompt: string): string {
   const scratchpad = safeRead(join(DATA_DIR, "scratchpad.md"));
   const goals = safeRead(join(DATA_DIR, "goals.md"));
   const stateRaw = safeRead(join(DATA_DIR, "state.json"));
+  const knowledge = loadKnowledge();
 
   const sections: string[] = [defaultPrompt];
 
@@ -43,6 +69,10 @@ export function buildJinxSystemPrompt(defaultPrompt: string): string {
 
   if (goals) {
     sections.push(`\n\n# Goals\n\n${goals}`);
+  }
+
+  if (knowledge) {
+    sections.push(`\n\n# Knowledge Base\n\n${knowledge}`);
   }
 
   if (stateRaw) {
