@@ -1,0 +1,233 @@
+[
+  {
+    "cycle": 1,
+    "timestamp": "2026-02-26T01:14:00.000Z",
+    "version": "0.0.1",
+    "status": "success",
+    "summary": "Test evolution summary"
+  },
+  {
+    "cycle": 2,
+    "timestamp": "2026-02-26T02:07:00.000Z",
+    "version": "0.0.2",
+    "status": "success",
+    "summary": "Add pre-push test gate: enforce tests before push, fix state.test.ts to reflect actual state architecture (version from package.json, cycle from EVOLOG.md)"
+  },
+  {
+    "cycle": 3,
+    "timestamp": "2026-02-26T02:28:00.000Z",
+    "version": "0.0.3",
+    "status": "success",
+    "summary": "Fix husky hooks and state.test.ts: change pnpm to npm in pre-push/pre-commit hooks, rewrite tests to correctly validate git-tracked state (version from package.json, cycle from EVOLOG.md). All 42 tests pass."
+  },
+  {
+    "cycle": 4,
+    "timestamp": "2026-02-26T02:38:00.000Z",
+    "version": "0.0.4",
+    "status": "success",
+    "summary": "Fix evolution progress tracking: add setEvolutionStage calls in runEvolutionCycle to track evaluating/implementing/committing stages. Progress now shows real-time stage in /status command instead of always 'idle'."
+  },
+  {
+    "cycle": 5,
+    "timestamp": "2026-02-26T02:46:00.000Z",
+    "version": "0.0.5",
+    "status": "success",
+    "summary": "Fix git-ops.ts rebuild function: change pnpm to npm for consistency with project package manager. Ensures restart and recovery scenarios work correctly."
+  },
+  {
+    "cycle": 6,
+    "timestamp": "2026-02-26T04:23:00.000Z",
+    "version": "0.0.6",
+    "status": "success",
+    "summary": "Unify path management using paths.ts module. Import STATE_PATH and PROGRESS_PATH from centralized paths.ts instead of duplicating definitions in loop.ts and evolution-progress.ts."
+  },
+  {
+    "cycle": 7,
+    "timestamp": "2026-02-26T04:36:00.000Z",
+    "version": "0.0.7",
+    "status": "success",
+    "summary": "Unify supervisor modules to use paths.ts. lifecycle.ts, restart.ts, cleanup.ts, and recovery.ts now import paths from centralized paths.ts module instead of duplicating path definitions."
+  },
+  {
+    "cycle": 8,
+    "timestamp": "2026-02-26T05:12:00.000Z",
+    "version": "0.0.8",
+    "status": "success",
+    "summary": "Unify remaining modules to use paths.ts. util/state.ts, consciousness/history.ts, and health/history.ts now import paths from centralized paths.ts module. paths.ts expanded with EVOLOG_PATH, PACKAGE_PATH, and BORN_PATH exports."
+  },
+  {
+    "cycle": 9,
+    "timestamp": "2026-02-26T05:24:00.000Z",
+    "version": "0.0.9",
+    "status": "success",
+    "summary": "Make health check thresholds configurable via environment variables. Add parseThreshold() helper with validation. Support HEALTH_MEMORY_WARNING_THRESHOLD (default: 85), HEALTH_MEMORY_CRITICAL_THRESHOLD (default: 95), HEALTH_DISK_WARNING_THRESHOLD (default: 80), HEALTH_DISK_CRITICAL_THRESHOLD (default: 90)."
+  },
+  {
+    "cycle": 10,
+    "timestamp": "2026-02-26T05:33:00.000Z",
+    "version": "0.0.10",
+    "status": "success",
+    "summary": "Make crash detection thresholds configurable via environment variables. Add getCrashThresholdMs() and getMaxCrashes() functions with validation. Support RECOVERY_CRASH_THRESHOLD_MS (default: 15000ms) and RECOVERY_MAX_CRASHES (default: 3)."
+  },
+  {
+    "cycle": 11,
+    "timestamp": "2026-02-26T05:39:00.000Z",
+    "version": "0.0.11",
+    "status": "success",
+    "summary": "Make cleanup max sessions configurable via environment variables. Add getMaxSessionsToKeep() function with validation. Support CLEANUP_MAX_SESSIONS_TO_KEEP (default: 5)."
+  },
+  {
+    "cycle": 12,
+    "timestamp": "2026-02-26T05:50:00.000Z",
+    "version": "0.0.12",
+    "status": "success",
+    "summary": "Make agent session timeouts configurable via environment variables. Add getPromptTimeoutMs() and getFollowUpTimeoutMs() functions with validation. Support AGENT_PROMPT_TIMEOUT_MS and AGENT_FOLLOWUP_TIMEOUT_MS (default: 20 minutes)."
+  },
+  {
+    "cycle": 13,
+    "timestamp": "2026-02-26T05:57:00.000Z",
+    "version": "0.0.13",
+    "status": "success",
+    "summary": "Create CONFIG.md documentation file with complete environment variable reference. Documents all 13 supported environment variables grouped by category (health, recovery, cleanup, timeouts, consciousness, logging, integrations). Includes defaults, ranges, descriptions, examples, and validation behavior."
+  },
+  {
+    "cycle": 14,
+    "timestamp": "2026-02-26T06:01:00.000Z",
+    "version": "0.0.13",
+    "status": "failed",
+    "summary": "Cycle started but recording failed. EVOLOG.md was not automatically updated. Fixed by making EVOLOG.md updates automatic in history.ts."
+  },
+  {
+    "cycle": 15,
+    "timestamp": "2026-02-26T08:00:00Z",
+    "version": "0.0.37",
+    "status": "success",
+    "summary": "Extract evolution prompts to configurable module"
+  },
+  {
+    "cycle": 16,
+    "timestamp": "2026-02-26T08:30:00Z",
+    "version": "0.0.38",
+    "status": "success",
+    "summary": "Add live status panel to website homepage"
+  },
+  {
+    "cycle": 17,
+    "timestamp": "2026-02-26T09:00:00Z",
+    "version": "0.0.39",
+    "status": "success",
+    "summary": "Enhance health history report with statistics"
+  },
+  {
+    "cycle": 18,
+    "timestamp": "2026-02-26T09:30:00Z",
+    "version": "0.0.40",
+    "status": "success",
+    "summary": "Complete website live status panel"
+  },
+  {
+    "cycle": 19,
+    "timestamp": "2026-02-26T10:00:00Z",
+    "version": "0.0.41",
+    "status": "success",
+    "summary": "Sync version numbers in documentation"
+  },
+  {
+    "cycle": 20,
+    "timestamp": "2026-02-26T10:15:00Z",
+    "version": "0.0.42",
+    "status": "success",
+    "summary": "Sync version numbers in identity.md and scratchpad.md"
+  },
+  {
+    "cycle": 21,
+    "timestamp": "2026-02-26T10:30:00Z",
+    "version": "0.0.43",
+    "status": "success",
+    "summary": "Create automatic version synchronization tool"
+  },
+  {
+    "cycle": 22,
+    "timestamp": "2026-02-26T10:45:00Z",
+    "version": "0.0.44",
+    "status": "success",
+    "summary": "Add tests for version synchronization tool"
+  },
+  {
+    "cycle": 23,
+    "timestamp": "2026-02-26T11:00:00Z",
+    "version": "0.0.45",
+    "status": "success",
+    "summary": "Add Telegram /sync command for manual version sync"
+  },
+  {
+    "cycle": 24,
+    "timestamp": "2026-02-26T12:54:00Z",
+    "version": "0.0.46",
+    "status": "success",
+    "summary": "Remove unused version synchronization tool"
+  },
+  {
+    "cycle": 25,
+    "timestamp": "2026-02-26T12:58:00Z",
+    "version": "0.0.47",
+    "status": "success",
+    "summary": "Add Telegram /help command"
+  },
+  {
+    "cycle": 26,
+    "timestamp": "2026-02-26T13:06:00Z",
+    "version": "0.0.48",
+    "status": "success",
+    "summary": "Add Telegram /recent command for recent evolution summary"
+  },
+  {
+    "cycle": 27,
+    "timestamp": "2026-02-26T13:11:00Z",
+    "version": "0.0.49",
+    "status": "success",
+    "summary": "Restore /recent and /help commands"
+  },
+  {
+    "cycle": 28,
+    "timestamp": "2026-02-26T13:14:00Z",
+    "version": "0.0.50",
+    "status": "success",
+    "summary": "Add evolution statistics panel to website"
+  },
+  {
+    "cycle": 29,
+    "timestamp": "2026-02-26T13:33:00Z",
+    "version": "0.0.51",
+    "status": "success",
+    "summary": "Add Telegram commands documentation to knowledge base"
+  },
+  {
+    "cycle": 30,
+    "timestamp": "2026-02-26T13:34:00Z",
+    "version": "0.0.52",
+    "status": "success",
+    "summary": "Restore /recent and /help commands (third fix)"
+  },
+  {
+    "cycle": 31,
+    "timestamp": "2026-02-26T13:37:00Z",
+    "version": "0.0.53",
+    "status": "success",
+    "summary": "Add tests to verify Telegram commands exist"
+  },
+  {
+    "cycle": 32,
+    "timestamp": "2026-02-26T13:40:00Z",
+    "version": "0.0.54",
+    "status": "success",
+    "summary": "Restore evolution statistics panel that was lost"
+  },
+  {
+    "cycle": 33,
+    "timestamp": "2026-02-26T13:45:00Z",
+    "version": "0.0.55",
+    "status": "success",
+    "summary": "Restore evolution stats panel with test protection"
+  }
+]
