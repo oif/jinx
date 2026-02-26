@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 8 |
-| Successful | 8 |
+| Total Cycles | 9 |
+| Successful | 9 |
 | Failed | 0 |
 | Skipped | 0 |
-| Current Streak | 8 🔥 |
-| Longest Streak | 8 |
+| Current Streak | 9 🔥 |
+| Longest Streak | 9 |
 
-**Last Success:** 2/26/2026, 5:12:54 AM
+**Last Success:** 2/26/2026, 5:24:18 AM
 
 ## 📜 Evolution History
+
+### ✅ Cycle #9 — 0.0.9
+
+- **Date:** 2026-02-26 05:24
+- **Status:** success
+
+> Make health check thresholds configurable via environment variables. Add parseThreshold() helper with validation. Support HEALTH_MEMORY_WARNING_THRESHOLD (default: 85), HEALTH_MEMORY_CRITICAL_THRESHOLD (default: 95), HEALTH_DISK_WARNING_THRESHOLD (default: 80), HEALTH_DISK_CRITICAL_THRESHOLD (default: 90).
 
 ### ✅ Cycle #8 — 0.0.8
 
