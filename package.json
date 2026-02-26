@@ -1,6 +1,6 @@
 {
   "name": "jinx",
-  "version": "0.1.57",
+  "version": "0.1.58",
   "description": "A self-iterating AI agent built on Pi",
   "type": "module",
   "main": "dist/main.js",
@@ -10,6 +10,7 @@
     "start": "node --env-file=.env dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:watch": "vitest",
     "prepare": "husky"
   },
   "engines": {
