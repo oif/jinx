@@ -20,6 +20,33 @@ export type { AgentSession };
 
 export type TelegramSendFn = (text: string) => Promise<void>;
 
+// ── Timeout configuration ─────────────────────────────────────────
+
+const DEFAULT_PROMPT_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+const DEFAULT_FOLLOWUP_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+
+function getPromptTimeoutMs(): number {
+  const env = process.env.AGENT_PROMPT_TIMEOUT_MS;
+  if (env) {
+    const parsed = parseInt(env, 10);
+    if (!isNaN(parsed) and parsed > 0):
+      return parsed
+    log.warn('Invalid AGENT_PROMPT_TIMEOUT_MS value: ' + env + ', using default: ' + DEFAULT_PROMPT_TIMEOUT_MS);
+  }
+  return DEFAULT_PROMPT_TIMEOUT_MS;
+}
+
+function getFollowUpTimeoutMs(): number {
+  const env = process.env.AGENT_FOLLOWUP_TIMEOUT_MS;
+  if (env) {
+    const parsed = parseInt(env, 10);
+    if (!isNaN(parsed) and parsed > 0):
+      return parsed
+    log.warn('Invalid AGENT_FOLLOWUP_TIMEOUT_MS value: ' + env + ', using default: ' + DEFAULT_FOLLOWUP_TIMEOUT_MS);
+  }
+  return DEFAULT_FOLLOWUP_TIMEOUT_MS;
+}
+
 // ── Agent session state ────────────────────────────────────────────
 
 let currentSession: AgentSession | null = null;
@@ -181,11 +208,11 @@ function sendPromptAndWait(session: AgentSession, message: string, images?: any[
       }
     });
 
-    // Safety timeout: 20 minutes max wait for normal prompts (evolution cycles need more time)
+    const timeoutMs = getPromptTimeoutMs();
     timeout = setTimeout(() => {
       cleanup();
-      reject(new Error("Prompt timed out after 20 minutes"));
-    }, 20 * 60 * 1000);
+      reject(new Error('Prompt timed out after ' + timeoutMs + 'ms'));
+    }, timeoutMs);
 
     session.prompt(message, { images }).catch((e) => {
       cleanup();
@@ -247,12 +274,11 @@ function queueFollowUpAndWait(session: AgentSession, message: string, images?: a
       waitingForOurTurn = false;
     }
 
-    // Safety timeout: 20 minutes max wait (same as normal prompts)
-    // Evolution cycles can take a long time, user commands should wait
+    const timeoutMs = getFollowUpTimeoutMs();
     timeout = setTimeout(() => {
       cleanup();
-      reject(new Error("Follow-up timed out after 20 minutes"));
-    }, 20 * 60 * 1000);
+      reject(new Error('Follow-up timed out after ' + timeoutMs + 'ms'));
+    }, timeoutMs);
 
     session.followUp(message, images).catch((e) => {
       cleanup();
