@@ -153,6 +153,13 @@ function sendPromptAndWait(session: AgentSession, message: string, images?: any[
   return new Promise<string>((resolve, reject) => {
     let text = "";
     let errorMsg = "";
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (timeout) clearTimeout(timeout);
+      unsubscribe();
+    };
+
     const unsubscribe = session.subscribe((event) => {
       if (event.type === "message_end") {
         const msg = (event as any).message;
@@ -169,13 +176,19 @@ function sendPromptAndWait(session: AgentSession, message: string, images?: any[
       }
 
       if (event.type === "agent_end") {
-        unsubscribe();
+        cleanup();
         resolve(errorMsg || text || "(No response)");
       }
     });
 
+    // Safety timeout: 10 minutes max wait for normal prompts
+    timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("Prompt timed out after 10 minutes"));
+    }, 10 * 60 * 1000);
+
     session.prompt(message, { images }).catch((e) => {
-      unsubscribe();
+      cleanup();
       reject(e);
     });
   });
@@ -184,12 +197,22 @@ function sendPromptAndWait(session: AgentSession, message: string, images?: any[
 /**
  * Queue a followUp when agent is streaming. Waits for current work to end,
  * then collects the response from the followUp's agent cycle.
+ *
+ * Fixes race condition: checks if agent already finished (isStreaming=false)
+ * immediately after subscribing, to handle the case where agent_end fired
+ * before our subscription was active.
  */
 function queueFollowUpAndWait(session: AgentSession, message: string, images?: any[]): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let waitingForOurTurn = true;
     let text = "";
     let errorMsg = "";
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (timeout) clearTimeout(timeout);
+      unsubscribe();
+    };
 
     const unsubscribe = session.subscribe((event) => {
       if (waitingForOurTurn && event.type === "agent_end") {
@@ -213,14 +236,25 @@ function queueFollowUpAndWait(session: AgentSession, message: string, images?: a
         }
 
         if (event.type === "agent_end") {
-          unsubscribe();
+          cleanup();
           resolve(errorMsg || text || "(No response)");
         }
       }
     });
 
+    // Race condition fix: if agent already finished (isStreaming=false), we're next
+    if (!session.isStreaming) {
+      waitingForOurTurn = false;
+    }
+
+    // Safety timeout: 5 minutes max wait
+    timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("Follow-up timed out after 5 minutes"));
+    }, 5 * 60 * 1000);
+
     session.followUp(message, images).catch((e) => {
-      unsubscribe();
+      cleanup();
       reject(e);
     });
   });
