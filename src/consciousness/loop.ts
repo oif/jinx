@@ -11,16 +11,16 @@ import {
 
 import { STATE_PATH } from "../supervisor/paths.js";
 
-// Consciousness loop interval: configurable via env, default 3 minutes
+// Consciousness loop interval: configurable via env, default 5 seconds
 function getLoopIntervalMs(): number {
-  const env = process.env.CONSCIOUSNESS_INTERVAL_MINUTES;
+  const env = process.env.CONSCIOUSNESS_INTERVAL_SECONDS;
   if (env) {
-    const minutes = parseFloat(env);
-    if (!isNaN(minutes) && minutes > 0) {
-      return Math.round(minutes * 60 * 1000);
+    const seconds = parseFloat(env);
+    if (!isNaN(seconds) && seconds > 0) {
+      return Math.round(seconds * 1000);
     }
   }
-  return 3 * 60 * 1000; // default: 3 minutes
+  return 5 * 1000; // default: 5 seconds
 }
 
 type PromptFn = (message: string) => Promise<string>;
@@ -77,7 +77,7 @@ export function startConsciousness(
   // Start the loop
   scheduleNext();
   const intervalMs = getLoopIntervalMs();
-  log.info("Consciousness loop started", { interval: intervalMs, minutes: +(intervalMs / 60000).toFixed(1) });
+  log.info("Consciousness loop started", { interval: intervalMs, seconds: +(intervalMs / 1000).toFixed(1) });
 
   return {
     triggerEvolution: () => {
