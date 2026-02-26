@@ -1,10 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   loadEvolutionHistory,
   saveEvolutionHistory,
   recordEvolutionResult,
   calculateEvolutionStats,
   formatEvolutionReport,
+  setFileSystem,
+  resetFileSystem,
+  createMemoryFileSystem,
   type EvolutionRecord,
 } from "../src/consciousness/history.js";
 import { existsSync, unlinkSync } from "node:fs";
@@ -12,12 +15,46 @@ import { join } from "node:path";
 
 const TEST_HISTORY_PATH = join(process.cwd(), "data", "evolution-history.json");
 
+// Sample EVOLOG content for testing
+const sampleEvolog = `# Evolution Log
+
+> Auto-generated record of Jinx's growth and evolution cycles.
+
+## 📊 Statistics
+
+| Metric | Value |
+|--------|-------|
+| Total Cycles | 50 |
+| Successful | 49 |
+| Failed | 1 |
+| Skipped | 0 |
+| Current Streak | 34 |
+| Longest Streak | 35 |
+
+**Last Success:** 2/26/2026, 2:57:15 PM
+
+## 📜 Evolution History
+
+Test fixture file for evolution-history tests.
+`;
+
 describe("evolution history", () => {
   beforeEach(() => {
     // Clean up test file
     if (existsSync(TEST_HISTORY_PATH)) {
       unlinkSync(TEST_HISTORY_PATH);
     }
+    
+    // Set up memory file system for EVOLOG.md to prevent test pollution
+    const memoryFs = createMemoryFileSystem({
+      "EVOLOG.md": sampleEvolog,
+    });
+    setFileSystem(memoryFs);
+  });
+
+  afterEach(() => {
+    // Reset to real file system
+    resetFileSystem();
   });
 
   it("should return empty array when no history exists", () => {
@@ -60,8 +97,8 @@ describe("evolution history", () => {
     expect(stats.totalCycles).toBe(4);
     expect(stats.successfulCycles).toBe(3);
     expect(stats.failedCycles).toBe(1);
-    expect(stats.currentStreak).toBe(1); // Last was success
-    expect(stats.longestStreak).toBe(2); // First two were successes
+    expect(stats.currentStreak).toBe(1);
+    expect(stats.longestStreak).toBe(2);
   });
 
   it("should limit summary length", () => {
@@ -82,5 +119,11 @@ describe("evolution history", () => {
   it("should handle empty history in format report", () => {
     const report = formatEvolutionReport();
     expect(report).toBe("No evolution history recorded yet.");
+  });
+
+  it("should not pollute real EVOLOG.md during tests", () => {
+    recordEvolutionResult(999, "9.9.9", "success", "Test should not appear in real EVOLOG");
+    const history = loadEvolutionHistory();
+    expect(history[0].cycle).toBe(999);
   });
 });
