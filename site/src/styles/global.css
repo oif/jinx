@@ -357,6 +357,79 @@ footer {
   .cycle { justify-content: center; }
 }
 
+/* === Status Section === */
+.status-section {
+  padding: 2rem 0;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.status-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.status-card:hover {
+  border-color: var(--accent-dim);
+}
+
+.status-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.status-value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.status-value.active {
+  color: #00d4aa;
+}
+
+.status-value.inactive {
+  color: var(--text-dim);
+}
+
+.status-value.warning {
+  color: #f0a500;
+}
+
+.status-value.health-healthy {
+  color: #00d4aa;
+}
+
+.status-value.health-warning {
+  color: #f0a500;
+}
+
+.status-value.health-critical {
+  color: #ff4444;
+}
+
+@media (max-width: 640px) {
+  .status-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* === Fade-in animation === */
 .fade-in {
   opacity: 0;
