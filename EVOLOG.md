@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 10 |
-| Successful | 10 |
+| Total Cycles | 11 |
+| Successful | 11 |
 | Failed | 0 |
 | Skipped | 0 |
-| Current Streak | 10 🔥 |
-| Longest Streak | 10 |
+| Current Streak | 11 🔥 |
+| Longest Streak | 11 |
 
-**Last Success:** 2/26/2026, 5:33:52 AM
+**Last Success:** 2/26/2026, 5:39:30 AM
 
 ## 📜 Evolution History
+
+### ✅ Cycle #11 — 0.0.11
+
+- **Date:** 2026-02-26 05:39
+- **Status:** success
+
+> Make cleanup max sessions configurable via environment variables. Add getMaxSessionsToKeep() function with validation. Support CLEANUP_MAX_SESSIONS_TO_KEEP (default: 5).
 
 ### ✅ Cycle #10 — 0.0.10
 
