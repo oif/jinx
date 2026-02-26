@@ -115,8 +115,10 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
 
   // Start tracking progress
   startEvolutionProgress(cycle);
+  setEvolutionStage("evaluating", "Analyzing codebase for improvements");
 
   try {
+    setEvolutionStage("implementing", "Executing evolution cycle");
     const result = await promptFn(
       `这是你第 ${cycle} 次进化循环。\n\n` +
       `按照 BORN.md 中的进化循环执行：\n` +
@@ -137,6 +139,8 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
     );
 
     const durationMs = Date.now() - startTime;
+
+    setEvolutionStage("committing", "Saving changes and updating records");
 
     saveState({
       cycle,
