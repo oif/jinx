@@ -19,10 +19,23 @@ export interface HealthStatus {
   uptime: number;
 }
 
-const MEMORY_WARNING_THRESHOLD = 85;
-const MEMORY_CRITICAL_THRESHOLD = 95;
-const DISK_WARNING_THRESHOLD = 80;
-const DISK_CRITICAL_THRESHOLD = 90;
+// Default thresholds (can be overridden via environment variables)
+const DEFAULT_MEMORY_WARNING = 85;
+const DEFAULT_MEMORY_CRITICAL = 95;
+const DEFAULT_DISK_WARNING = 80;
+const DEFAULT_DISK_CRITICAL = 90;
+
+function parseThreshold(envVar: string, defaultValue: number): number {
+  const env = process.env[envVar];
+  if (env) {
+    const parsed = parseInt(env, 10);
+    if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+      return parsed;
+    }
+    log.warn(`Invalid ${envVar} value: ${env}, using default: ${defaultValue}`);
+  }
+  return defaultValue;
+}
 
 // Track last notified state to avoid spam
 let lastNotifiedStatus: HealthStatus["status"] = "healthy";
@@ -42,10 +55,13 @@ function formatHealthAlert(health: HealthStatus): string {
   const emoji = health.status === "critical" ? "🚨" : "⚠️";
   const issues: string[] = [];
 
-  if (health.memory.usedPercent > MEMORY_WARNING_THRESHOLD) {
+  const memWarning = parseThreshold("HEALTH_MEMORY_WARNING_THRESHOLD", DEFAULT_MEMORY_WARNING);
+  const diskWarning = parseThreshold("HEALTH_DISK_WARNING_THRESHOLD", DEFAULT_DISK_WARNING);
+
+  if (health.memory.usedPercent > memWarning) {
     issues.push(`Memory: ${health.memory.usedPercent}%`);
   }
-  if (health.disk.usedPercent > DISK_WARNING_THRESHOLD) {
+  if (health.disk.usedPercent > diskWarning) {
     issues.push(`Disk: ${health.disk.usedPercent}%`);
   }
 
@@ -65,16 +81,21 @@ export async function checkHealth(options?: { silent?: boolean }): Promise<Healt
     ]);
 
     const memUsedPercent = (mem.active / mem.total) * 100;
-    
+
     // Check main mount point (usually /)
     const mainDisk = disk.find(d => d.mount === "/") || disk[0];
     const diskUsedPercent = mainDisk ? mainDisk.use : 0;
 
+    const memWarning = parseThreshold("HEALTH_MEMORY_WARNING_THRESHOLD", DEFAULT_MEMORY_WARNING);
+    const memCritical = parseThreshold("HEALTH_MEMORY_CRITICAL_THRESHOLD", DEFAULT_MEMORY_CRITICAL);
+    const diskWarning = parseThreshold("HEALTH_DISK_WARNING_THRESHOLD", DEFAULT_DISK_WARNING);
+    const diskCritical = parseThreshold("HEALTH_DISK_CRITICAL_THRESHOLD", DEFAULT_DISK_CRITICAL);
+
     let status: HealthStatus["status"] = "healthy";
 
-    if (memUsedPercent > MEMORY_CRITICAL_THRESHOLD || diskUsedPercent > DISK_CRITICAL_THRESHOLD) {
+    if (memUsedPercent > memCritical || diskUsedPercent > diskCritical) {
       status = "critical";
-    } else if (memUsedPercent > MEMORY_WARNING_THRESHOLD || diskUsedPercent > DISK_WARNING_THRESHOLD) {
+    } else if (memUsedPercent > memWarning || diskUsedPercent > diskWarning) {
       status = "warning";
     }
 
