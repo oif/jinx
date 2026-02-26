@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
+import { recordEvolutionResult } from "./history.js";
 
 const DATA_DIR = join(process.cwd(), "data");
 const STATE_PATH = join(DATA_DIR, "state.json");
@@ -119,6 +120,7 @@ export function startConsciousness(
 async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promise<void> {
   const state = loadState();
   const cycle = state.cycle + 1;
+  const startTime = Date.now();
 
   log.info(`Evolution cycle #${cycle} starting`);
 
@@ -130,24 +132,35 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
       `2. 选择 —— 选一件事（只选一件）\n` +
       `3. 实现 —— 完整实现 + 测试\n` +
       `4. 提交 —— git commit，版本递增\n` +
-      `5. 汇报 —— 告诉我你做了什么\n\n` +
+      `5. 汇报 —— 告诉我我做了什么\n\n` +
       `重要：执行完成后，你必须发送一条文本消息汇报结果（即使只是说明为什么这次没有改动）。` +
       `不要只调用工具而不发送最终文本消息。`
     );
+
+    const durationMs = Date.now() - startTime;
 
     saveState({
       cycle,
       lastEvolution: new Date().toISOString(),
     });
 
-    log.info(`Evolution cycle #${cycle} completed`);
+    // Record successful evolution
+    const summary = result.slice(0, 200);
+    recordEvolutionResult(cycle, state.version, "success", summary, durationMs);
+
+    log.info(`Evolution cycle #${cycle} completed`, { durationMs });
 
     // Notify creator with a summary
-    const summary = result.length > 500 ? result.slice(0, 500) + "..." : result;
-    await notifyFn(`🧬 Evolution #${cycle} complete:\n${summary}`);
+    const notifySummary = result.length > 500 ? result.slice(0, 500) + "..." : result;
+    await notifyFn(`🧬 Evolution #${cycle} complete:\n${notifySummary}`);
   } catch (e) {
     const err = e as Error;
-    log.error(`Evolution cycle #${cycle} failed`, { error: err.message });
+    const durationMs = Date.now() - startTime;
+
+    // Record failed evolution
+    recordEvolutionResult(cycle, state.version, "failed", err.message, durationMs);
+
+    log.error(`Evolution cycle #${cycle} failed`, { error: err.message, durationMs });
     await notifyFn(`❌ Evolution #${cycle} failed: ${err.message}`);
   }
 }

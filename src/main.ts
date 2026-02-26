@@ -70,6 +70,11 @@ async function main(): Promise<void> {
         return formatHistoryReport();
       },
 
+      evolution: async () => {
+        const { formatEvolutionReport } = await import("./consciousness/history.js");
+        return formatEvolutionReport();
+      },
+
       evolve: async () => {
         if (consciousness.handle) {
           consciousness.handle.triggerEvolution();
