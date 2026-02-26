@@ -3,20 +3,78 @@
  * 
  * Automatically updates EVOLOG.md statistics based on package.json version
  * and provided cycle information. Eliminates manual number updating.
+ * 
+ * Now with dependency injection support for testing!
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { log } from "./log.js";
 
-const EVOLOG_PATH = "EVOLOG.md";
+const DEFAULT_EVOLOG_PATH = "EVOLOG.md";
 const PKG_PATH = "package.json";
+
+// File system interface for dependency injection
+export interface FileSystem {
+  readFile(path: string): string;
+  writeFile(path: string, content: string): void;
+}
+
+// Real file system implementation
+export const realFileSystem: FileSystem = {
+  readFile(path: string): string {
+    return readFileSync(path, "utf-8");
+  },
+  writeFile(path: string, content: string): void {
+    writeFileSync(path, content);
+  },
+};
+
+// In-memory file system for testing
+export function createMemoryFileSystem(initialFiles: Record<string, string> = {}): FileSystem {
+  const files = { ...initialFiles };
+  return {
+    readFile(path: string): string {
+      if (!(path in files)) {
+        throw new Error(`File not found: ${path}`);
+      }
+      return files[path];
+    },
+    writeFile(path: string, content: string): void {
+      files[path] = content;
+    },
+  };
+}
+
+// Global file system instance (can be overridden for testing)
+let fileSystem: FileSystem = realFileSystem;
+
+/**
+ * Set the file system implementation (for testing)
+ */
+export function setFileSystem(fs: FileSystem): void {
+  fileSystem = fs;
+}
+
+/**
+ * Reset to real file system (after testing)
+ */
+export function resetFileSystem(): void {
+  fileSystem = realFileSystem;
+}
+
+/**
+ * Get current file system
+ */
+export function getFileSystem(): FileSystem {
+  return fileSystem;
+}
 
 /**
  * Get current version from package.json
  */
 export function getPackageVersion(): string {
   try {
-    const pkg = JSON.parse(readFileSync(PKG_PATH, "utf-8"));
+    const pkg = JSON.parse(fileSystem.readFile(PKG_PATH));
     return pkg.version || "0.0.0";
   } catch (e) {
     log.error("Failed to read package.json", { error: (e as Error).message });
@@ -25,18 +83,15 @@ export function getPackageVersion(): string {
 }
 
 /**
- * Extract cycle number from version (e.g., "0.0.62" -> 62 cycles if starting from 0.0.0)
- * Or use provided cycle number
+ * Extract cycle number from version
  */
 export function extractCycleFromVersion(version: string, offset: number = 0): number {
   const parts = version.split(".").map(Number);
-  // version format: major.minor.patch
-  // if we started at 0.0.0, total cycles = patch + minor*100 + major*10000
   const cycle = parts[2] + parts[1] * 100 + parts[0] * 10000;
   return cycle + offset;
 }
 
-interface EvologStats {
+export interface EvologStats {
   totalCycles: number;
   successfulCycles: number;
   failedCycles: number;
@@ -48,9 +103,9 @@ interface EvologStats {
 /**
  * Read current EVOLOG.md statistics
  */
-export function readCurrentStats(): EvologStats | null {
+export function readCurrentStats(evologPath: string = DEFAULT_EVOLOG_PATH): EvologStats | null {
   try {
-    const content = readFileSync(EVOLOG_PATH, "utf-8");
+    const content = fileSystem.readFile(evologPath);
     
     const totalMatch = content.match(/\|\s*Total Cycles\s*\|\s*(\d+)\s*\|/);
     const successfulMatch = content.match(/\|\s*Successful\s*\|\s*(\d+)\s*\|/);
@@ -76,9 +131,13 @@ export function readCurrentStats(): EvologStats | null {
 /**
  * Update EVOLOG.md with new statistics
  */
-export function updateEvologStats(stats: EvologStats, lastSuccessTime?: string): void {
+export function updateEvologStats(
+  stats: EvologStats, 
+  lastSuccessTime?: string,
+  evologPath: string = DEFAULT_EVOLOG_PATH
+): void {
   try {
-    let content = readFileSync(EVOLOG_PATH, "utf-8");
+    let content = fileSystem.readFile(evologPath);
     
     // Update Total Cycles
     content = content.replace(
@@ -133,7 +192,7 @@ export function updateEvologStats(stats: EvologStats, lastSuccessTime?: string):
       );
     }
     
-    writeFileSync(EVOLOG_PATH, content);
+    fileSystem.writeFile(evologPath, content);
     log.info("Updated EVOLOG.md statistics", { stats });
   } catch (e) {
     log.error("Failed to update EVOLOG.md", { error: (e as Error).message });
@@ -144,8 +203,8 @@ export function updateEvologStats(stats: EvologStats, lastSuccessTime?: string):
 /**
  * Increment statistics for a successful evolution cycle
  */
-export function incrementSuccessfulCycle(): void {
-  const stats = readCurrentStats();
+export function incrementSuccessfulCycle(evologPath: string = DEFAULT_EVOLOG_PATH): void {
+  const stats = readCurrentStats(evologPath);
   if (!stats) {
     throw new Error("Could not read current EVOLOG.md stats");
   }
@@ -159,14 +218,14 @@ export function incrementSuccessfulCycle(): void {
     longestStreak: Math.max(stats.longestStreak, stats.currentStreak + 1),
   };
   
-  updateEvologStats(newStats, new Date().toISOString());
+  updateEvologStats(newStats, new Date().toISOString(), evologPath);
 }
 
 /**
  * Increment statistics for a failed evolution cycle
  */
-export function incrementFailedCycle(): void {
-  const stats = readCurrentStats();
+export function incrementFailedCycle(evologPath: string = DEFAULT_EVOLOG_PATH): void {
+  const stats = readCurrentStats(evologPath);
   if (!stats) {
     throw new Error("Could not read current EVOLOG.md stats");
   }
@@ -180,16 +239,16 @@ export function incrementFailedCycle(): void {
     longestStreak: stats.longestStreak,
   };
   
-  updateEvologStats(newStats);
+  updateEvologStats(newStats, undefined, evologPath);
 }
 
 /**
  * Main function to auto-sync EVOLOG.md after a successful evolution
  */
-export function syncAfterEvolution(): void {
+export function syncAfterEvolution(evologPath: string = DEFAULT_EVOLOG_PATH): void {
   const version = getPackageVersion();
   log.info("Syncing EVOLOG.md after evolution", { version });
-  incrementSuccessfulCycle();
+  incrementSuccessfulCycle(evologPath);
 }
 
 // CLI usage: npx tsx src/util/evolog-sync.ts

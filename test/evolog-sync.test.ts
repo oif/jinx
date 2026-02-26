@@ -1,11 +1,16 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from "node:fs";
-
-// Set up fixture path before importing module
-const FIXTURE_DIR = "test/fixtures";
-const TEST_EVOLOG_PATH = `${FIXTURE_DIR}/test-evolog.md`;
-const REAL_EVOLOG_PATH = "EVOLOG.md";
-const BACKUP_PATH = `${FIXTURE_DIR}/evolog-backup.md`;
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { 
+  getPackageVersion, 
+  extractCycleFromVersion,
+  readCurrentStats,
+  updateEvologStats,
+  incrementSuccessfulCycle,
+  incrementFailedCycle,
+  setFileSystem,
+  resetFileSystem,
+  createMemoryFileSystem,
+  type EvologStats,
+} from "../src/util/evolog-sync.js";
 
 // Sample EVOLOG content for testing
 const sampleEvolog = `# Evolution Log
@@ -30,42 +35,26 @@ const sampleEvolog = `# Evolution Log
 Test fixture file for evolog-sync tests.
 `;
 
-// Backup real EVOLOG.md and create fixture before all tests
-let realContent: string;
-
-beforeAll(() => {
-  // Ensure fixture directory exists
-  if (!existsSync(FIXTURE_DIR)) {
-    mkdirSync(FIXTURE_DIR, { recursive: true });
-  }
+describe("evolog-sync with dependency injection", () => {
+  const TEST_PATH = "test-evolog.md";
   
-  // Backup real EVOLOG.md
-  realContent = readFileSync(REAL_EVOLOG_PATH, "utf-8");
-  writeFileSync(BACKUP_PATH, realContent);
-  
-  // Write fixture to real EVOLOG.md location for tests
-  writeFileSync(REAL_EVOLOG_PATH, sampleEvolog);
-});
+  beforeEach(() => {
+    // Set up memory file system with test data
+    const memoryFs = createMemoryFileSystem({
+      [TEST_PATH]: sampleEvolog,
+    });
+    setFileSystem(memoryFs);
+  });
 
-// Restore real EVOLOG.md after all tests
-afterAll(() => {
-  // Restore from backup
-  writeFileSync(REAL_EVOLOG_PATH, realContent);
-});
+  afterEach(() => {
+    // Reset to real file system
+    resetFileSystem();
+  });
 
-// Now import the module (it will read the fixture we just wrote)
-const { 
-  getPackageVersion, 
-  extractCycleFromVersion,
-  readCurrentStats,
-  updateEvologStats,
-  incrementSuccessfulCycle,
-  incrementFailedCycle 
-} = await import("../src/util/evolog-sync.js");
-
-describe("evolog-sync", () => {
   describe("getPackageVersion", () => {
     it("should return a valid version string", () => {
+      // Use real file system for this test since it reads package.json
+      resetFileSystem();
       const version = getPackageVersion();
       expect(version).toMatch(/^\d+\.\d+\.\d+$/);
     });
@@ -80,23 +69,30 @@ describe("evolog-sync", () => {
       expect(extractCycleFromVersion("0.1.0")).toBe(100);
     });
 
+    it("should handle major version", () => {
+      expect(extractCycleFromVersion("1.0.0")).toBe(10000);
+    });
+
     it("should handle offset", () => {
       expect(extractCycleFromVersion("0.0.1", 10)).toBe(11);
     });
   });
 
   describe("readCurrentStats", () => {
-    it("should read current stats from EVOLOG.md (fixture)", () => {
-      const stats = readCurrentStats();
+    it("should read current stats from memory file system", () => {
+      const stats = readCurrentStats(TEST_PATH);
       expect(stats).not.toBeNull();
       expect(stats?.totalCycles).toBe(50);
       expect(stats?.successfulCycles).toBe(49);
+      expect(stats?.failedCycles).toBe(1);
+      expect(stats?.currentStreak).toBe(34);
+      expect(stats?.longestStreak).toBe(35);
     });
   });
 
   describe("updateEvologStats", () => {
-    it("should update statistics correctly", () => {
-      const testStats = {
+    it("should update statistics correctly in memory", () => {
+      const testStats: EvologStats = {
         totalCycles: 51,
         successfulCycles: 50,
         failedCycles: 1,
@@ -105,25 +101,24 @@ describe("evolog-sync", () => {
         longestStreak: 35,
       };
       
-      expect(() => updateEvologStats(testStats, "2026-02-26T15:00:00.000Z")).not.toThrow();
+      updateEvologStats(testStats, "2026-02-26T15:00:00.000Z", TEST_PATH);
       
-      const updatedContent = readFileSync(REAL_EVOLOG_PATH, "utf-8");
-      expect(updatedContent).toContain("| Total Cycles | 51 |");
-      expect(updatedContent).toContain("| Successful | 50 |");
+      // Read back and verify
+      const updatedStats = readCurrentStats(TEST_PATH);
+      expect(updatedStats?.totalCycles).toBe(51);
+      expect(updatedStats?.successfulCycles).toBe(50);
+      expect(updatedStats?.currentStreak).toBe(35);
     });
   });
 
   describe("incrementSuccessfulCycle", () => {
-    it("should increment successful cycle stats", () => {
-      // Reset to known state first
-      writeFileSync(REAL_EVOLOG_PATH, sampleEvolog);
-      
-      const beforeStats = readCurrentStats();
+    it("should increment successful cycle stats in memory", () => {
+      const beforeStats = readCurrentStats(TEST_PATH);
       expect(beforeStats).not.toBeNull();
       
-      incrementSuccessfulCycle();
+      incrementSuccessfulCycle(TEST_PATH);
       
-      const afterStats = readCurrentStats();
+      const afterStats = readCurrentStats(TEST_PATH);
       expect(afterStats).not.toBeNull();
       expect(afterStats!.totalCycles).toBe(51);
       expect(afterStats!.successfulCycles).toBe(50);
@@ -132,26 +127,26 @@ describe("evolog-sync", () => {
   });
 
   describe("incrementFailedCycle", () => {
-    it("should increment failed cycle stats and reset streak", () => {
-      // Reset to known state
-      let content = sampleEvolog;
-      content = content.replace(/\|\s*Total Cycles\s*\|\s*\d+\s*\|/, "| Total Cycles | 60 |");
-      content = content.replace(/\|\s*Failed\s*\|\s*\d+\s*\|/, "| Failed | 5 |");
-      content = content.replace(/\|\s*Current Streak\s*\|\s*\d+\s*\|/, "| Current Streak | 10 |");
-      content = content.replace(/\|\s*Longest Streak\s*\|\s*\d+\s*\|/, "| Longest Streak | 25 |");
-      writeFileSync(REAL_EVOLOG_PATH, content);
+    it("should increment failed cycle stats and reset streak in memory", () => {
+      // Set up specific initial state
+      const initialStats: EvologStats = {
+        totalCycles: 60,
+        successfulCycles: 59,
+        failedCycles: 1,
+        skippedCycles: 0,
+        currentStreak: 10,
+        longestStreak: 25,
+      };
+      updateEvologStats(initialStats, undefined, TEST_PATH);
       
-      const beforeStats = readCurrentStats();
-      expect(beforeStats).not.toBeNull();
+      incrementFailedCycle(TEST_PATH);
       
-      incrementFailedCycle();
-      
-      const afterStats = readCurrentStats();
+      const afterStats = readCurrentStats(TEST_PATH);
       expect(afterStats).not.toBeNull();
       expect(afterStats!.totalCycles).toBe(61);
-      expect(afterStats!.failedCycles).toBe(6);
+      expect(afterStats!.failedCycles).toBe(2);
       expect(afterStats!.currentStreak).toBe(0);
-      expect(afterStats!.longestStreak).toBe(25);
+      expect(afterStats!.longestStreak).toBe(25); // Should not decrease
     });
   });
 });
