@@ -1,6 +1,6 @@
 import { log } from "./util/log.js";
 import { readVersion, readState } from "./util/state.js";
-import { startAgent, registerTelegramSend, prompt as agentPrompt, abortAgent } from "./agent/session.js";
+import { startAgent, registerTelegramSend, prompt as agentPrompt, abortAgent, isAgentBusy } from "./agent/session.js";
 import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
@@ -9,8 +9,6 @@ import { checkHealth, registerHealthNotifier } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
 import { cleanupOldSessions } from "./supervisor/cleanup.js";
 import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
-
-let agentBusy = false;
 
 async function main(): Promise<void> {
   // Step 0: Emergency crash loop detection
@@ -33,17 +31,12 @@ async function main(): Promise<void> {
   const tg = createTelegramBot(
     // onMessage: forward to agent
     async (text, images) => {
-      agentBusy = true;
-      try {
-        const imageContents = images?.map(img => ({
-          type: "image" as const,
-          mimeType: img.mimeType,
-          data: img.data,
-        }));
-        return await agentPrompt(text, imageContents);
-      } finally {
-        agentBusy = false;
-      }
+      const imageContents = images?.map(img => ({
+        type: "image" as const,
+        mimeType: img.mimeType,
+        data: img.data,
+      }));
+      return await agentPrompt(text, imageContents);
     },
     // onCommand: built-in commands
     {
@@ -116,15 +109,10 @@ async function main(): Promise<void> {
 
   consciousness.handle = startConsciousness(
     async (msg) => {
-      agentBusy = true;
-      try {
-        return await agentPrompt(msg);
-      } finally {
-        agentBusy = false;
-      }
+      return await agentPrompt(msg);
     },
     tg.sendToOwner,
-    () => agentBusy,
+    isAgentBusy,
   );
 
   // Step 6: Register shutdown
