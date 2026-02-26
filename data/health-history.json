@@ -1,0 +1,58 @@
+[
+  {
+    "timestamp": "2026-02-25T23:39:09.552Z",
+    "status": "healthy",
+    "memoryPercent": 2.75,
+    "cpuPercent": 0.15,
+    "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-25T23:44:10.411Z",
+    "status": "healthy",
+    "memoryPercent": 2.75,
+    "cpuPercent": 0.05,
+    "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-25T23:49:11.191Z",
+    "status": "healthy",
+    "memoryPercent": 2.73,
+    "cpuPercent": 0.06,
+    "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-25T23:54:11.977Z",
+    "status": "healthy",
+    "memoryPercent": 3.57,
+    "cpuPercent": 0.15,
+    "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-25T23:59:12.783Z",
+    "status": "healthy",
+    "memoryPercent": 2.73,
+    "cpuPercent": 1.06,
+    "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-26T00:04:13.635Z",
+    "status": "healthy",
+    "memoryPercent": 3.84,
+    "cpuPercent": 0.81,
+    "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-26T00:09:14.378Z",
+    "status": "healthy",
+    "memoryPercent": 3.54,
+    "cpuPercent": 0.32,
+    "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-26T00:18:59.271Z",
+    "status": "healthy",
+    "memoryPercent": 4.62,
+    "cpuPercent": 0.16,
+    "diskPercent": 4.48
+  }
+]

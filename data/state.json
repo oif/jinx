@@ -1,7 +1,9 @@
 {
-  "version": "0.0.1",
-  "cycle": 51,
-  "evolutionEnabled": false,
+  "version": "0.1.0",
+  "cycle": 52,
+  "evolutionEnabled": true,
   "lastRestart": null,
-  "lastEvolution": "2026-02-25T22:03:25.363Z"
+  "lastEvolution": "2026-02-25T22:03:25.363Z",
+  "crashCount": 0,
+  "lastBoot": "2026-02-26T00:21:32.223Z"
 }

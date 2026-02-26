@@ -36,7 +36,7 @@ export function saveHealthHistory(history: HealthHistoryEntry[]): void {
 }
 
 export async function recordHealthSnapshot(): Promise<void> {
-  const currentHealth = await checkHealth();
+  const currentHealth = await checkHealth({ silent: true });
   const history = loadHealthHistory();
   
   history.push({

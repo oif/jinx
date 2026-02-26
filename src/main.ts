@@ -6,7 +6,7 @@ import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
 import { startConsciousness } from "./consciousness/loop.js";
-import { checkHealth } from "./health/check.js";
+import { checkHealth, registerHealthNotifier } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
 import { cleanupOldSessions } from "./supervisor/cleanup.js";
 import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
@@ -100,6 +100,9 @@ async function main(): Promise<void> {
   // Step 5: Start subsystems
   startLifecycleMonitor();
   tg.start();
+
+  // Register health notifier for proactive alerts
+  registerHealthNotifier(tg.sendToOwner);
 
   consciousness.handle = startConsciousness(
     async (msg) => {

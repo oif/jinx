@@ -24,10 +24,39 @@ const MEMORY_CRITICAL_THRESHOLD = 95;
 const DISK_WARNING_THRESHOLD = 80;
 const DISK_CRITICAL_THRESHOLD = 90;
 
+// Track last notified state to avoid spam
+let lastNotifiedStatus: HealthStatus["status"] = "healthy";
+let notifyFn: ((message: string) => Promise<void>) | null = null;
+
+/**
+ * Register a notification function for health alerts.
+ */
+export function registerHealthNotifier(fn: (message: string) => Promise<void>): void {
+  notifyFn = fn;
+}
+
+/**
+ * Format a health alert message.
+ */
+function formatHealthAlert(health: HealthStatus): string {
+  const emoji = health.status === "critical" ? "🚨" : "⚠️";
+  const issues: string[] = [];
+
+  if (health.memory.usedPercent > MEMORY_WARNING_THRESHOLD) {
+    issues.push(`Memory: ${health.memory.usedPercent}%`);
+  }
+  if (health.disk.usedPercent > DISK_WARNING_THRESHOLD) {
+    issues.push(`Disk: ${health.disk.usedPercent}%`);
+  }
+
+  return `${emoji} Health Alert: ${health.status.toUpperCase()}\n${issues.join(" | ")}`;
+}
+
 /**
  * Perform a system health check.
+ * Optionally sends notifications when status changes to warning/critical.
  */
-export async function checkHealth(): Promise<HealthStatus> {
+export async function checkHealth(options?: { silent?: boolean }): Promise<HealthStatus> {
   try {
     const [mem, cpu, disk] = await Promise.all([
       si.mem(),
@@ -66,6 +95,28 @@ export async function checkHealth(): Promise<HealthStatus> {
       },
       uptime: process.uptime(),
     };
+
+    // Notify on status change (not on every check to avoid spam)
+    if (!options?.silent && status !== "healthy" && status !== lastNotifiedStatus && notifyFn) {
+      try {
+        await notifyFn(formatHealthAlert(health));
+        lastNotifiedStatus = status;
+      } catch (e) {
+        log.error("Failed to send health alert", { error: (e as Error).message });
+      }
+    }
+
+    // Reset notification state when back to healthy
+    if (status === "healthy" && lastNotifiedStatus !== "healthy") {
+      lastNotifiedStatus = "healthy";
+      if (!options?.silent && notifyFn) {
+        try {
+          await notifyFn("✅ Health status recovered to HEALTHY");
+        } catch (e) {
+          log.error("Failed to send health recovery notification", { error: (e as Error).message });
+        }
+      }
+    }
 
     if (status !== "healthy") {
       log.warn("Health check reported issues", health as unknown as Record<string, unknown>);
