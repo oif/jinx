@@ -27,8 +27,9 @@ const TG_MAX_LENGTH = 4096;
 
 /**
  * Split a long message at newline boundaries to fit Telegram's limit.
+ * Exported for testing.
  */
-function splitMessage(text: string, maxLength = TG_MAX_LENGTH): string[] {
+export function splitMessage(text: string, maxLength = TG_MAX_LENGTH): string[] {
   if (text.length <= maxLength) return [text];
 
   const chunks: string[] = [];
@@ -173,8 +174,93 @@ export function createTelegramBot(
     }
   });
 
+  // ── Document/File messages ──
   bot.on("message:document", async (ctx) => {
-    await ctx.reply("Document received. (File processing not yet implemented — I'll add this via evolution.)");
+    try {
+      await ctx.replyWithChatAction("typing");
+
+      const doc = ctx.message.document;
+      if (!doc) {
+        await ctx.reply("Error: No document data received.");
+        return;
+      }
+
+      // File size limit: 10MB (Telegram's limit for bot downloads is 20MB, but we stay conservative)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024;
+      if (doc.file_size && doc.file_size > MAX_FILE_SIZE) {
+        await ctx.reply(`File too large (${(doc.file_size / 1024 / 1024).toFixed(1)}MB). Max size: 10MB.`);
+        return;
+      }
+
+      // Get file from Telegram
+      const file = await ctx.api.getFile(doc.file_id);
+      if (!file.file_path) {
+        await ctx.reply("Error: Cannot get file path from Telegram.");
+        return;
+      }
+
+      const fileUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+      const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.statusText}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const content = Buffer.from(buffer);
+
+      // Check if it's a text file we can process
+      const textMimeTypes = [
+        "text/",
+        "application/json",
+        "application/javascript",
+        "application/typescript",
+        "application/xml",
+        "application/yaml",
+        "application/toml",
+      ];
+      const textExtensions = [".txt", ".md", ".js", ".ts", ".json", ".xml", ".yaml", ".yml", ".toml", ".css", ".html", ".sh", ".py", ".rb", ".go", ".rs", ".java", ".c", ".cpp", ".h", ".hpp", ".sql", ".log", ".conf", ".config", ".env", ".gitignore", ".dockerfile"];
+
+      const mimeType = doc.mime_type || "";
+      const fileName = doc.file_name || "";
+      const isTextFile = textMimeTypes.some(t => mimeType.startsWith(t)) ||
+                         textExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+
+      if (!isTextFile) {
+        await ctx.reply(`Received: ${fileName} (${(content.length / 1024).toFixed(1)}KB)\n\nThis file type is not text-based. I can only process text files (code, configs, markdown, etc.).`);
+        return;
+      }
+
+      // Decode as UTF-8 text
+      let textContent: string;
+      try {
+        textContent = content.toString("utf-8");
+      } catch {
+        await ctx.reply(`Received: ${fileName}\n\nCould not decode file as text. It may be a binary file.`);
+        return;
+      }
+
+      // Size check for text content (to avoid context window overflow)
+      const MAX_TEXT_LENGTH = 50000; // ~50KB of text
+      const isTruncated = textContent.length > MAX_TEXT_LENGTH;
+      if (isTruncated) {
+        textContent = textContent.slice(0, MAX_TEXT_LENGTH) + "\n\n[... File truncated due to length ...]";
+      }
+
+      log.info("TG document received", { fileName, size: content.length, mimeType });
+
+      // Build prompt with file content
+      const caption = ctx.message.caption || "Please analyze this file.";
+      const promptText = `File: ${fileName}\n\n${caption}\n\n---\n\n${textContent}`;
+
+      const reply = await onMessage(promptText);
+      if (reply) {
+        await sendLong(bot, ownerId, reply);
+      }
+    } catch (e) {
+      const err = e as Error;
+      log.error("Document handler failed", { error: err.message });
+      await ctx.reply(`Error processing document: ${err.message}`);
+    }
   });
 
   // ── Error handler ──
@@ -209,11 +295,16 @@ async function sendLong(bot: Bot, chatId: number, text: string): Promise<void> {
   const chunks = splitMessage(text);
   for (const chunk of chunks) {
     try {
-      await bot.api.sendMessage(chatId, chunk);
+      await bot.api.sendMessage(chatId, chunk, { parse_mode: "Markdown" });
     } catch (e) {
       // If markdown fails, retry without parse_mode
-      log.warn("sendMessage failed, retrying as plain text");
-      await bot.api.sendMessage(chatId, chunk);
+      try {
+        log.warn("sendMessage with Markdown failed, retrying as plain text");
+        await bot.api.sendMessage(chatId, chunk);
+      } catch (e2) {
+        log.error("sendMessage failed completely", { error: (e2 as Error).message });
+        throw e2;
+      }
     }
   }
 }
