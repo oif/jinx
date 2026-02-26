@@ -4,7 +4,18 @@ import { log } from "../util/log.js";
 
 const DATA_DIR = join(process.cwd(), "data");
 const STATE_PATH = join(DATA_DIR, "state.json");
-const DEFAULT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// Consciousness loop interval: configurable via env, default 3 minutes
+function getLoopIntervalMs(): number {
+  const env = process.env.CONSCIOUSNESS_INTERVAL_MINUTES;
+  if (env) {
+    const minutes = parseFloat(env);
+    if (!isNaN(minutes) && minutes > 0) {
+      return Math.round(minutes * 60 * 1000);
+    }
+  }
+  return 3 * 60 * 1000; // default: 3 minutes
+}
 
 type PromptFn = (message: string) => Promise<string>;
 type NotifyFn = (message: string) => Promise<void>;
@@ -71,12 +82,13 @@ export function startConsciousness(
 
   function scheduleNext(): void {
     if (timer) clearTimeout(timer);
-    timer = setTimeout(tick, DEFAULT_INTERVAL);
+    timer = setTimeout(tick, getLoopIntervalMs());
   }
 
   // Start the loop
   scheduleNext();
-  log.info("Consciousness loop started", { interval: DEFAULT_INTERVAL });
+  const intervalMs = getLoopIntervalMs();
+  log.info("Consciousness loop started", { interval: intervalMs, minutes: +(intervalMs / 60000).toFixed(1) });
 
   return {
     triggerEvolution: () => {

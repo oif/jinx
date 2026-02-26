@@ -15,6 +15,22 @@
           "maxTokens": 65536
         }
       ]
+    },
+    "kimi": {
+      "baseUrl": "https://api.kimi.com/coding/",
+      "apiKey": "KIMI_API_KEY",
+      "api": "anthropic-messages",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "kimi-code",
+          "name": "Kimi Code Plan",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 256000,
+          "maxTokens": 16384
+        }
+      ]
     }
   }
 }

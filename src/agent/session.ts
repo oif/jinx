@@ -3,6 +3,8 @@ import {
   SessionManager,
   codingTools,
   DefaultResourceLoader,
+  ModelRegistry,
+  AuthStorage,
   type AgentSession,
   type CreateAgentSessionOptions,
   type ToolDefinition,
@@ -11,6 +13,8 @@ import { buildJinxSystemPrompt } from "./system-prompt.js";
 import { jinxTools } from "./tools.js";
 import { log } from "../util/log.js";
 import { Type } from "@sinclair/typebox";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 export type { AgentSession };
 
@@ -77,9 +81,31 @@ export async function startAgent(): Promise<AgentSession> {
     systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
   });
 
+  // Setup model registry
+  const agentDir = join(homedir(), ".pi", "agent");
+  const authStorage = new AuthStorage(join(agentDir, "auth.json"));
+  const modelRegistry = new ModelRegistry(authStorage, join(agentDir, "models.json"));
+
+  // Find model from env or fallback to first available
+  const defaultModel = process.env.DEFAULT_MODEL;
+  let selectedModel = undefined;
+  if (defaultModel) {
+    const [provider, modelId] = defaultModel.includes("/")
+      ? defaultModel.split("/")
+      : [undefined, defaultModel];
+    selectedModel = provider
+      ? modelRegistry.find(provider, modelId)
+      : modelRegistry.getAll().find(m => m.id === modelId || m.name === modelId);
+    if (!selectedModel) {
+      log.warn(`Model "${defaultModel}" not found in registry, falling back to first available model`);
+    }
+  }
+
   const options: CreateAgentSessionOptions = {
     sessionManager,
     resourceLoader,
+    modelRegistry,
+    model: selectedModel,
     thinkingLevel: "high",
     tools: codingTools,
     customTools: allCustomTools,
@@ -92,7 +118,7 @@ export async function startAgent(): Promise<AgentSession> {
   }
 
   currentSession = session;
-  log.info("Agent session started");
+  log.info("Agent session started", { model: selectedModel?.name || "fallback" });
   return session;
 }
 
