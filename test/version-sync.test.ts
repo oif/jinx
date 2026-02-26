@@ -49,7 +49,7 @@ describe("version-sync", () => {
     it("should return version from package.json", () => {
       const version = getPackageVersion();
       expect(version).toMatch(/^\d+\.\d+\.\d+$/);
-      expect(version).toBe("0.0.44"); // Current version
+      expect(version).toBe("0.0.45"); // Current version
     });
   });
 
