@@ -99,6 +99,48 @@ async function main(): Promise<void> {
       },
 
       ping: async () => "pong 🏓",
+
+      recent: async () => {
+        const { loadEvolutionHistory } = await import("./consciousness/history.js");
+        const history = loadEvolutionHistory();
+        if (history.length === 0) {
+          return "No evolution history yet.";
+        }
+        const recent = history.slice(-5).reverse();
+        const lines = ["📜 Recent Evolutions:"];
+        for (const record of recent) {
+          const emoji = record.status === "success" ? "✅" : record.status === "failed" ? "❌" : "⏭️";
+          const date = new Date(record.timestamp).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+          const summary = record.summary.split("\n")[0].slice(0, 40);
+          lines.push(
+            `${emoji} #${record.cycle} (${record.version}) - ${date}`,
+            `   ${summary}${record.summary.length > 40 ? "..." : ""}`
+          );
+        }
+        return lines.join("\n");
+      },
+
+      help: async () => {
+        return [
+          "📋 Available Commands:",
+          "",
+          "/start - Check if Jinx is alive",
+          "/status - Show system status (version, health, uptime)",
+          "/history - Show health history with statistics",
+          "/evolution - Show evolution history report",
+          "/evolve - Start evolution mode",
+          "/stop_evolve - Stop evolution mode",
+          "/recent - Show recent 5 evolutions summary",
+          "/restart - Request process restart",
+          "/ping - Ping Jinx",
+          "/help - Show this help message",
+          "",
+          "💬 You can also send me messages directly for agent mode.",
+        ].join("\n");
+      },
     }
   );
 
