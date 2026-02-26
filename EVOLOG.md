@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 3 |
-| Successful | 3 |
+| Total Cycles | 4 |
+| Successful | 4 |
 | Failed | 0 |
 | Skipped | 0 |
-| Current Streak | 3 🔥 |
-| Longest Streak | 3 |
+| Current Streak | 4 🔥 |
+| Longest Streak | 4 |
 
-**Last Success:** 2/26/2026, 2:28:34 AM
+**Last Success:** 2/26/2026, 2:38:21 AM
 
 ## 📜 Evolution History
+
+### ✅ Cycle #4 — 0.0.4
+
+- **Date:** 2026-02-26 02:38
+- **Status:** success
+
+> Fix evolution progress tracking: add setEvolutionStage calls in runEvolutionCycle to track evaluating/implementing/committing stages. Progress now shows real-time stage in /status command instead of always 'idle'.
 
 ### ✅ Cycle #3 — 0.0.3
 
