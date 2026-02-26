@@ -9,6 +9,7 @@
     "dev": "tsx src/main.ts",
     "start": "node --env-file=.env dist/main.js",
     "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky"
