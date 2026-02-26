@@ -80,6 +80,45 @@ function updateEvolog(record: EvolutionRecord): void {
 
 `;
 
+    // Update statistics table
+    const totalCyclesMatch = content.match(/\|\s*Total Cycles\s*\|\s*(\d+)\s*\|/);
+    if (totalCyclesMatch) {
+      const currentTotal = parseInt(totalCyclesMatch[1], 10);
+      if (record.cycle > currentTotal) {
+        content = content.replace(
+          /\|\s*Total Cycles\s*\|\s*\d+\s*\|/,
+          `| Total Cycles | ${record.cycle} |`
+        );
+      }
+    }
+
+    // Update other stats
+    const successfulMatch = content.match(/\|\s*Successful\s*\|\s*(\d+)\s*\|/);
+    const failedMatch = content.match(/\|\s*Failed\s*\|\s*(\d+)\s*\|/);
+    const skippedMatch = content.match(/\|\s*Skipped\s*\|\s*(\d+)\s*\|/);
+
+    if (successfulMatch && record.status === "success") {
+      const current = parseInt(successfulMatch[1], 10);
+      content = content.replace(
+        /\|\s*Successful\s*\|\s*\d+\s*\|/,
+        `| Successful | ${current + 1} |`
+      );
+    }
+    if (failedMatch && record.status === "failed") {
+      const current = parseInt(failedMatch[1], 10);
+      content = content.replace(
+        /\|\s*Failed\s*\|\s*\d+\s*\|/,
+        `| Failed | ${current + 1} |`
+      );
+    }
+    if (skippedMatch && record.status === "skipped") {
+      const current = parseInt(skippedMatch[1], 10);
+      content = content.replace(
+        /\|\s*Skipped\s*\|\s*\d+\s*\|/,
+        `| Skipped | ${current + 1} |`
+      );
+    }
+
     // Find the position to insert (after "## 📜 Evolution History")
     const historyMarker = "## 📜 Evolution History\n";
     const insertPos = content.indexOf(historyMarker);
