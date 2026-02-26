@@ -127,6 +127,8 @@ export const claudeCodeTool: ToolDefinition = {
  * Request process restart to load new code after self-modification.
  * Writes a marker file that the supervisor polls for.
  */
+import { requestRestart } from "../supervisor/restart.js";
+
 export const requestRestartTool: ToolDefinition = {
   name: "request_restart",
   label: "Request Restart",
@@ -142,21 +144,7 @@ export const requestRestartTool: ToolDefinition = {
     _onUpdate?: AgentToolUpdateCallback,
     _ctx?: ExtensionContext
   ): Promise<AgentToolResult<unknown>> => {
-    ensureDataDir();
-
-    let sha = "unknown";
-    try {
-      sha = shell("git rev-parse HEAD", { cwd: process.cwd() });
-    } catch {
-      // git not available or not a repo — continue anyway
-    }
-
-    const marker = {
-      reason: params.reason as string,
-      sha,
-      requestedAt: new Date().toISOString(),
-    };
-    writeFileSync(RESTART_MARKER, JSON.stringify(marker, null, 2));
+    requestRestart(params.reason as string);
     return textResult(`Restart requested: ${params.reason}. Supervisor will restart shortly.`);
   },
 };

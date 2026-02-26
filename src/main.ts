@@ -90,6 +90,12 @@ async function main(): Promise<void> {
         return "Consciousness loop not running.";
       },
 
+      restart: async () => {
+        const { requestRestart } = await import("./supervisor/restart.js");
+        await requestRestart("Manual restart requested via Telegram");
+        return "🔄 Restart requested. Supervisor will restart me shortly.";
+      },
+
       ping: async () => "pong 🏓",
     }
   );
