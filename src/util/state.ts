@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 const STATE_PATH = join(process.cwd(), "data", "state.json");
 const EVOLOG_PATH = join(process.cwd(), "EVOLOG.md");
+const PACKAGE_PATH = join(process.cwd(), "package.json");
 
 export interface State {
   version: string;
@@ -37,13 +38,13 @@ function readCycleFromEvolog(): number {
 }
 
 /**
- * Read the current version from state.json.
+ * Read the current version from package.json (git-tracked).
  * Falls back to "0.0.1" if not found.
  */
 export function readVersion(): string {
   try {
-    const state = JSON.parse(readFileSync(STATE_PATH, "utf-8"));
-    return state.version || "0.0.1";
+    const pkg = JSON.parse(readFileSync(PACKAGE_PATH, "utf-8"));
+    return pkg.version || "0.0.1";
   } catch {
     return "0.0.1";
   }
@@ -51,28 +52,30 @@ export function readVersion(): string {
 
 /**
  * Read the full state, merging:
+ * - version from package.json (git-tracked)
  * - cycle from EVOLOG.md (git-tracked, persistent)
  * - other fields from state.json (runtime state)
  */
 export function readState(): State {
-  // Cycle comes from EVOLOG.md (git-tracked)
+  // Git-tracked values
+  const version = readVersion();
   const cycle = readCycleFromEvolog();
 
-  // Other state comes from state.json (runtime)
+  // Runtime state from state.json
   try {
     const runtimeState = JSON.parse(readFileSync(STATE_PATH, "utf-8"));
     return {
       ...runtimeState,
-      version: runtimeState.version || "0.0.1",
-      cycle, // Always use git-tracked cycle from EVOLOG
+      version, // Always use git-tracked version
+      cycle,   // Always use git-tracked cycle
       evolutionEnabled: runtimeState.evolutionEnabled ?? false,
       lastRestart: runtimeState.lastRestart || null,
       lastEvolution: runtimeState.lastEvolution || null,
     };
   } catch {
-    // state.json doesn't exist - return defaults with git-tracked cycle
+    // state.json doesn't exist - return defaults with git-tracked values
     return {
-      version: "0.0.1",
+      version,
       cycle,
       evolutionEnabled: false,
       lastRestart: null,
