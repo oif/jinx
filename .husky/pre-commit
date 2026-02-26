@@ -1,1 +1,1 @@
-pnpm run build && pnpm run typecheck
+npm run build && npm run typecheck
