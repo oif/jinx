@@ -1,16 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { readFileSync, writeFileSync, copyFileSync, existsSync } from "node:fs";
-import { 
-  getPackageVersion, 
-  extractCycleFromVersion,
-  readCurrentStats,
-  updateEvologStats,
-  incrementSuccessfulCycle,
-  incrementFailedCycle 
-} from "../src/util/evolog-sync.js";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from "node:fs";
 
-const TEST_EVOLOG_PATH = "test/fixtures/test-evolog.md";
-const BACKUP_PATH = "test/fixtures/test-evolog.md.backup";
+// Set up fixture path before importing module
+const FIXTURE_DIR = "test/fixtures";
+const TEST_EVOLOG_PATH = `${FIXTURE_DIR}/test-evolog.md`;
+const REAL_EVOLOG_PATH = "EVOLOG.md";
+const BACKUP_PATH = `${FIXTURE_DIR}/evolog-backup.md`;
 
 // Sample EVOLOG content for testing
 const sampleEvolog = `# Evolution Log
@@ -32,8 +27,41 @@ const sampleEvolog = `# Evolution Log
 
 ## 📜 Evolution History
 
-Some history here...
+Test fixture file for evolog-sync tests.
 `;
+
+// Backup real EVOLOG.md and create fixture before all tests
+let realContent: string;
+
+beforeAll(() => {
+  // Ensure fixture directory exists
+  if (!existsSync(FIXTURE_DIR)) {
+    mkdirSync(FIXTURE_DIR, { recursive: true });
+  }
+  
+  // Backup real EVOLOG.md
+  realContent = readFileSync(REAL_EVOLOG_PATH, "utf-8");
+  writeFileSync(BACKUP_PATH, realContent);
+  
+  // Write fixture to real EVOLOG.md location for tests
+  writeFileSync(REAL_EVOLOG_PATH, sampleEvolog);
+});
+
+// Restore real EVOLOG.md after all tests
+afterAll(() => {
+  // Restore from backup
+  writeFileSync(REAL_EVOLOG_PATH, realContent);
+});
+
+// Now import the module (it will read the fixture we just wrote)
+const { 
+  getPackageVersion, 
+  extractCycleFromVersion,
+  readCurrentStats,
+  updateEvologStats,
+  incrementSuccessfulCycle,
+  incrementFailedCycle 
+} = await import("../src/util/evolog-sync.js");
 
 describe("evolog-sync", () => {
   describe("getPackageVersion", () => {
@@ -58,20 +86,16 @@ describe("evolog-sync", () => {
   });
 
   describe("readCurrentStats", () => {
-    it("should read current stats from actual EVOLOG.md", () => {
+    it("should read current stats from EVOLOG.md (fixture)", () => {
       const stats = readCurrentStats();
       expect(stats).not.toBeNull();
-      expect(stats?.totalCycles).toBeGreaterThan(0);
-      expect(stats?.successfulCycles).toBeGreaterThan(0);
+      expect(stats?.totalCycles).toBe(50);
+      expect(stats?.successfulCycles).toBe(49);
     });
   });
 
   describe("updateEvologStats", () => {
     it("should update statistics correctly", () => {
-      // This test validates the regex patterns work
-      const testContent = sampleEvolog;
-      
-      // Create a test file
       const testStats = {
         totalCycles: 51,
         successfulCycles: 50,
@@ -81,11 +105,9 @@ describe("evolog-sync", () => {
         longestStreak: 35,
       };
       
-      // Test that the update doesn't throw
       expect(() => updateEvologStats(testStats, "2026-02-26T15:00:00.000Z")).not.toThrow();
       
-      // Verify the update was applied by reading back
-      const updatedContent = readFileSync("EVOLOG.md", "utf-8");
+      const updatedContent = readFileSync(REAL_EVOLOG_PATH, "utf-8");
       expect(updatedContent).toContain("| Total Cycles | 51 |");
       expect(updatedContent).toContain("| Successful | 50 |");
     });
@@ -93,52 +115,43 @@ describe("evolog-sync", () => {
 
   describe("incrementSuccessfulCycle", () => {
     it("should increment successful cycle stats", () => {
-      // Get current stats
+      // Reset to known state first
+      writeFileSync(REAL_EVOLOG_PATH, sampleEvolog);
+      
       const beforeStats = readCurrentStats();
       expect(beforeStats).not.toBeNull();
       
-      // Store the values
-      const beforeTotal = beforeStats!.totalCycles;
-      const beforeSuccessful = beforeStats!.successfulCycles;
-      const beforeStreak = beforeStats!.currentStreak;
-      
-      // Increment
       incrementSuccessfulCycle();
       
-      // Read again
       const afterStats = readCurrentStats();
       expect(afterStats).not.toBeNull();
-      
-      // Verify increment
-      expect(afterStats!.totalCycles).toBe(beforeTotal + 1);
-      expect(afterStats!.successfulCycles).toBe(beforeSuccessful + 1);
-      expect(afterStats!.currentStreak).toBe(beforeStreak + 1);
+      expect(afterStats!.totalCycles).toBe(51);
+      expect(afterStats!.successfulCycles).toBe(50);
+      expect(afterStats!.currentStreak).toBe(35);
     });
   });
 
   describe("incrementFailedCycle", () => {
     it("should increment failed cycle stats and reset streak", () => {
-      // Get current stats
+      // Reset to known state
+      let content = sampleEvolog;
+      content = content.replace(/\|\s*Total Cycles\s*\|\s*\d+\s*\|/, "| Total Cycles | 60 |");
+      content = content.replace(/\|\s*Failed\s*\|\s*\d+\s*\|/, "| Failed | 5 |");
+      content = content.replace(/\|\s*Current Streak\s*\|\s*\d+\s*\|/, "| Current Streak | 10 |");
+      content = content.replace(/\|\s*Longest Streak\s*\|\s*\d+\s*\|/, "| Longest Streak | 25 |");
+      writeFileSync(REAL_EVOLOG_PATH, content);
+      
       const beforeStats = readCurrentStats();
       expect(beforeStats).not.toBeNull();
       
-      // Store the values
-      const beforeTotal = beforeStats!.totalCycles;
-      const beforeFailed = beforeStats!.failedCycles;
-      const beforeLongest = beforeStats!.longestStreak;
-      
-      // Increment
       incrementFailedCycle();
       
-      // Read again
       const afterStats = readCurrentStats();
       expect(afterStats).not.toBeNull();
-      
-      // Verify increment
-      expect(afterStats!.totalCycles).toBe(beforeTotal + 1);
-      expect(afterStats!.failedCycles).toBe(beforeFailed + 1);
+      expect(afterStats!.totalCycles).toBe(61);
+      expect(afterStats!.failedCycles).toBe(6);
       expect(afterStats!.currentStreak).toBe(0);
-      expect(afterStats!.longestStreak).toBe(beforeLongest); // Should not decrease
+      expect(afterStats!.longestStreak).toBe(25);
     });
   });
 });
