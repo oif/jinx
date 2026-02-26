@@ -1,15 +1,10 @@
 import { readdirSync, statSync, unlinkSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
+import { SESSIONS_DIR } from "./paths.js";
 
-const DATA_DIR = join(process.cwd(), "data");
-const SESSIONS_DIR = join(DATA_DIR, "sessions");
 const MAX_SESSIONS_TO_KEEP = 5;
 
-/**
- * Periodically clean up old agent sessions to prevent disk bloat.
- * Keeps the most recent N sessions.
- */
 export function cleanupOldSessions(): void {
   if (!existsSync(SESSIONS_DIR)) {
     return;
@@ -25,7 +20,7 @@ export function cleanupOldSessions(): void {
           mtime: statSync(fullPath).mtime.getTime(),
         };
       })
-      .sort((a, b) => b.mtime - a.mtime); // Newest first
+      .sort((a, b) => b.mtime - a.mtime);
 
     if (files.length > MAX_SESSIONS_TO_KEEP) {
       const toDelete = files.slice(MAX_SESSIONS_TO_KEEP);
