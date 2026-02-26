@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 13 |
+| Total Cycles | 14 |
 | Successful | 13 |
-| Failed | 0 |
+| Failed | 1 |
 | Skipped | 0 |
-| Current Streak | 13 🔥 |
+| Current Streak | 0 |
 | Longest Streak | 13 |
 
 **Last Success:** 2/26/2026, 5:57:23 AM
 
 ## 📜 Evolution History
+
+### ❌ Cycle #14 — 0.0.13
+
+- **Date:** 2026-02-26 06:01
+- **Status:** failed
+
+> Cycle started but recording failed. EVOLOG.md was not automatically updated. Fixed by making EVOLOG.md updates automatic in history.ts.
 
 ### ✅ Cycle #13 — 0.0.13
 
