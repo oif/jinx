@@ -8,9 +8,9 @@ describe("identity.md", () => {
     expect(content).toContain("# Jinx 的身份");
   });
 
-  it("should mention current version", () => {
-    // Should contain version format like 0.1.58
-    expect(content).toMatch(/版本.*0\.\d+\.\d+/);
+  it("should reference package.json for version", () => {
+    expect(content).toContain("版本");
+    expect(content).toContain("package.json");
   });
 
   it("should mention evolution cycle count", () => {
