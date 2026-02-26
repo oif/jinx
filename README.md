@@ -179,6 +179,18 @@ sudo systemctl enable jinx
 # Jinx 后续通过 evolution 自行更新
 ```
 
+## Scripts
+
+```bash
+npm run build        # TypeScript 编译
+npm run dev          # 开发模式 (tsx)
+npm run start        # 生产模式 (node)
+npm run test         # 运行测试 (vitest)
+npm run test:watch   # 持续测试模式
+npm run lint         # 代码检查 (tsc --noEmit)
+npm run typecheck    # 类型检查
+```
+
 ## BORN.md
 
 Jinx 的宪法。定义了它是谁、它守护什么、它如何成长。
