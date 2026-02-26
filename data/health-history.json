@@ -54,5 +54,12 @@
     "memoryPercent": 4.62,
     "cpuPercent": 0.16,
     "diskPercent": 4.48
+  },
+  {
+    "timestamp": "2026-02-26T01:14:47.850Z",
+    "status": "healthy",
+    "memoryPercent": 2.96,
+    "cpuPercent": 0.66,
+    "diskPercent": 4.48
   }
 ]
