@@ -1,10 +1,7 @@
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { writeFileSync, renameSync } from "node:fs";
 import { getCurrentSha } from "./git-ops.js";
 import { log } from "../util/log.js";
-
-const DATA_DIR = join(process.cwd(), "data");
-const RESTART_MARKER = join(DATA_DIR, ".restart_requested");
+import { RESTART_MARKER, RESTART_MARKER_TMP } from "./paths.js";
 
 interface RestartRequest {
   reason: string;
@@ -16,6 +13,9 @@ interface RestartRequest {
  * Request a process restart.
  * Writes a marker file that the lifecycle monitor polls for.
  * This is the clean way to trigger a restart from anywhere in the codebase.
+ *
+ * Uses atomic write (write to .tmp then rename) to prevent the lifecycle
+ * monitor from reading a partially-written file.
  */
 export function requestRestart(reason: string): void {
   const sha = getCurrentSha();
@@ -26,6 +26,8 @@ export function requestRestart(reason: string): void {
     requestedAt: new Date().toISOString(),
   };
 
-  writeFileSync(RESTART_MARKER, JSON.stringify(marker, null, 2));
+  // Atomic write: write to tmp, then rename into place
+  writeFileSync(RESTART_MARKER_TMP, JSON.stringify(marker, null, 2));
+  renameSync(RESTART_MARKER_TMP, RESTART_MARKER);
   log.info("Restart requested", { reason, sha });
 }

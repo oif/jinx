@@ -1,13 +1,12 @@
-import { existsSync, readFileSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, renameSync, unlinkSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { safePull, rebuild, rollbackToMain, getCurrentSha } from "./git-ops.js";
+import { safePull, rebuild, rollbackToMain, getCurrentSha, verifyImport } from "./git-ops.js";
 import { log } from "../util/log.js";
 import { markIntentionalRestart } from "./recovery.js";
+import { RESTART_MARKER, RESTART_MARKER_PROCESSING } from "./paths.js";
 
-const DATA_DIR = join(process.cwd(), "data");
-const RESTART_MARKER = join(DATA_DIR, ".restart_requested");
 const POLL_INTERVAL = 5_000; // 5 seconds
+const SHUTDOWN_TIMEOUT_MS = 30_000; // Force exit after 30s
 
 interface RestartRequest {
   reason: string;
@@ -39,7 +38,8 @@ async function notify(msg: string): Promise<void> {
  * 1. Pull new code from origin/dev
  * 2. Verify SHA matches expectation
  * 3. Rebuild (pnpm install + tsc)
- * 4. Trigger PM2 restart
+ * 4. Verify import works
+ * 5. Trigger PM2 restart
  *
  * On failure → rollback to main, notify owner.
  */
@@ -67,15 +67,26 @@ async function handleRestart(req: RestartRequest): Promise<void> {
     return;
   }
 
-  // Step 4: Restart via PM2
+  // Step 4: Verify import works at runtime
+  if (!verifyImport()) {
+    log.error("Import verification failed after rebuild, attempting rollback");
+    await handleRollback(req.reason);
+    return;
+  }
+
+  // Step 5: Restart via PM2
+  // CRITICAL: Mark intentional restart BEFORE the delay, not inside setTimeout.
+  // If markIntentionalRestart fails or setTimeout callback errors, we'd otherwise
+  // trigger a false crash-loop rollback on the next boot.
+  markIntentionalRestart();
+
   log.info("Restarting via PM2 in 5 seconds to allow graceful agent loop completion");
   await notify(`🔄 Restarting: ${req.reason}`);
 
   setTimeout(() => {
     try {
-      markIntentionalRestart();
       execSync("pm2 restart jinx", { timeout: 30_000, stdio: "pipe" });
-    } catch (e) {
+    } catch {
       // If pm2 restart fails, try a hard process exit — PM2 will auto-restart
       log.error("PM2 restart failed, exiting process for auto-restart");
       process.exit(0);
@@ -97,26 +108,42 @@ async function handleRollback(reason: string): Promise<void> {
 
 /**
  * Start polling for restart requests.
+ *
+ * Uses atomic file rename to prevent read/write races:
+ * Writer (restart.ts) writes to .tmp then renames to RESTART_MARKER.
+ * Reader (here) renames RESTART_MARKER to .processing, then reads .processing.
+ * This guarantees we never read a partially-written file.
  */
 export function startLifecycleMonitor(): void {
   if (pollTimer) return;
+
+  // Clean up any stale processing marker from a previous crash
+  try { unlinkSync(RESTART_MARKER_PROCESSING); } catch { /* not present */ }
 
   pollTimer = setInterval(async () => {
     if (!existsSync(RESTART_MARKER)) return;
 
     try {
-      const raw = readFileSync(RESTART_MARKER, "utf-8");
+      // Atomically claim the marker — prevents partial-read races
+      renameSync(RESTART_MARKER, RESTART_MARKER_PROCESSING);
+    } catch {
+      // Another tick already claimed it, or writer is mid-rename. Skip.
+      return;
+    }
+
+    try {
+      const raw = readFileSync(RESTART_MARKER_PROCESSING, "utf-8");
       const req: RestartRequest = JSON.parse(raw);
 
-      // Remove marker before processing — prevent infinite restart loops
-      unlinkSync(RESTART_MARKER);
+      // Remove claimed marker before processing — prevent infinite restart loops
+      unlinkSync(RESTART_MARKER_PROCESSING);
 
       await handleRestart(req);
     } catch (e) {
       const err = e as Error;
       log.error("Failed to process restart marker", { error: err.message });
       // Remove broken marker
-      try { unlinkSync(RESTART_MARKER); } catch { /* already gone */ }
+      try { unlinkSync(RESTART_MARKER_PROCESSING); } catch { /* already gone */ }
     }
   }, POLL_INTERVAL);
 
@@ -136,12 +163,32 @@ export function stopLifecycleMonitor(): void {
 
 /**
  * Register graceful shutdown handlers.
+ * Includes a force-exit timeout to prevent hanging on stuck cleanup.
  */
 export function registerShutdownHandlers(cleanup: () => Promise<void>): void {
+  let shuttingDown = false;
+
   const shutdown = async (signal: string) => {
+    if (shuttingDown) return; // Prevent double-shutdown
+    shuttingDown = true;
+
     log.info(`Received ${signal}, shutting down...`);
-    stopLifecycleMonitor();
-    await cleanup();
+
+    // Force exit if cleanup hangs
+    const forceExit = setTimeout(() => {
+      log.error(`Shutdown timed out after ${SHUTDOWN_TIMEOUT_MS}ms, forcing exit`);
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+    forceExit.unref(); // Don't let this timer keep the process alive
+
+    try {
+      stopLifecycleMonitor();
+      await cleanup();
+    } catch (e) {
+      log.error("Error during cleanup", { error: (e as Error).message });
+    }
+
+    clearTimeout(forceExit);
     process.exit(0);
   };
 

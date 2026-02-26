@@ -1,13 +1,13 @@
 import { execSync } from "node:child_process";
 import { log } from "../util/log.js";
+import { PROJECT_ROOT } from "./paths.js";
 
-const REPO_DIR = process.cwd();
 const DEV_BRANCH = "dev";
 const MAIN_BRANCH = "main";
 
 function git(cmd: string): string {
   return execSync(`git ${cmd}`, {
-    cwd: REPO_DIR,
+    cwd: PROJECT_ROOT,
     encoding: "utf-8",
     timeout: 60_000,
   }).trim();
@@ -55,6 +55,9 @@ export function ensureDevBranch(): void {
 /**
  * Pull latest code from origin/dev.
  * Returns true if successful, false if failed.
+ *
+ * On stash pop conflict: keeps the stash (doesn't drop it) and logs a warning.
+ * The stash can be recovered manually via `git stash list`.
  */
 export function safePull(): boolean {
   try {
@@ -70,8 +73,12 @@ export function safePull(): boolean {
       try {
         git("stash pop");
       } catch {
-        log.warn("Stash pop failed — changes may be lost");
-        git("stash drop");
+        // Do NOT drop the stash — it contains Jinx's uncommitted work.
+        // The stash is preserved and can be recovered via `git stash list`.
+        const stashList = safeGit("stash list --oneline -1") || "(unknown)";
+        log.error("Stash pop failed — stash preserved for manual recovery", { stash: stashList });
+        // Notify will happen at a higher level via handleRollback or similar.
+        // We still return true because the pull itself succeeded.
       }
     }
 
@@ -81,6 +88,17 @@ export function safePull(): boolean {
     const err = e as Error;
     log.error("Pull failed", { error: err.message });
     return false;
+  }
+}
+
+/**
+ * Non-throwing git helper for informational commands.
+ */
+function safeGit(cmd: string): string | null {
+  try {
+    return git(cmd);
+  } catch {
+    return null;
   }
 }
 
@@ -108,7 +126,7 @@ export function rollbackToMain(): boolean {
 export function verifyImport(): boolean {
   try {
     execSync("node -e \"import('./dist/main.js')\"", {
-      cwd: REPO_DIR,
+      cwd: PROJECT_ROOT,
       encoding: "utf-8",
       timeout: 30_000,
     });
@@ -119,13 +137,13 @@ export function verifyImport(): boolean {
 }
 
 /**
-  * Rebuild the project (pnpm install + tsc).
-  * If first attempt fails, wipes node_modules and retries.
-  */
+ * Rebuild the project (pnpm install + tsc).
+ * If first attempt fails, wipes dist + node_modules and retries.
+ */
 export function rebuild(): boolean {
   try {
     execSync("pnpm install && pnpm run build", {
-      cwd: REPO_DIR,
+      cwd: PROJECT_ROOT,
       encoding: "utf-8",
       timeout: 120_000,
       stdio: "pipe",
@@ -134,10 +152,11 @@ export function rebuild(): boolean {
     return true;
   } catch (e) {
     const err = e as Error;
-    log.warn("Rebuild failed, retrying with clean node_modules", { error: err.message });
+    log.warn("Rebuild failed, retrying with clean slate", { error: err.message });
     try {
-      execSync("rm -rf node_modules && pnpm install && pnpm run build", {
-        cwd: REPO_DIR,
+      // Clean both dist (stale compilation artifacts) and node_modules (corrupted deps)
+      execSync("rm -rf dist node_modules && pnpm install && pnpm run build", {
+        cwd: PROJECT_ROOT,
         encoding: "utf-8",
         timeout: 180_000,
         stdio: "pipe",

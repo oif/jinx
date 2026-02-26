@@ -25,8 +25,7 @@ function textResult(text: string): AgentToolResult<undefined> {
 
 // ── Helpers ────────────────────────────────────────────────────────
 
-const DATA_DIR = join(process.cwd(), "data");
-const RESTART_MARKER = join(DATA_DIR, ".restart_requested");
+import { DATA_DIR, STATE_PATH } from "../supervisor/paths.js";
 
 function ensureDataDir(): void {
   if (!existsSync(DATA_DIR)) {
@@ -215,7 +214,7 @@ export const updateStateTool: ToolDefinition = {
     _ctx?: ExtensionContext
   ): Promise<AgentToolResult<unknown>> => {
     ensureDataDir();
-    const statePath = join(DATA_DIR, "state.json");
+    const statePath = STATE_PATH;
     let state: Record<string, unknown> = {};
     try {
       state = JSON.parse(readFileSync(statePath, "utf-8"));

@@ -12,17 +12,20 @@ import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
 
 async function main(): Promise<void> {
   // Step 0: Emergency crash loop detection
-  checkCrashLoopAndRecover();
+  const { safeMode } = checkCrashLoopAndRecover();
 
   log.info("Jinx starting", {
     version: readVersion(),
     sha: getCurrentSha(),
     branch: getCurrentBranch(),
     pid: process.pid,
+    safeMode,
   });
 
   // Step 1: Ensure we're on dev branch & clean up old files
-  ensureDevBranch();
+  if (!safeMode) {
+    ensureDevBranch();
+  }
   cleanupOldSessions();
 
   // Step 2: Create Telegram bot (before agent, so we can inject sendToOwner)
@@ -31,6 +34,9 @@ async function main(): Promise<void> {
   const tg = createTelegramBot(
     // onMessage: forward to agent
     async (text, images) => {
+      if (safeMode) {
+        return "⚠️ Jinx is in safe mode (crash loop recovery). Agent is disabled.\nUse /restart to attempt recovery, or fix the issue manually.";
+      }
       const imageContents = images?.map(img => ({
         type: "image" as const,
         mimeType: img.mimeType,
@@ -40,14 +46,16 @@ async function main(): Promise<void> {
     },
     // onCommand: built-in commands
     {
-      start: async () => "Jinx is alive. 🐾",
+      start: async () => safeMode
+        ? "⚠️ Jinx is alive but in SAFE MODE. Agent and consciousness are disabled due to crash loop."
+        : "Jinx is alive. 🐾",
 
       status: async () => {
         const state = readState();
         const branch = getCurrentBranch();
         const sha = getCurrentSha().slice(0, 8);
         const health = await checkHealth();
-        return [
+        const lines = [
           `Version: ${state.version}`,
           `Branch: ${branch} (${sha})`,
           `Cycle: ${state.cycle}`,
@@ -55,7 +63,11 @@ async function main(): Promise<void> {
           `PID: ${process.pid}`,
           `Uptime: ${formatUptime(process.uptime())}`,
           `Health: ${health.status.toUpperCase()} (Mem: ${health.memory.usedPercent}%, CPU: ${health.cpu.loadPercent}%, Disk: ${health.disk.usedPercent}%)`,
-        ].join("\n");
+        ];
+        if (safeMode) {
+          lines.unshift("⚠️ SAFE MODE ACTIVE");
+        }
+        return lines.join("\n");
       },
 
       history: async () => {
@@ -68,6 +80,7 @@ async function main(): Promise<void> {
       },
 
       evolve: async () => {
+        if (safeMode) return "Cannot evolve in safe mode.";
         if (consciousness.handle) {
           consciousness.handle.triggerEvolution();
           return "🧬 Evolution mode activated.";
@@ -85,7 +98,7 @@ async function main(): Promise<void> {
 
       restart: async () => {
         const { requestRestart } = await import("./supervisor/restart.js");
-        await requestRestart("Manual restart requested via Telegram");
+        requestRestart("Manual restart requested via Telegram");
         return "🔄 Restart requested. Supervisor will restart me shortly.";
       },
 
@@ -93,42 +106,48 @@ async function main(): Promise<void> {
     }
   );
 
-  // Step 3: Register Telegram send for agent tools
-  registerTelegramSend(tg.sendToOwner);
+  // Step 3: Register Telegram send
   registerNotify(tg.sendToOwner);
 
-  // Step 4: Start agent session
-  await startAgent();
+  if (!safeMode) {
+    // Step 4: Start agent session (skip in safe mode)
+    registerTelegramSend(tg.sendToOwner);
+    await startAgent();
+  }
 
   // Step 5: Start subsystems
   startLifecycleMonitor();
   tg.start();
 
-  // Register health notifier for proactive alerts
   registerHealthNotifier(tg.sendToOwner);
 
-  consciousness.handle = startConsciousness(
-    async (msg) => {
-      return await agentPrompt(msg);
-    },
-    tg.sendToOwner,
-    isAgentBusy,
-  );
+  if (!safeMode) {
+    consciousness.handle = startConsciousness(
+      async (msg) => {
+        return await agentPrompt(msg);
+      },
+      tg.sendToOwner,
+      isAgentBusy,
+    );
+  }
 
   // Step 6: Register shutdown
   registerShutdownHandlers(async () => {
     consciousness.handle?.stop();
     stopLifecycleMonitor();
-    await abortAgent();
+    if (!safeMode) {
+      await abortAgent();
+    }
     await tg.stop();
   });
 
-  log.info("Jinx is alive", { version: readVersion() });
+  log.info("Jinx is alive", { version: readVersion(), safeMode });
 
   // Notify owner on startup
   try {
+    const modeLabel = safeMode ? " [⚠️ SAFE MODE]" : "";
     await tg.sendToOwner(
-      `🐾 Jinx started.\nVersion: ${readVersion()}\nBranch: ${getCurrentBranch()} (${getCurrentSha().slice(0, 8)})`
+      `🐾 Jinx started${modeLabel}.\nVersion: ${readVersion()}\nBranch: ${getCurrentBranch()} (${getCurrentSha().slice(0, 8)})`
     );
   } catch {
     // TG might not be ready yet — not fatal

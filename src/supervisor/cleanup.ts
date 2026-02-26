@@ -1,9 +1,8 @@
 import { readdirSync, statSync, unlinkSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
+import { SESSIONS_DIR } from "./paths.js";
 
-const DATA_DIR = join(process.cwd(), "data");
-const SESSIONS_DIR = join(DATA_DIR, "sessions");
 const MAX_SESSIONS_TO_KEEP = 5;
 
 /**

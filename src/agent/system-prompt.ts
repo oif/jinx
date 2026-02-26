@@ -1,7 +1,6 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-
-const DATA_DIR = join(process.cwd(), "data");
+import { DATA_DIR, PROJECT_ROOT } from "../supervisor/paths.js";
 
 function safeRead(path: string): string {
   try {
@@ -46,7 +45,7 @@ function loadKnowledge(): string {
  * Uses the callback form: (defaultPrompt) => extendedPrompt
  */
 export function buildJinxSystemPrompt(defaultPrompt: string): string {
-  const born = safeRead(join(process.cwd(), "BORN.md"));
+  const born = safeRead(join(PROJECT_ROOT, "BORN.md"));
   const identity = safeRead(join(DATA_DIR, "identity.md"));
   const scratchpad = safeRead(join(DATA_DIR, "scratchpad.md"));
   const goals = safeRead(join(DATA_DIR, "goals.md"));

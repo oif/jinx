@@ -23,6 +23,8 @@ const MEMORY_WARNING_THRESHOLD = 85;
 const MEMORY_CRITICAL_THRESHOLD = 95;
 const DISK_WARNING_THRESHOLD = 80;
 const DISK_CRITICAL_THRESHOLD = 90;
+const CPU_WARNING_THRESHOLD = 90;
+const CPU_CRITICAL_THRESHOLD = 98;
 
 // Track last notified state to avoid spam
 let lastNotifiedStatus: HealthStatus["status"] = "healthy";
@@ -44,6 +46,9 @@ function formatHealthAlert(health: HealthStatus): string {
 
   if (health.memory.usedPercent > MEMORY_WARNING_THRESHOLD) {
     issues.push(`Memory: ${health.memory.usedPercent}%`);
+  }
+  if (health.cpu.loadPercent > CPU_WARNING_THRESHOLD) {
+    issues.push(`CPU: ${health.cpu.loadPercent}%`);
   }
   if (health.disk.usedPercent > DISK_WARNING_THRESHOLD) {
     issues.push(`Disk: ${health.disk.usedPercent}%`);
@@ -71,10 +76,19 @@ export async function checkHealth(options?: { silent?: boolean }): Promise<Healt
     const diskUsedPercent = mainDisk ? mainDisk.use : 0;
 
     let status: HealthStatus["status"] = "healthy";
+    const cpuLoad = cpu.currentLoad;
 
-    if (memUsedPercent > MEMORY_CRITICAL_THRESHOLD || diskUsedPercent > DISK_CRITICAL_THRESHOLD) {
+    if (
+      memUsedPercent > MEMORY_CRITICAL_THRESHOLD ||
+      diskUsedPercent > DISK_CRITICAL_THRESHOLD ||
+      cpuLoad > CPU_CRITICAL_THRESHOLD
+    ) {
       status = "critical";
-    } else if (memUsedPercent > MEMORY_WARNING_THRESHOLD || diskUsedPercent > DISK_WARNING_THRESHOLD) {
+    } else if (
+      memUsedPercent > MEMORY_WARNING_THRESHOLD ||
+      diskUsedPercent > DISK_WARNING_THRESHOLD ||
+      cpuLoad > CPU_WARNING_THRESHOLD
+    ) {
       status = "warning";
     }
 
