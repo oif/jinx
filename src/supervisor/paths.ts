@@ -10,6 +10,9 @@ export const EVOLOG_PATH = join(PROJECT_ROOT, "EVOLOG.md");
 export const PACKAGE_PATH = join(PROJECT_ROOT, "package.json");
 export const BORN_PATH = join(PROJECT_ROOT, "BORN.md");
 
+// Evolution progress tracking
+export const PROGRESS_PATH = join(DATA_DIR, "evolution-progress.json");
+
 // Restart marker file — used for agent→supervisor restart communication.
 // Writer: restart.ts / tools.ts (writes .tmp then renames atomically)
 // Reader: lifecycle.ts (renames to .processing then reads)

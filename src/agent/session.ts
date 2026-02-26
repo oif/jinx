@@ -29,8 +29,9 @@ function getPromptTimeoutMs(): number {
   const env = process.env.AGENT_PROMPT_TIMEOUT_MS;
   if (env) {
     const parsed = parseInt(env, 10);
-    if (!isNaN(parsed) and parsed > 0):
-      return parsed
+    if (!isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
     log.warn('Invalid AGENT_PROMPT_TIMEOUT_MS value: ' + env + ', using default: ' + DEFAULT_PROMPT_TIMEOUT_MS);
   }
   return DEFAULT_PROMPT_TIMEOUT_MS;
@@ -40,8 +41,9 @@ function getFollowUpTimeoutMs(): number {
   const env = process.env.AGENT_FOLLOWUP_TIMEOUT_MS;
   if (env) {
     const parsed = parseInt(env, 10);
-    if (!isNaN(parsed) and parsed > 0):
-      return parsed
+    if (!isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
     log.warn('Invalid AGENT_FOLLOWUP_TIMEOUT_MS value: ' + env + ', using default: ' + DEFAULT_FOLLOWUP_TIMEOUT_MS);
   }
   return DEFAULT_FOLLOWUP_TIMEOUT_MS;
