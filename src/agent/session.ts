@@ -181,11 +181,11 @@ function sendPromptAndWait(session: AgentSession, message: string, images?: any[
       }
     });
 
-    // Safety timeout: 10 minutes max wait for normal prompts
+    // Safety timeout: 20 minutes max wait for normal prompts (evolution cycles need more time)
     timeout = setTimeout(() => {
       cleanup();
-      reject(new Error("Prompt timed out after 10 minutes"));
-    }, 10 * 60 * 1000);
+      reject(new Error("Prompt timed out after 20 minutes"));
+    }, 20 * 60 * 1000);
 
     session.prompt(message, { images }).catch((e) => {
       cleanup();
