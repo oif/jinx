@@ -247,11 +247,12 @@ function queueFollowUpAndWait(session: AgentSession, message: string, images?: a
       waitingForOurTurn = false;
     }
 
-    // Safety timeout: 5 minutes max wait
+    // Safety timeout: 20 minutes max wait (same as normal prompts)
+    // Evolution cycles can take a long time, user commands should wait
     timeout = setTimeout(() => {
       cleanup();
-      reject(new Error("Follow-up timed out after 5 minutes"));
-    }, 5 * 60 * 1000);
+      reject(new Error("Follow-up timed out after 20 minutes"));
+    }, 20 * 60 * 1000);
 
     session.followUp(message, images).catch((e) => {
       cleanup();
