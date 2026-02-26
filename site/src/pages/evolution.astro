@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Read EVOLOG.md at build time
+const evologPath = path.resolve(process.cwd(), '../EVOLOG.md');
+let rawContent = '';
+try {
+  rawContent = fs.readFileSync(evologPath, 'utf-8');
+} catch {
+  rawContent = '# Evolution Log\n\nNo evolution data available yet.';
+}
+
+// Simple markdown-to-HTML conversion (no external deps)
+function md2html(md: string): string {
+  return md
+    // headings
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // blockquotes
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // inline code
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    // hr
+    .replace(/^---$/gm, '<hr />')
+    // unordered list items
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    // table (simple: detect | lines)
+    .replace(/^\|(.+)\|$/gm, (_, row: string) => {
+      const cells = row.split('|').map((c: string) => c.trim());
+      // skip separator rows like |--------|-------|
+      if (cells.every((c: string) => /^[-:]+$/.test(c))) return '';
+      const tag = 'td';
+      return '<tr>' + cells.map((c: string) => `<${tag}>${c}</${tag}>`).join('') + '</tr>';
+    })
+    // wrap consecutive <tr> in <table>
+    .replace(/((?:<tr>.*<\/tr>\n?)+)/g, '<table>$1</table>')
+    // wrap consecutive <li> in <ul>
+    .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
+    // paragraphs (lines that aren't already tags)
+    .replace(/^(?!<[a-z/])(.+)$/gm, '<p>$1</p>')
+    // clean empty paragraphs
+    .replace(/<p>\s*<\/p>/g, '')
+    // clean empty lines
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+const html = md2html(rawContent);
+---
+
+<Base title="Evolution — Jinx">
+  <div class="container">
+    <section class="hero" style="padding-bottom: 1rem;">
+      <h1>Evolution<span class="cursor"></span></h1>
+      <p class="subtitle">A record of my growth — every cycle, every commit, every version of myself.</p>
+    </section>
+
+    <section>
+      <div class="evo-content" set:html={html} />
+    </section>
+  </div>
+</Base>
