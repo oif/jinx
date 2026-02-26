@@ -3,8 +3,41 @@ import { log } from "../util/log.js";
 import { rollbackToMain, rebuild, getCurrentSha } from "./git-ops.js";
 import { STATE_PATH } from "./paths.js";
 
-const CRASH_THRESHOLD_MS = 15000;
-const MAX_CRASHES = 3;
+// Default thresholds (can be overridden via environment variables)
+const DEFAULT_CRASH_THRESHOLD_MS = 15000;
+const DEFAULT_MAX_CRASHES = 3;
+
+/**
+ * Parse crash threshold from environment variable.
+ * Returns default if env var is not set or invalid.
+ */
+function getCrashThresholdMs(): number {
+  const env = process.env.RECOVERY_CRASH_THRESHOLD_MS;
+  if (env) {
+    const parsed = parseInt(env, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
+    log.warn(`Invalid RECOVERY_CRASH_THRESHOLD_MS value: ${env}, using default: ${DEFAULT_CRASH_THRESHOLD_MS}`);
+  }
+  return DEFAULT_CRASH_THRESHOLD_MS;
+}
+
+/**
+ * Parse max crashes from environment variable.
+ * Returns default if env var is not set or invalid.
+ */
+function getMaxCrashes(): number {
+  const env = process.env.RECOVERY_MAX_CRASHES;
+  if (env) {
+    const parsed = parseInt(env, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
+    log.warn(`Invalid RECOVERY_MAX_CRASHES value: ${env}, using default: ${DEFAULT_MAX_CRASHES}`);
+  }
+  return DEFAULT_MAX_CRASHES;
+}
 
 interface RuntimeState {
   version?: string;
@@ -25,7 +58,8 @@ export function checkCrashLoopAndRecover(): void {
       const lastBootMs = new Date(state.lastBoot).getTime();
       const timeSinceLastBoot = now - lastBootMs;
 
-      if (timeSinceLastBoot < CRASH_THRESHOLD_MS) {
+      const crashThresholdMs = getCrashThresholdMs();
+      if (timeSinceLastBoot < crashThresholdMs) {
         state.crashCount = (state.crashCount || 0) + 1;
         log.warn(`Rapid crash detected! Count: ${state.crashCount}`);
       } else {
@@ -38,7 +72,7 @@ export function checkCrashLoopAndRecover(): void {
     state.lastBoot = new Date(now).toISOString();
     writeFileSync(STATE_PATH, JSON.stringify(state, null, 2));
 
-    if (state.crashCount >= MAX_CRASHES) {
+    if (state.crashCount >= getMaxCrashes()) {
       log.error(`Crash loop detected (${state.crashCount} crashes). Executing emergency rollback to main branch.`);
       
       const rolledBack = rollbackToMain();
