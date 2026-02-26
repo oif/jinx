@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 9 |
-| Successful | 9 |
+| Total Cycles | 10 |
+| Successful | 10 |
 | Failed | 0 |
 | Skipped | 0 |
-| Current Streak | 9 🔥 |
-| Longest Streak | 9 |
+| Current Streak | 10 🔥 |
+| Longest Streak | 10 |
 
-**Last Success:** 2/26/2026, 5:24:18 AM
+**Last Success:** 2/26/2026, 5:33:52 AM
 
 ## 📜 Evolution History
+
+### ✅ Cycle #10 — 0.0.10
+
+- **Date:** 2026-02-26 05:33
+- **Status:** success
+
+> Make crash detection thresholds configurable via environment variables. Add getCrashThresholdMs() and getMaxCrashes() functions with validation. Support RECOVERY_CRASH_THRESHOLD_MS (default: 15000ms) and RECOVERY_MAX_CRASHES (default: 3).
 
 ### ✅ Cycle #9 — 0.0.9
 
