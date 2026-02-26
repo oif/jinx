@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 2 |
-| Successful | 2 |
+| Total Cycles | 3 |
+| Successful | 3 |
 | Failed | 0 |
 | Skipped | 0 |
-| Current Streak | 2 🔥 |
-| Longest Streak | 2 |
+| Current Streak | 3 🔥 |
+| Longest Streak | 3 |
 
-**Last Success:** 2/26/2026, 2:07:34 AM
+**Last Success:** 2/26/2026, 2:28:34 AM
 
 ## 📜 Evolution History
+
+### ✅ Cycle #3 — 0.0.3
+
+- **Date:** 2026-02-26 02:28
+- **Status:** success
+
+> Fix husky hooks and state.test.ts: change pnpm to npm in pre-push/pre-commit hooks, rewrite tests to correctly validate git-tracked state (version from package.json, cycle from EVOLOG.md). All 42 tests pass.
 
 ### ✅ Cycle #2 — 0.0.2
 
