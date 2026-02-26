@@ -4,6 +4,7 @@ import { log } from "../util/log.js";
 import { DATA_DIR } from "../supervisor/paths.js";
 
 const HISTORY_PATH = join(DATA_DIR, "evolution-history.json");
+const EVOLOG_PATH = "EVOLOG.md";
 const MAX_HISTORY_ENTRIES = 100; // Keep last 100 cycles
 
 export interface EvolutionRecord {
@@ -53,6 +54,53 @@ export function saveEvolutionHistory(history: EvolutionRecord[]): void {
 }
 
 /**
+ * Update EVOLOG.md with the new evolution cycle entry.
+ */
+function updateEvolog(record: EvolutionRecord): void {
+  try {
+    let content = "";
+    if (existsSync(EVOLOG_PATH)) {
+      content = readFileSync(EVOLOG_PATH, "utf-8");
+    }
+
+    const date = new Date(record.timestamp).toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const entry = `### ${record.status === "success" ? "✅" : "❌"} Cycle #${record.cycle} — ${record.version}
+
+- **Date:** ${date}
+- **Status:** ${record.status}
+
+> ${record.summary.slice(0, 200)}${record.summary.length > 200 ? "..." : ""}
+
+`;
+
+    // Find the position to insert (after "## 📜 Evolution History")
+    const historyMarker = "## 📜 Evolution History\n";
+    const insertPos = content.indexOf(historyMarker);
+
+    if (insertPos >= 0) {
+      const before = content.slice(0, insertPos + historyMarker.length);
+      const after = content.slice(insertPos + historyMarker.length);
+      content = before + "\n" + entry + after;
+    } else {
+      // Append to end if marker not found
+      content += "\n" + entry;
+    }
+
+    writeFileSync(EVOLOG_PATH, content);
+    log.info(`EVOLOG.md updated with cycle #${record.cycle}`);
+  } catch (e) {
+    log.warn("Failed to update EVOLOG.md", { error: (e as Error).message });
+  }
+}
+
+/**
  * Record a new evolution cycle result.
  */
 export function recordEvolutionResult(
@@ -64,16 +112,19 @@ export function recordEvolutionResult(
 ): void {
   const history = loadEvolutionHistory();
 
-  history.push({
+  const record: EvolutionRecord = {
     cycle,
     timestamp: new Date().toISOString(),
     version,
     status,
     summary: summary.slice(0, 500), // Limit summary length
     durationMs,
-  });
+  };
+
+  history.push(record);
 
   saveEvolutionHistory(history);
+  updateEvolog(record);
   log.info(`Evolution #${cycle} recorded`, { status, version });
 }
 
