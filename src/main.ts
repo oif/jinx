@@ -1,15 +1,20 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { log } from "./util/log.js";
-import { startAgent, registerTelegramSend, prompt as agentPrompt, abortAgent } from "./agent/session.js";
+import { readVersion, readState } from "./util/state.js";
+import { startAgent, registerTelegramSend, prompt as agentPrompt, abortAgent, isAgentBusy } from "./agent/session.js";
 import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
 import { startConsciousness } from "./consciousness/loop.js";
-
-let agentBusy = false;
+import { checkHealth, registerHealthNotifier } from "./health/check.js";
+import { formatHistoryReport } from "./health/history.js";
+import { cleanupOldSessions } from "./supervisor/cleanup.js";
+import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
+import { formatProgress, isEvolutionActive } from "./consciousness/evolution-progress.js";
 
 async function main(): Promise<void> {
+  // Step 0: Emergency crash loop detection
+  checkCrashLoopAndRecover();
+
   log.info("Jinx starting", {
     version: readVersion(),
     sha: getCurrentSha(),
@@ -17,21 +22,22 @@ async function main(): Promise<void> {
     pid: process.pid,
   });
 
-  // Step 1: Ensure we're on dev branch
+  // Step 1: Ensure we're on dev branch & clean up old files
   ensureDevBranch();
+  cleanupOldSessions();
 
   // Step 2: Create Telegram bot (before agent, so we can inject sendToOwner)
   const consciousness = { handle: null as ReturnType<typeof startConsciousness> | null };
 
   const tg = createTelegramBot(
     // onMessage: forward to agent
-    async (text) => {
-      agentBusy = true;
-      try {
-        return await agentPrompt(text);
-      } finally {
-        agentBusy = false;
-      }
+    async (text, images) => {
+      const imageContents = images?.map(img => ({
+        type: "image" as const,
+        mimeType: img.mimeType,
+        data: img.data,
+      }));
+      return await agentPrompt(text, imageContents);
     },
     // onCommand: built-in commands
     {
@@ -41,14 +47,33 @@ async function main(): Promise<void> {
         const state = readState();
         const branch = getCurrentBranch();
         const sha = getCurrentSha().slice(0, 8);
-        return [
+        const health = await checkHealth();
+
+        const lines: string[] = [
           `Version: ${state.version}`,
           `Branch: ${branch} (${sha})`,
           `Cycle: ${state.cycle}`,
           `Evolution: ${state.evolutionEnabled ? "ON" : "OFF"}`,
           `PID: ${process.pid}`,
           `Uptime: ${formatUptime(process.uptime())}`,
-        ].join("\n");
+          `Health: ${health.status.toUpperCase()} (Mem: ${health.memory.usedPercent}%, CPU: ${health.cpu.loadPercent}%, Disk: ${health.disk.usedPercent}%)`,
+        ];
+
+        // Show evolution progress if active
+        if (isEvolutionActive()) {
+          lines.push("", formatProgress());
+        }
+
+        return lines.join("\n");
+      },
+
+      history: async () => {
+        return formatHistoryReport();
+      },
+
+      evolution: async () => {
+        const { formatEvolutionReport } = await import("./consciousness/history.js");
+        return formatEvolutionReport();
       },
 
       evolve: async () => {
@@ -67,6 +92,12 @@ async function main(): Promise<void> {
         return "Consciousness loop not running.";
       },
 
+      restart: async () => {
+        const { requestRestart } = await import("./supervisor/restart.js");
+        await requestRestart("Manual restart requested via Telegram");
+        return "🔄 Restart requested. Supervisor will restart me shortly.";
+      },
+
       ping: async () => "pong 🏓",
     }
   );
@@ -82,17 +113,15 @@ async function main(): Promise<void> {
   startLifecycleMonitor();
   tg.start();
 
+  // Register health notifier for proactive alerts
+  registerHealthNotifier(tg.sendToOwner);
+
   consciousness.handle = startConsciousness(
     async (msg) => {
-      agentBusy = true;
-      try {
-        return await agentPrompt(msg);
-      } finally {
-        agentBusy = false;
-      }
+      return await agentPrompt(msg);
     },
     tg.sendToOwner,
-    () => agentBusy,
+    isAgentBusy,
   );
 
   // Step 6: Register shutdown
@@ -116,23 +145,6 @@ async function main(): Promise<void> {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────
-
-function readVersion(): string {
-  try {
-    const state = JSON.parse(readFileSync(join(process.cwd(), "data", "state.json"), "utf-8"));
-    return state.version || "0.0.1";
-  } catch {
-    return "0.0.1";
-  }
-}
-
-function readState(): Record<string, unknown> {
-  try {
-    return JSON.parse(readFileSync(join(process.cwd(), "data", "state.json"), "utf-8"));
-  } catch {
-    return { version: "0.0.1", cycle: 0, evolutionEnabled: false };
-  }
-}
 
 function formatUptime(seconds: number): string {
   const h = Math.floor(seconds / 3600);

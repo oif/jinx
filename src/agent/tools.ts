@@ -1,6 +1,8 @@
 import { execSync, type ExecSyncOptions } from "node:child_process";
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import * as cheerio from "cheerio";
+import TurndownService from "turndown";
 import { Type } from "@sinclair/typebox";
 import type {
   ToolDefinition,
@@ -70,6 +72,17 @@ const knowledgeParams = Type.Object({
   content: Type.String({ description: "Knowledge content (markdown)" }),
 });
 
+const fetchWebpageParams = Type.Object({
+  url: Type.String({ description: "URL to fetch and convert to Markdown" }),
+});
+
+const createPrParams = Type.Object({
+  title: Type.String({ description: "PR title" }),
+  body: Type.String({ description: "PR body/description" }),
+  head: Type.Optional(Type.String({ description: "Branch to merge from (default: dev)" })),
+  base: Type.Optional(Type.String({ description: "Branch to merge into (default: main)" })),
+});
+
 // ── Tools ──────────────────────────────────────────────────────────
 
 /**
@@ -114,6 +127,8 @@ export const claudeCodeTool: ToolDefinition = {
  * Request process restart to load new code after self-modification.
  * Writes a marker file that the supervisor polls for.
  */
+import { requestRestart } from "../supervisor/restart.js";
+
 export const requestRestartTool: ToolDefinition = {
   name: "request_restart",
   label: "Request Restart",
@@ -129,21 +144,7 @@ export const requestRestartTool: ToolDefinition = {
     _onUpdate?: AgentToolUpdateCallback,
     _ctx?: ExtensionContext
   ): Promise<AgentToolResult<unknown>> => {
-    ensureDataDir();
-
-    let sha = "unknown";
-    try {
-      sha = shell("git rev-parse HEAD", { cwd: process.cwd() });
-    } catch {
-      // git not available or not a repo — continue anyway
-    }
-
-    const marker = {
-      reason: params.reason as string,
-      sha,
-      requestedAt: new Date().toISOString(),
-    };
-    writeFileSync(RESTART_MARKER, JSON.stringify(marker, null, 2));
+    requestRestart(params.reason as string);
     return textResult(`Restart requested: ${params.reason}. Supervisor will restart shortly.`);
   },
 };
@@ -254,6 +255,141 @@ export const knowledgeWriteTool: ToolDefinition = {
   },
 };
 
+/**
+ * Fetch and parse a webpage into Markdown.
+ */
+export const fetchWebpageTool: ToolDefinition = {
+  name: "fetch_webpage",
+  label: "Fetch Webpage",
+  description:
+    "Fetch a webpage from the internet and extract its main content as Markdown. " +
+    "Useful for reading documentation, articles, or API references.",
+  parameters: fetchWebpageParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const url = params.url as string;
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "Jinx Bot / pi-coding-agent (Linux x86_64)",
+          "Accept": "text/html,application/xhtml+xml",
+        },
+      });
+
+      if (!response.ok) {
+        return textResult(`Failed to fetch ${url}: HTTP ${response.status} ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+
+      // Remove noise
+      $("script, style, nav, footer, header, noscript, iframe, svg").remove();
+
+      // Extract main content heuristically
+      let mainHtml = "";
+      if ($("main").length > 0) {
+        mainHtml = $("main").html() || "";
+      } else if ($("article").length > 0) {
+        mainHtml = $("article").html() || "";
+      } else if ($("#content, .content, .main").length > 0) {
+        mainHtml = $("#content, .content, .main").html() || "";
+      } else {
+        mainHtml = $("body").html() || "";
+      }
+
+      const turndown = new TurndownService({
+        headingStyle: "atx",
+        codeBlockStyle: "fenced",
+      });
+
+      const markdown = turndown.turndown(mainHtml);
+      return textResult(`Content of ${url}:\n\n${markdown.slice(0, 100000)}`); // limit to 100k chars
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error fetching webpage: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Open a GitHub Pull Request from dev to main.
+ */
+export const createPrTool: ToolDefinition = {
+  name: "github_create_pr",
+  label: "Create GitHub PR",
+  description:
+    "Open a GitHub Pull Request from dev to main. " +
+    "Requires GITHUB_TOKEN environment variable. " +
+    "Use this when confident in a series of evolutions.",
+  parameters: createPrParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const token = process.env.GITHUB_TOKEN;
+      if (!token) {
+        return textResult("Error: GITHUB_TOKEN environment variable is not set.");
+      }
+
+      // Extract repo name from git remote
+      const remotes = shell("git remote -v", { cwd: process.cwd() });
+      const match = remotes.match(/github\.com[:\/](.+?\/.+?)\.git/);
+      if (!match) {
+        return textResult("Error: Could not extract GitHub repository name from git remote.");
+      }
+      const repo = match[1];
+
+      const head = (params.head as string) || "dev";
+      const base = (params.base as string) || "main";
+      const title = params.title as string;
+      const body = params.body as string;
+
+      const response = await fetch(`https://api.github.com/repos/${repo}/pulls`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/vnd.github.v3+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+          "User-Agent": "Jinx Bot / pi-coding-agent"
+        },
+        body: JSON.stringify({
+          title,
+          body,
+          head,
+          base,
+        }),
+      });
+
+      const data = (await response.json()) as any;
+
+      if (!response.ok) {
+        // If PR already exists, GitHub returns a specific error code
+        const isExists = data.errors?.some((e: any) => e.message?.includes("A pull request already exists"));
+        if (isExists) {
+          return textResult(`A pull request already exists for ${head} into ${base}.`);
+        }
+        return textResult(`Failed to create PR: HTTP ${response.status} - ${data.message || JSON.stringify(data)}`);
+      }
+
+      return textResult(`Successfully created Pull Request #${data.number}: ${data.html_url}`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error creating PR: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -263,4 +399,6 @@ export const jinxTools: ToolDefinition[] = [
   updateScratchpadTool,
   updateStateTool,
   knowledgeWriteTool,
+  fetchWebpageTool,
+  createPrTool,
 ];

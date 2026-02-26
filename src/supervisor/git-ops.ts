@@ -119,11 +119,12 @@ export function verifyImport(): boolean {
 }
 
 /**
- * Rebuild the project (npm install + tsc).
- */
+  * Rebuild the project (pnpm install + tsc).
+  * If first attempt fails, wipes node_modules and retries.
+  */
 export function rebuild(): boolean {
   try {
-    execSync("npm install --omit=dev && npm run build", {
+    execSync("pnpm install && pnpm run build", {
       cwd: REPO_DIR,
       encoding: "utf-8",
       timeout: 120_000,
@@ -133,7 +134,20 @@ export function rebuild(): boolean {
     return true;
   } catch (e) {
     const err = e as Error;
-    log.error("Rebuild failed", { error: err.message });
-    return false;
+    log.warn("Rebuild failed, retrying with clean node_modules", { error: err.message });
+    try {
+      execSync("rm -rf node_modules && pnpm install && pnpm run build", {
+        cwd: REPO_DIR,
+        encoding: "utf-8",
+        timeout: 180_000,
+        stdio: "pipe",
+      });
+      log.info("Rebuild successful after clean retry");
+      return true;
+    } catch (e2) {
+      const err2 = e2 as Error;
+      log.error("Rebuild failed after clean retry", { error: err2.message });
+      return false;
+    }
   }
 }

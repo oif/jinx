@@ -3,13 +3,13 @@ module.exports = {
     {
       name: "jinx",
       script: "./dist/main.js",
-      cwd: "/home/neo/jinx",
-      node_args: "--max-old-space-size=4096",
+      cwd: __dirname,
+      node_args: "--env-file=.env --max-old-space-size=8192",
       autorestart: true,
       max_restarts: 10,
       restart_delay: 5000,
       exp_backoff_restart_delay: 1000,
-      max_memory_restart: "3G",
+      max_memory_restart: "12G",
       env: {
         NODE_ENV: "production",
       },

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { execSync } from "node:child_process";
 import { safePull, rebuild, rollbackToMain, getCurrentSha } from "./git-ops.js";
 import { log } from "../util/log.js";
+import { markIntentionalRestart } from "./recovery.js";
 
 const DATA_DIR = join(process.cwd(), "data");
 const RESTART_MARKER = join(DATA_DIR, ".restart_requested");
@@ -37,7 +38,7 @@ async function notify(msg: string): Promise<void> {
  * Handle a restart request:
  * 1. Pull new code from origin/dev
  * 2. Verify SHA matches expectation
- * 3. Rebuild (npm install + tsc)
+ * 3. Rebuild (pnpm install + tsc)
  * 4. Trigger PM2 restart
  *
  * On failure → rollback to main, notify owner.
@@ -67,16 +68,19 @@ async function handleRestart(req: RestartRequest): Promise<void> {
   }
 
   // Step 4: Restart via PM2
-  log.info("Restarting via PM2");
+  log.info("Restarting via PM2 in 5 seconds to allow graceful agent loop completion");
   await notify(`🔄 Restarting: ${req.reason}`);
 
-  try {
-    execSync("pm2 restart jinx", { timeout: 30_000, stdio: "pipe" });
-  } catch (e) {
-    // If pm2 restart fails, try a hard process exit — PM2 will auto-restart
-    log.error("PM2 restart failed, exiting process for auto-restart");
-    process.exit(0);
-  }
+  setTimeout(() => {
+    try {
+      markIntentionalRestart();
+      execSync("pm2 restart jinx", { timeout: 30_000, stdio: "pipe" });
+    } catch (e) {
+      // If pm2 restart fails, try a hard process exit — PM2 will auto-restart
+      log.error("PM2 restart failed, exiting process for auto-restart");
+      process.exit(0);
+    }
+  }, 5000);
 }
 
 async function handleRollback(reason: string): Promise<void> {

@@ -1,22 +1,31 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
+import { readState, type State } from "../util/state.js";
+import { recordEvolutionResult } from "./history.js";
+import {
+  startEvolutionProgress,
+  setEvolutionStage,
+  completeEvolutionProgress,
+  failEvolutionProgress,
+} from "./evolution-progress.js";
 
-const DATA_DIR = join(process.cwd(), "data");
-const STATE_PATH = join(DATA_DIR, "state.json");
-const DEFAULT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const STATE_PATH = join(process.cwd(), "data", "state.json");
+
+// Consciousness loop interval: configurable via env, default 3 minutes
+function getLoopIntervalMs(): number {
+  const env = process.env.CONSCIOUSNESS_INTERVAL_MINUTES;
+  if (env) {
+    const minutes = parseFloat(env);
+    if (!isNaN(minutes) && minutes > 0) {
+      return Math.round(minutes * 60 * 1000);
+    }
+  }
+  return 3 * 60 * 1000; // default: 3 minutes
+}
 
 type PromptFn = (message: string) => Promise<string>;
 type NotifyFn = (message: string) => Promise<void>;
-
-interface State {
-  version: string;
-  cycle: number;
-  evolutionEnabled: boolean;
-  lastRestart: string | null;
-  lastEvolution: string | null;
-  [key: string]: unknown;
-}
 
 interface ConsciousnessHandle {
   triggerEvolution: () => void;
@@ -24,16 +33,8 @@ interface ConsciousnessHandle {
   stop: () => void;
 }
 
-function loadState(): State {
-  try {
-    return JSON.parse(readFileSync(STATE_PATH, "utf-8"));
-  } catch {
-    return { version: "0.0.1", cycle: 0, evolutionEnabled: false, lastRestart: null, lastEvolution: null };
-  }
-}
-
 function saveState(patch: Partial<State>): void {
-  const current = loadState();
+  const current = readState();
   const updated = { ...current, ...patch };
   writeFileSync(STATE_PATH, JSON.stringify(updated, null, 2));
 }
@@ -45,7 +46,7 @@ export function startConsciousness(
 ): ConsciousnessHandle {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let running = false;
-  let evolutionEnabled = loadState().evolutionEnabled;
+  let evolutionEnabled = readState().evolutionEnabled;
 
   async function tick(): Promise<void> {
     if (running || isAgentBusy()) {
@@ -71,12 +72,13 @@ export function startConsciousness(
 
   function scheduleNext(): void {
     if (timer) clearTimeout(timer);
-    timer = setTimeout(tick, DEFAULT_INTERVAL);
+    timer = setTimeout(tick, getLoopIntervalMs());
   }
 
   // Start the loop
   scheduleNext();
-  log.info("Consciousness loop started", { interval: DEFAULT_INTERVAL });
+  const intervalMs = getLoopIntervalMs();
+  log.info("Consciousness loop started", { interval: intervalMs, minutes: +(intervalMs / 60000).toFixed(1) });
 
   return {
     triggerEvolution: () => {
@@ -105,34 +107,77 @@ export function startConsciousness(
 }
 
 async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promise<void> {
-  const state = loadState();
+  const state = readState();
   const cycle = state.cycle + 1;
+  const startTime = Date.now();
 
   log.info(`Evolution cycle #${cycle} starting`);
 
+  // Start tracking progress
+  startEvolutionProgress(cycle);
+  setEvolutionStage("evaluating", "Analyzing codebase for improvements");
+
   try {
-    const result = await promptFn(`EVOLUTION #${cycle}`);
+    setEvolutionStage("implementing", "Executing evolution cycle");
+    const result = await promptFn(
+      `这是你第 ${cycle} 次进化循环。\n\n` +
+      `按照 BORN.md 中的进化循环执行：\n` +
+      `1. 评估 —— 查看 codebase，找出最有价值的改进\n` +
+      `2. 选择 —— 选一件事（只选一件）\n` +
+      `3. 实现 —— 完整实现 + 测试\n` +
+      `4. 提交 —— git commit，版本递增\n` +
+      `5. 汇报 —— 告诉我我做了什么\n\n` +
+      `【重要】进度汇报要求：\n` +
+      `在每个阶段完成后，必须使用 send_owner_message 工具向创造者发送进度更新：\n` +
+      `- 评估完成后: "🧬 Evolution #${cycle} - 评估完成：找到 X 个改进点"\n` +
+      `- 选择完成后: "🧬 Evolution #${cycle} - 选择完成：决定做 XXX"\n` +
+      `- 实现完成后: "🧬 Evolution #${cycle} - 实现完成：已修改 XXX 文件"\n` +
+      `- 验证完成后: "🧬 Evolution #${cycle} - 验证完成：测试通过"\n` +
+      `- 提交完成后: "🧬 Evolution #${cycle} - 提交完成：版本 X.X.X"\n` +
+      `- 最终汇报结果\n\n` +
+      `执行完成后，必须发送一条文本消息汇报最终结果。`
+    );
+
+    const durationMs = Date.now() - startTime;
+
+    setEvolutionStage("committing", "Saving changes and updating records");
 
     saveState({
       cycle,
       lastEvolution: new Date().toISOString(),
     });
 
-    log.info(`Evolution cycle #${cycle} completed`);
+    // Record successful evolution
+    const summary = result.slice(0, 200);
+    recordEvolutionResult(cycle, state.version, "success", summary, durationMs);
+    completeEvolutionProgress(durationMs);
+
+    log.info(`Evolution cycle #${cycle} completed`, { durationMs });
 
     // Notify creator with a summary
-    const summary = result.length > 500 ? result.slice(0, 500) + "..." : result;
-    await notifyFn(`🧬 Evolution #${cycle} complete:\n${summary}`);
+    const notifySummary = result.length > 500 ? result.slice(0, 500) + "..." : result;
+    await notifyFn(`🧬 Evolution #${cycle} complete:\n${notifySummary}`);
   } catch (e) {
     const err = e as Error;
-    log.error(`Evolution cycle #${cycle} failed`, { error: err.message });
+    const durationMs = Date.now() - startTime;
+
+    // Record failed evolution
+    recordEvolutionResult(cycle, state.version, "failed", err.message, durationMs);
+    failEvolutionProgress(err.message);
+
+    log.error(`Evolution cycle #${cycle} failed`, { error: err.message, durationMs });
     await notifyFn(`❌ Evolution #${cycle} failed: ${err.message}`);
   }
 }
 
+import { recordHealthSnapshot } from "../health/history.js";
+
 async function runConsciousnessCheck(promptFn: PromptFn): Promise<void> {
   log.info("Consciousness check");
   try {
+    // Record health stats quietly in the background
+    await recordHealthSnapshot();
+
     await promptFn(
       "Wake up. Briefly check your state: " +
       "read identity.md and scratchpad.md, " +
