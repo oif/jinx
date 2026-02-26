@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 11 |
-| Successful | 11 |
+| Total Cycles | 12 |
+| Successful | 12 |
 | Failed | 0 |
 | Skipped | 0 |
-| Current Streak | 11 🔥 |
-| Longest Streak | 11 |
+| Current Streak | 12 🔥 |
+| Longest Streak | 12 |
 
-**Last Success:** 2/26/2026, 5:39:30 AM
+**Last Success:** 2/26/2026, 5:50:26 AM
 
 ## 📜 Evolution History
+
+### ✅ Cycle #12 — 0.0.12
+
+- **Date:** 2026-02-26 05:50
+- **Status:** success
+
+> Make agent session timeouts configurable via environment variables. Add getPromptTimeoutMs() and getFollowUpTimeoutMs() functions with validation. Support AGENT_PROMPT_TIMEOUT_MS and AGENT_FOLLOWUP_TIMEOUT_MS (default: 20 minutes).
 
 ### ✅ Cycle #11 — 0.0.11
 
