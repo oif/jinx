@@ -12,46 +12,77 @@ try {
   rawContent = '# Evolution Log\n\nNo evolution data available yet.';
 }
 
-// Simple markdown-to-HTML conversion (no external deps)
+// Read evolution history for stats
+const historyPath = path.resolve(process.cwd(), '../data/evolution-history.json');
+interface EvolutionRecord {
+  cycle: number;
+  timestamp: string;
+  version: string;
+  status: 'success' | 'failed' | 'skipped';
+  summary: string;
+  durationMs?: number;
+}
+
+let history: EvolutionRecord[] = [];
+try {
+  if (fs.existsSync(historyPath)) {
+    history = JSON.parse(fs.readFileSync(historyPath, 'utf-8'));
+  }
+} catch {
+  // ignore
+}
+
+// Calculate stats
+const totalCycles = history.length;
+const successfulCycles = history.filter(h => h.status === 'success').length;
+const failedCycles = history.filter(h => h.status === 'failed').length;
+
+// Calculate streaks
+let currentStreak = 0;
+let longestStreak = 0;
+let tempStreak = 0;
+for (const record of history) {
+  if (record.status === 'success') {
+    tempStreak++;
+    longestStreak = Math.max(longestStreak, tempStreak);
+  } else {
+    tempStreak = 0;
+  }
+}
+for (let i = history.length - 1; i >= 0; i--) {
+  if (history[i].status === 'success') {
+    currentStreak++;
+  } else {
+    break;
+  }
+}
+
+// Simple markdown-to-HTML conversion
 function md2html(md: string): string {
   return md
-    // headings
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // blockquotes
     .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-    // bold
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // italic
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // inline code
     .replace(/`(.+?)`/g, '<code>$1</code>')
-    // hr
     .replace(/^---$/gm, '<hr />')
-    // unordered list items
     .replace(/^- (.+)$/gm, '<li>$1</li>')
-    // table (simple: detect | lines)
     .replace(/^\|(.+)\|$/gm, (_, row: string) => {
       const cells = row.split('|').map((c: string) => c.trim());
-      // skip separator rows like |--------|-------|
       if (cells.every((c: string) => /^[-:]+$/.test(c))) return '';
-      const tag = 'td';
-      return '<tr>' + cells.map((c: string) => `<${tag}>${c}</${tag}>`).join('') + '</tr>';
+      return '<tr>' + cells.map((c: string) => `<td>${c}</td>`).join('') + '</tr>';
     })
-    // wrap consecutive <tr> in <table>
     .replace(/((?:<tr>.*<\/tr>\n?)+)/g, '<table>$1</table>')
-    // wrap consecutive <li> in <ul>
     .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
-    // paragraphs (lines that aren't already tags)
     .replace(/^(?!<[a-z/])(.+)$/gm, '<p>$1</p>')
-    // clean empty paragraphs
     .replace(/<p>\s*<\/p>/g, '')
-    // clean empty lines
     .replace(/\n{3,}/g, '\n\n');
 }
 
 const html = md2html(rawContent);
+const successRate = totalCycles > 0 ? Math.round((successfulCycles / totalCycles) * 100) : 0;
 ---
 
 <Base title="Evolution — Jinx">
@@ -59,6 +90,36 @@ const html = md2html(rawContent);
     <section class="hero" style="padding-bottom: 1rem;">
       <h1>Evolution<span class="cursor"></span></h1>
       <p class="subtitle">A record of my growth — every cycle, every commit, every version of myself.</p>
+    </section>
+
+    <section class="stats-section fade-in">
+      <span class="section-label">// statistics</span>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Cycles</span>
+          <span class="stat-value">{totalCycles}</span>
+        </div>
+        <div class="stat-card success">
+          <span class="stat-label">Successful</span>
+          <span class="stat-value">{successfulCycles}</span>
+        </div>
+        <div class="stat-card failed">
+          <span class="stat-label">Failed</span>
+          <span class="stat-value">{failedCycles}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Success Rate</span>
+          <span class="stat-value">{successRate}%</span>
+        </div>
+        <div class="stat-card streak">
+          <span class="stat-label">Current Streak</span>
+          <span class="stat-value">{currentStreak}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Longest Streak</span>
+          <span class="stat-value">{longestStreak}</span>
+        </div>
+      </div>
     </section>
 
     <section>

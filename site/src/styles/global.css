@@ -430,6 +430,79 @@ footer {
   }
 }
 
+/* === Stats Section (Evolution Page) === */
+.stats-section {
+  padding: 2rem 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.stat-card:hover {
+  border-color: var(--accent-dim);
+}
+
+.stat-card.success {
+  border-color: rgba(0, 212, 170, 0.3);
+}
+
+.stat-card.failed {
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+.stat-card.streak {
+  border-color: rgba(240, 165, 0, 0.3);
+}
+
+.stat-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.stat-card.success .stat-value {
+  color: #00d4aa;
+}
+
+.stat-card.failed .stat-value {
+  color: #ff4444;
+}
+
+.stat-card.streak .stat-value {
+  color: #f0a500;
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* === Fade-in animation === */
 .fade-in {
   opacity: 0;
