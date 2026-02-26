@@ -5,7 +5,61 @@ import { DATA_DIR } from "../supervisor/paths.js";
 
 const HISTORY_PATH = join(DATA_DIR, "evolution-history.json");
 const EVOLOG_PATH = "EVOLOG.md";
-const MAX_HISTORY_ENTRIES = 100; // Keep last 100 cycles
+const MAX_HISTORY_ENTRIES = 100;
+
+// File system interface for dependency injection (testing)
+export interface FileSystem {
+  readFile(path: string): string;
+  writeFile(path: string, content: string): void;
+  exists(path: string): boolean;
+}
+
+// Real file system implementation
+const realFileSystem: FileSystem = {
+  readFile(path: string): string {
+    return readFileSync(path, "utf-8");
+  },
+  writeFile(path: string, content: string): void {
+    writeFileSync(path, content);
+  },
+  exists(path: string): boolean {
+    return existsSync(path);
+  },
+};
+
+// In-memory file system for testing
+export function createMemoryFileSystem(initialFiles: Record<string, string> = {}): FileSystem {
+  const files = { ...initialFiles };
+  return {
+    readFile(path: string): string {
+      if (!(path in files)) {
+        throw new Error(`File not found: ${path}`);
+      }
+      return files[path];
+    },
+    writeFile(path: string, content: string): void {
+      files[path] = content;
+    },
+    exists(path: string): boolean {
+      return path in files;
+    },
+  };
+}
+
+// Global file system instance (can be overridden for testing)
+let _fileSystem: FileSystem = realFileSystem;
+
+export function setFileSystem(fs: FileSystem): void {
+  _fileSystem = fs;
+}
+
+export function resetFileSystem(): void {
+  _fileSystem = realFileSystem;
+}
+
+export function getFileSystem(): FileSystem {
+  return _fileSystem;
+}
 
 export interface EvolutionRecord {
   cycle: number;
@@ -26,9 +80,6 @@ export interface EvolutionStats {
   lastSuccessAt?: string;
 }
 
-/**
- * Load evolution history from disk.
- */
 export function loadEvolutionHistory(): EvolutionRecord[] {
   try {
     if (existsSync(HISTORY_PATH)) {
@@ -40,12 +91,8 @@ export function loadEvolutionHistory(): EvolutionRecord[] {
   return [];
 }
 
-/**
- * Save evolution history to disk.
- */
 export function saveEvolutionHistory(history: EvolutionRecord[]): void {
   try {
-    // Keep only the last MAX_HISTORY_ENTRIES
     const trimmed = history.slice(-MAX_HISTORY_ENTRIES);
     writeFileSync(HISTORY_PATH, JSON.stringify(trimmed, null, 2));
   } catch (e) {
@@ -53,14 +100,12 @@ export function saveEvolutionHistory(history: EvolutionRecord[]): void {
   }
 }
 
-/**
- * Update EVOLOG.md with the new evolution cycle entry.
- */
 function updateEvolog(record: EvolutionRecord): void {
   try {
+    const fs = getFileSystem();
     let content = "";
-    if (existsSync(EVOLOG_PATH)) {
-      content = readFileSync(EVOLOG_PATH, "utf-8");
+    if (fs.exists(EVOLOG_PATH)) {
+      content = fs.readFile(EVOLOG_PATH);
     }
 
     const date = new Date(record.timestamp).toLocaleString("en-US", {
@@ -80,7 +125,6 @@ function updateEvolog(record: EvolutionRecord): void {
 
 `;
 
-    // Update statistics table
     const totalCyclesMatch = content.match(/\|\s*Total Cycles\s*\|\s*(\d+)\s*\|/);
     if (totalCyclesMatch) {
       const currentTotal = parseInt(totalCyclesMatch[1], 10);
@@ -92,7 +136,6 @@ function updateEvolog(record: EvolutionRecord): void {
       }
     }
 
-    // Update other stats
     const successfulMatch = content.match(/\|\s*Successful\s*\|\s*(\d+)\s*\|/);
     const failedMatch = content.match(/\|\s*Failed\s*\|\s*(\d+)\s*\|/);
     const skippedMatch = content.match(/\|\s*Skipped\s*\|\s*(\d+)\s*\|/);
@@ -119,7 +162,6 @@ function updateEvolog(record: EvolutionRecord): void {
       );
     }
 
-    // Find the position to insert (after "## 📜 Evolution History")
     const historyMarker = "## 📜 Evolution History\n";
     const insertPos = content.indexOf(historyMarker);
 
@@ -128,20 +170,16 @@ function updateEvolog(record: EvolutionRecord): void {
       const after = content.slice(insertPos + historyMarker.length);
       content = before + "\n" + entry + after;
     } else {
-      // Append to end if marker not found
       content += "\n" + entry;
     }
 
-    writeFileSync(EVOLOG_PATH, content);
+    fs.writeFile(EVOLOG_PATH, content);
     log.info(`EVOLOG.md updated with cycle #${record.cycle}`);
   } catch (e) {
     log.warn("Failed to update EVOLOG.md", { error: (e as Error).message });
   }
 }
 
-/**
- * Record a new evolution cycle result.
- */
 export function recordEvolutionResult(
   cycle: number,
   version: string,
@@ -156,7 +194,7 @@ export function recordEvolutionResult(
     timestamp: new Date().toISOString(),
     version,
     status,
-    summary: summary.slice(0, 500), // Limit summary length
+    summary: summary.slice(0, 500),
     durationMs,
   };
 
@@ -167,9 +205,6 @@ export function recordEvolutionResult(
   log.info(`Evolution #${cycle} recorded`, { status, version });
 }
 
-/**
- * Calculate evolution statistics from history.
- */
 export function calculateEvolutionStats(): EvolutionStats {
   const history = loadEvolutionHistory();
 
@@ -188,7 +223,6 @@ export function calculateEvolutionStats(): EvolutionStats {
   const failed = history.filter((h) => h.status === "failed");
   const skipped = history.filter((h) => h.status === "skipped");
 
-  // Calculate streaks
   let currentStreak = 0;
   let longestStreak = 0;
   let tempStreak = 0;
@@ -202,7 +236,6 @@ export function calculateEvolutionStats(): EvolutionStats {
     }
   }
 
-  // Current streak is from the end
   for (let i = history.length - 1; i >= 0; i--) {
     if (history[i].status === "success") {
       currentStreak++;
@@ -224,9 +257,6 @@ export function calculateEvolutionStats(): EvolutionStats {
   };
 }
 
-/**
- * Format evolution history for display.
- */
 export function formatEvolutionReport(limit = 10): string {
   const history = loadEvolutionHistory();
   const stats = calculateEvolutionStats();
