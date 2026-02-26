@@ -7,7 +7,7 @@ import { join } from 'node:path';
 const DATA_DIR = join(process.cwd(), '..', 'data');
 const STATE_PATH = join(DATA_DIR, 'state.json');
 const EVOLOG_PATH = join(process.cwd(), '..', 'EVOLOG.md');
-const HEALTH_HISTORY_PATH = join(DATA_DIR, 'health-history.json');
+const HEALTH_HISTORY_PATH = join(process.cwd(), '..', 'health-history.json');
 const PKG_PATH = join(process.cwd(), '..', 'package.json');
 
 interface State {
