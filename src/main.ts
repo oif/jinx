@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { log } from "./util/log.js";
+import { readVersion, readState } from "./util/state.js";
 import { startAgent, registerTelegramSend, prompt as agentPrompt, abortAgent } from "./agent/session.js";
 import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
@@ -143,23 +142,6 @@ async function main(): Promise<void> {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────
-
-function readVersion(): string {
-  try {
-    const state = JSON.parse(readFileSync(join(process.cwd(), "data", "state.json"), "utf-8"));
-    return state.version || "0.0.1";
-  } catch {
-    return "0.0.1";
-  }
-}
-
-function readState(): Record<string, unknown> {
-  try {
-    return JSON.parse(readFileSync(join(process.cwd(), "data", "state.json"), "utf-8"));
-  } catch {
-    return { version: "0.0.1", cycle: 0, evolutionEnabled: false };
-  }
-}
 
 function formatUptime(seconds: number): string {
   const h = Math.floor(seconds / 3600);

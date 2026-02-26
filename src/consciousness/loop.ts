@@ -1,10 +1,10 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
+import { readState, type State } from "../util/state.js";
 import { recordEvolutionResult } from "./history.js";
 
-const DATA_DIR = join(process.cwd(), "data");
-const STATE_PATH = join(DATA_DIR, "state.json");
+const STATE_PATH = join(process.cwd(), "data", "state.json");
 
 // Consciousness loop interval: configurable via env, default 3 minutes
 function getLoopIntervalMs(): number {
@@ -21,31 +21,14 @@ function getLoopIntervalMs(): number {
 type PromptFn = (message: string) => Promise<string>;
 type NotifyFn = (message: string) => Promise<void>;
 
-interface State {
-  version: string;
-  cycle: number;
-  evolutionEnabled: boolean;
-  lastRestart: string | null;
-  lastEvolution: string | null;
-  [key: string]: unknown;
-}
-
 interface ConsciousnessHandle {
   triggerEvolution: () => void;
   stopEvolution: () => void;
   stop: () => void;
 }
 
-function loadState(): State {
-  try {
-    return JSON.parse(readFileSync(STATE_PATH, "utf-8"));
-  } catch {
-    return { version: "0.0.1", cycle: 0, evolutionEnabled: false, lastRestart: null, lastEvolution: null };
-  }
-}
-
 function saveState(patch: Partial<State>): void {
-  const current = loadState();
+  const current = readState();
   const updated = { ...current, ...patch };
   writeFileSync(STATE_PATH, JSON.stringify(updated, null, 2));
 }
@@ -57,7 +40,7 @@ export function startConsciousness(
 ): ConsciousnessHandle {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let running = false;
-  let evolutionEnabled = loadState().evolutionEnabled;
+  let evolutionEnabled = readState().evolutionEnabled;
 
   async function tick(): Promise<void> {
     if (running || isAgentBusy()) {
@@ -118,7 +101,7 @@ export function startConsciousness(
 }
 
 async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promise<void> {
-  const state = loadState();
+  const state = readState();
   const cycle = state.cycle + 1;
   const startTime = Date.now();
 
