@@ -1,8 +1,7 @@
 import { writeFileSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
 import { log } from "../util/log.js";
 
-const PROGRESS_PATH = join(process.cwd(), "data", "evolution-progress.json");
+import { PROGRESS_PATH } from "../supervisor/paths.js";
 
 export type EvolutionStage =
   | "idle"

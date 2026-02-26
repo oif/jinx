@@ -1,5 +1,4 @@
 import { writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { log } from "../util/log.js";
 import { readState, type State } from "../util/state.js";
 import { recordEvolutionResult } from "./history.js";
@@ -10,7 +9,7 @@ import {
   failEvolutionProgress,
 } from "./evolution-progress.js";
 
-const STATE_PATH = join(process.cwd(), "data", "state.json");
+import { STATE_PATH } from "../supervisor/paths.js";
 
 // Consciousness loop interval: configurable via env, default 3 minutes
 function getLoopIntervalMs(): number {
