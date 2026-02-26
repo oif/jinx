@@ -1,9 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
-
-const STATE_PATH = join(process.cwd(), "data", "state.json");
-const EVOLOG_PATH = join(process.cwd(), "EVOLOG.md");
-const PACKAGE_PATH = join(process.cwd(), "package.json");
+import { STATE_PATH, EVOLOG_PATH, PACKAGE_PATH } from "../supervisor/paths.js";
 
 export interface State {
   version: string;

@@ -2,8 +2,9 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { HealthStatus, checkHealth } from "./check.js";
 import { log } from "../util/log.js";
+import { DATA_DIR } from "../supervisor/paths.js";
 
-const HISTORY_PATH = join(process.cwd(), "data", "health-history.json");
+const HISTORY_PATH = join(DATA_DIR, "health-history.json");
 const MAX_HISTORY_ENTRIES = 288; // 24 hours of 5-minute intervals
 
 export interface HealthHistoryEntry {
@@ -38,7 +39,7 @@ export function saveHealthHistory(history: HealthHistoryEntry[]): void {
 export async function recordHealthSnapshot(): Promise<void> {
   const currentHealth = await checkHealth({ silent: true });
   const history = loadHealthHistory();
-  
+
   history.push({
     timestamp: new Date().toISOString(),
     status: currentHealth.status,
