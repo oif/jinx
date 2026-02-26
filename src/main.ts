@@ -9,6 +9,7 @@ import { checkHealth, registerHealthNotifier } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
 import { cleanupOldSessions } from "./supervisor/cleanup.js";
 import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
+import { formatProgress, isEvolutionActive } from "./consciousness/evolution-progress.js";
 
 async function main(): Promise<void> {
   // Step 0: Emergency crash loop detection
@@ -47,7 +48,8 @@ async function main(): Promise<void> {
         const branch = getCurrentBranch();
         const sha = getCurrentSha().slice(0, 8);
         const health = await checkHealth();
-        return [
+
+        const lines: string[] = [
           `Version: ${state.version}`,
           `Branch: ${branch} (${sha})`,
           `Cycle: ${state.cycle}`,
@@ -55,7 +57,14 @@ async function main(): Promise<void> {
           `PID: ${process.pid}`,
           `Uptime: ${formatUptime(process.uptime())}`,
           `Health: ${health.status.toUpperCase()} (Mem: ${health.memory.usedPercent}%, CPU: ${health.cpu.loadPercent}%, Disk: ${health.disk.usedPercent}%)`,
-        ].join("\n");
+        ];
+
+        // Show evolution progress if active
+        if (isEvolutionActive()) {
+          lines.push("", formatProgress());
+        }
+
+        return lines.join("\n");
       },
 
       history: async () => {

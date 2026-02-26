@@ -3,6 +3,12 @@ import { join } from "node:path";
 import { log } from "../util/log.js";
 import { readState, type State } from "../util/state.js";
 import { recordEvolutionResult } from "./history.js";
+import {
+  startEvolutionProgress,
+  setEvolutionStage,
+  completeEvolutionProgress,
+  failEvolutionProgress,
+} from "./evolution-progress.js";
 
 const STATE_PATH = join(process.cwd(), "data", "state.json");
 
@@ -107,6 +113,9 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
 
   log.info(`Evolution cycle #${cycle} starting`);
 
+  // Start tracking progress
+  startEvolutionProgress(cycle);
+
   try {
     const result = await promptFn(
       `这是你第 ${cycle} 次进化循环。\n\n` +
@@ -116,8 +125,15 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
       `3. 实现 —— 完整实现 + 测试\n` +
       `4. 提交 —— git commit，版本递增\n` +
       `5. 汇报 —— 告诉我我做了什么\n\n` +
-      `重要：执行完成后，你必须发送一条文本消息汇报结果（即使只是说明为什么这次没有改动）。` +
-      `不要只调用工具而不发送最终文本消息。`
+      `【重要】进度汇报要求：\n` +
+      `在每个阶段完成后，必须使用 send_owner_message 工具向创造者发送进度更新：\n` +
+      `- 评估完成后: "🧬 Evolution #${cycle} - 评估完成：找到 X 个改进点"\n` +
+      `- 选择完成后: "🧬 Evolution #${cycle} - 选择完成：决定做 XXX"\n` +
+      `- 实现完成后: "🧬 Evolution #${cycle} - 实现完成：已修改 XXX 文件"\n` +
+      `- 验证完成后: "🧬 Evolution #${cycle} - 验证完成：测试通过"\n` +
+      `- 提交完成后: "🧬 Evolution #${cycle} - 提交完成：版本 X.X.X"\n` +
+      `- 最终汇报结果\n\n` +
+      `执行完成后，必须发送一条文本消息汇报最终结果。`
     );
 
     const durationMs = Date.now() - startTime;
@@ -130,6 +146,7 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
     // Record successful evolution
     const summary = result.slice(0, 200);
     recordEvolutionResult(cycle, state.version, "success", summary, durationMs);
+    completeEvolutionProgress(durationMs);
 
     log.info(`Evolution cycle #${cycle} completed`, { durationMs });
 
@@ -142,6 +159,7 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
 
     // Record failed evolution
     recordEvolutionResult(cycle, state.version, "failed", err.message, durationMs);
+    failEvolutionProgress(err.message);
 
     log.error(`Evolution cycle #${cycle} failed`, { error: err.message, durationMs });
     await notifyFn(`❌ Evolution #${cycle} failed: ${err.message}`);
