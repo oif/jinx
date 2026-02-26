@@ -18,9 +18,6 @@ import { join } from "node:path";
 
 export type { AgentSession };
 
-/**
- * Telegram send function signature — injected to avoid circular deps.
- */
 export type TelegramSendFn = (text: string) => Promise<void>;
 
 // ── Agent session state ────────────────────────────────────────────
@@ -28,17 +25,10 @@ export type TelegramSendFn = (text: string) => Promise<void>;
 let currentSession: AgentSession | null = null;
 let tgSend: TelegramSendFn | null = null;
 
-/**
- * Register the Telegram send function.
- * Called once during bootstrap, before the first prompt.
- */
 export function registerTelegramSend(fn: TelegramSendFn): void {
   tgSend = fn;
 }
 
-/**
- * Build the Telegram send tool (needs the send function injected at runtime).
- */
 function buildTgSendTool(sendFn: TelegramSendFn | null): ToolDefinition {
   const params = Type.Object({
     text: Type.String({ description: "Message text (supports Markdown)" }),
@@ -81,12 +71,10 @@ export async function startAgent(): Promise<AgentSession> {
     systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
   });
 
-  // Setup model registry
   const agentDir = join(homedir(), ".pi", "agent");
   const authStorage = new AuthStorage(join(agentDir, "auth.json"));
   const modelRegistry = new ModelRegistry(authStorage, join(agentDir, "models.json"));
 
-  // Find model from env or fallback to first available
   const defaultModel = process.env.DEFAULT_MODEL;
   let selectedModel = undefined;
   if (defaultModel) {
@@ -122,35 +110,94 @@ export async function startAgent(): Promise<AgentSession> {
   return session;
 }
 
-/**
- * Get the current active session.
- */
 export function getSession(): AgentSession | null {
   return currentSession;
 }
 
 /**
+ * Check if agent is streaming. Uses Pi's native isStreaming — no race conditions.
+ */
+export function isAgentBusy(): boolean {
+  return currentSession?.isStreaming ?? false;
+}
+
+/**
  * Send a prompt to the agent and return the response text.
  *
- * `session.prompt()` returns `Promise<void>`. We capture the assistant's
- * response by subscribing to events and collecting text from message_end.
+ * Handles concurrency via Pi's native steer/followUp API:
+ * - Agent idle: sends prompt normally
+ * - Agent streaming: queues as followUp (waits for current work to finish)
  */
 export async function prompt(message: string, images?: any[]): Promise<string> {
   if (!currentSession) {
     throw new Error("Agent session not started");
   }
 
-  log.info(`Prompt: ${message.slice(0, 100)}${message.length > 100 ? "..." : ""}`, { hasImages: !!images?.length });
-
   const session = currentSession;
+  const streaming = session.isStreaming;
 
-  // Helper to wait for a complete agent turn and collect text
-  const waitForResponse = (promptMsg: string, isFollowUp = false): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-      let text = "";
-      let errorMsg = "";
-      const unsubscribe = session.subscribe((event) => {
-        // Collect text from assistant message_end events
+  log.info(`Prompt: ${message.slice(0, 100)}${message.length > 100 ? "..." : ""}`, {
+    hasImages: !!images?.length,
+    streaming,
+  });
+
+  if (streaming) {
+    log.info("Agent is streaming, queuing as followUp");
+    return queueFollowUpAndWait(session, message, images);
+  }
+
+  return sendPromptAndWait(session, message, images);
+}
+
+function sendPromptAndWait(session: AgentSession, message: string, images?: any[]): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    let text = "";
+    let errorMsg = "";
+    const unsubscribe = session.subscribe((event) => {
+      if (event.type === "message_end") {
+        const msg = (event as any).message;
+        if (msg?.role === "assistant" && msg?.content) {
+          for (const block of msg.content) {
+            if (block.type === "text") {
+              text += block.text;
+            }
+          }
+        }
+        if (msg?.errorMessage) {
+          errorMsg = msg.errorMessage;
+        }
+      }
+
+      if (event.type === "agent_end") {
+        unsubscribe();
+        resolve(errorMsg || text || "(No response)");
+      }
+    });
+
+    session.prompt(message, { images }).catch((e) => {
+      unsubscribe();
+      reject(e);
+    });
+  });
+}
+
+/**
+ * Queue a followUp when agent is streaming. Waits for current work to end,
+ * then collects the response from the followUp's agent cycle.
+ */
+function queueFollowUpAndWait(session: AgentSession, message: string, images?: any[]): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    let waitingForOurTurn = true;
+    let text = "";
+    let errorMsg = "";
+
+    const unsubscribe = session.subscribe((event) => {
+      if (waitingForOurTurn && event.type === "agent_end") {
+        waitingForOurTurn = false;
+        return;
+      }
+
+      if (!waitingForOurTurn) {
         if (event.type === "message_end") {
           const msg = (event as any).message;
           if (msg?.role === "assistant" && msg?.content) {
@@ -160,54 +207,31 @@ export async function prompt(message: string, images?: any[]): Promise<string> {
               }
             }
           }
-          // Capture API errors (e.g., quota limit)
           if (msg?.errorMessage) {
             errorMsg = msg.errorMessage;
           }
         }
 
-        // Agent finished processing
         if (event.type === "agent_end") {
           unsubscribe();
-          // Return error if present, otherwise return collected text
-          resolve(errorMsg || text);
+          resolve(errorMsg || text || "(No response)");
         }
-      });
-
-      session.prompt(promptMsg, { images: isFollowUp ? undefined : images }).catch((e) => {
-        unsubscribe();
-        reject(e);
-      });
+      }
     });
-  };
 
-  try {
-    // First attempt
-    let responseText = await waitForResponse(message);
-
-    // If no text response, send follow-up
-    if (!responseText.trim()) {
-      log.info("No text response from agent, sending follow-up prompt");
-      responseText = await waitForResponse("请用文本形式简要汇报你刚才做了什么或发现了什么。", true);
-    }
-
-    return responseText || "(No response)";
-  } catch (e) {
-    const err = e as Error;
-    log.error(`Prompt failed: ${err.message}`);
-    throw err;
-  }
+    session.followUp(message, images).catch((e) => {
+      unsubscribe();
+      reject(e);
+    });
+  });
 }
 
-/**
- * Abort the current agent operation.
- */
 export async function abortAgent(): Promise<void> {
   if (currentSession) {
     try {
       await currentSession.abort();
     } catch {
-      // Abort can fail if nothing is running — that's fine
+      // Abort can fail if nothing is running
     }
   }
 }
