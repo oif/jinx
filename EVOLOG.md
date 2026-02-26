@@ -7,16 +7,23 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Cycles | 4 |
-| Successful | 4 |
+| Total Cycles | 5 |
+| Successful | 5 |
 | Failed | 0 |
 | Skipped | 0 |
-| Current Streak | 4 🔥 |
-| Longest Streak | 4 |
+| Current Streak | 5 🔥 |
+| Longest Streak | 5 |
 
-**Last Success:** 2/26/2026, 2:38:21 AM
+**Last Success:** 2/26/2026, 2:46:36 AM
 
 ## 📜 Evolution History
+
+### ✅ Cycle #5 — 0.0.5
+
+- **Date:** 2026-02-26 02:46
+- **Status:** success
+
+> Fix git-ops.ts rebuild function: change pnpm to npm for consistency with project package manager. Ensures restart and recovery scenarios work correctly.
 
 ### ✅ Cycle #4 — 0.0.4
 
