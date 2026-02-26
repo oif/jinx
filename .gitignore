@@ -3,8 +3,9 @@ dist/
 *.js.map
 package-lock.json
 
-# Data — sessions are too large for git
-data/sessions/
+# Data — runtime state, managed by Jinx at runtime
+data/
+!data/.gitkeep
 
 # Environment
 .env
