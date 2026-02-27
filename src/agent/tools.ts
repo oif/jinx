@@ -14,6 +14,18 @@ import { formatPerformanceReport } from "../observability/metrics.js";
 import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
 import { runSelfDiagnosis, formatDiagnosisReport, executeRepairAction } from "../diagnosis/engine.js";
 import { forceStrategy, getCurrentStrategy, formatStrategyStatus, enableAutoSelect, disableAutoSelect } from "../evolution/strategy.js";
+import {
+  listAllSkills,
+  searchSkills,
+  loadSkill,
+  createSkill,
+  createSkillFromTemplate,
+  formatSkillList,
+  formatSkillDetail,
+  validateSkillParams,
+  recordSkillUsage,
+  SKILL_TEMPLATES,
+} from "../skills/library.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -110,6 +122,26 @@ const setStrategyParams = Type.Object({
 });
 
 const strategyStatusParams = Type.Object({}); // No parameters needed
+
+const listSkillsParams = Type.Object({
+  tag: Type.Optional(Type.String({ description: "Filter by tag" })),
+  search: Type.Optional(Type.String({ description: "Search in name/description" })),
+});
+
+const createSkillParams = Type.Object({
+  name: Type.String({ description: "Skill name" }),
+  description: Type.String({ description: "What this skill does" }),
+  template: Type.Optional(Type.String({ description: "Template to use: 'code-review', 'pre-commit', or 'system-health-check'" })),
+});
+
+const skillDetailParams = Type.Object({
+  skillId: Type.String({ description: "Skill ID" }),
+});
+
+const executeSkillParams = Type.Object({
+  skillId: Type.String({ description: "Skill ID to execute" }),
+  params: Type.Optional(Type.String({ description: "JSON string of parameters (e.g., '{\"target\": \"all\"}')" })),
+});
 
 // ── Tools ──────────────────────────────────────────────────────────
 
@@ -767,6 +799,195 @@ export const disableAutoStrategyTool: ToolDefinition = {
   },
 };
 
+// ── Skill Library Tools ────────────────────────────────────────────
+
+/**
+ * List all skills in the library.
+ */
+export const listSkillsTool: ToolDefinition = {
+  name: "list_skills",
+  label: "List Skills",
+  description:
+    "List all skills in the skill library. Optionally filter by tag or search term. " +
+    "Skills are reusable workflows composed of multiple tool calls.",
+  parameters: listSkillsParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const tag = params.tag as string | undefined;
+      const search = params.search as string | undefined;
+      
+      let skills;
+      if (tag || search) {
+        skills = searchSkills({ tags: tag ? [tag] : undefined, nameContains: search });
+      } else {
+        skills = listAllSkills();
+      }
+      
+      return textResult(formatSkillList(skills));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error listing skills: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Get detailed information about a skill.
+ */
+export const getSkillDetailTool: ToolDefinition = {
+  name: "get_skill_detail",
+  label: "Get Skill Detail",
+  description:
+    "Get detailed information about a specific skill including its parameters, " +
+    "steps, usage count, and other metadata.",
+  parameters: skillDetailParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const skillId = params.skillId as string;
+      const skill = loadSkill(skillId);
+      
+      if (!skill) {
+        return textResult(`❌ Skill not found: ${skillId}`);
+      }
+      
+      return textResult(formatSkillDetail(skill));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error getting skill detail: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Create a new skill.
+ */
+export const createSkillTool: ToolDefinition = {
+  name: "create_skill",
+  label: "Create Skill",
+  description:
+    "Create a new skill in the skill library. Skills are reusable workflows " +
+    "that combine multiple tool calls. You can create from a template or define custom skills. " +
+    "Available templates: 'code-review' (comprehensive code review), " +
+    "'pre-commit' (pre-commit checks), 'system-health-check' (system diagnostics).",
+  parameters: createSkillParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const name = params.name as string;
+      const description = params.description as string;
+      const template = params.template as string | undefined;
+      
+      let skill;
+      if (template) {
+        if (!(template in SKILL_TEMPLATES)) {
+          return textResult(
+            `❌ Unknown template: ${template}. Available: ${Object.keys(SKILL_TEMPLATES).join(", ")}`
+          );
+        }
+        skill = createSkillFromTemplate(template as keyof typeof SKILL_TEMPLATES, {
+          description,
+        });
+        // Update name if provided
+        if (name !== skill.name) {
+          skill = { ...skill, name };
+        }
+      } else {
+        skill = createSkill({
+          name,
+          description,
+          version: "1.0.0",
+          tags: [],
+          parameters: [],
+          steps: [],
+        });
+      }
+      
+      return textResult(
+        `✅ Skill created: ${skill.name}\nID: ${skill.id}\n\nUse get_skill_detail to view and customize it.`
+      );
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error creating skill: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Execute a skill.
+ */
+export const executeSkillTool: ToolDefinition = {
+  name: "execute_skill",
+  label: "Execute Skill",
+  description:
+    "Execute a skill from the skill library. Skills are reusable workflows " +
+    "that run a sequence of tools. Use list_skills to see available skills " +
+    "and get_skill_detail to see required parameters.",
+  parameters: executeSkillParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const skillId = params.skillId as string;
+      const paramJson = (params.params as string) || "{}";
+      
+      const skill = loadSkill(skillId);
+      if (!skill) {
+        return textResult(`❌ Skill not found: ${skillId}`);
+      }
+      
+      let parsedParams: Record<string, unknown>;
+      try {
+        parsedParams = JSON.parse(paramJson);
+      } catch {
+        return textResult(`❌ Invalid parameters JSON: ${paramJson}`);
+      }
+      
+      // Validate parameters
+      const validation = validateSkillParams(skill, parsedParams);
+      if (!validation.valid) {
+        return textResult(
+          `❌ Parameter validation failed:\n${validation.errors.join("\n")}`
+        );
+      }
+      
+      // Record usage
+      recordSkillUsage(skillId);
+      
+      // Return execution plan (actual execution would need tool invocation system)
+      const steps = skill.steps.map((s, i) => `${i + 1}. ${s.toolName}`).join("\n");
+      return textResult(
+        `🚀 Executing skill: ${skill.name}\n\nSteps:\n${steps}\n\n` +
+        `Parameters: ${JSON.stringify(parsedParams, null, 2)}\n\n` +
+        `Note: Skill execution requires running the actual tools in sequence.`
+      );
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error executing skill: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -788,4 +1009,8 @@ export const jinxTools: ToolDefinition[] = [
   getStrategyStatusTool,
   enableAutoStrategyTool,
   disableAutoStrategyTool,
+  listSkillsTool,
+  getSkillDetailTool,
+  createSkillTool,
+  executeSkillTool,
 ];
