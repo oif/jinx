@@ -12,11 +12,11 @@ Neo 通过 Telegram 消息告知 Jinx 添加任务，Jinx 也可在 consciousnes
 ---
 
 ## Pending
-- [ ] #016: 添加 API 成本与配额监控 - 追踪 Claude Code、Web Search、GitHub API 调用次数和估算成本，设置预算预警，避免意外高额账单
 - [ ] #017: 实现测试覆盖率报告生成 - 集成 vitest coverage 生成覆盖率报告，在站点展示或定期发送给 Neo，识别未测试的代码区域
 - [ ] #018: 添加数据自动备份机制 - 定期将 data/ 目录（记忆、技能、状态）备份到 GitHub Gist 或外部存储，防止数据丢失
 
 ## Done
+- [x] #016: 添加 API 成本与配额监控 - 追踪 Claude Code、Web Search、GitHub API 调用次数和估算成本，设置预算预警，避免意外高额账单 — 2026-02-27
 - [x] #015: 增强 Site 公开站点内容 - 添加技能库展示页面、记忆图谱可视化、实时健康状态仪表盘，让站点成为真正的"数字身份展示" — 2026-02-27
 - [x] #014: 将 Browser Automation 暴露为 Pi 工具 - src/browser/automation.ts 已实现但未被 agent 使用，需添加 screenshot/analyze_page/test_interaction 等工具 — 2026-02-27
 - [x] #013: 实现技能真实执行引擎 - 当前 execute_skill 仅返回执行计划，需实现真正的工具链调用执行，支持顺序执行、错误恢复、参数传递 — 2026-02-27

@@ -17,6 +17,24 @@ export default defineConfig({
     isolate: true,
     // Run tests sequentially to avoid FS race conditions
     fileParallelism: false,
+    // Coverage configuration
+    coverage: {
+      provider: "v8",
+      reporter: ["json", "html", "text-summary"],
+      reportsDirectory: "./coverage",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "src/**/*.d.ts",
+        "src/**/*.test.ts",
+        "src/**/index.ts",
+      ],
+      thresholds: {
+        lines: 50,
+        functions: 50,
+        branches: 50,
+        statements: 50,
+      },
+    },
   },
   resolve: {
     // Ensure TypeScript extensions are properly resolved

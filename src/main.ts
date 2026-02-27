@@ -155,6 +155,15 @@ async function main(): Promise<void> {
         return formatPricingInfo();
       },
 
+      coverage: async () => {
+        const { readCoverageReport, formatCoverageReport } = await import("./coverage/analyzer.js");
+        const summary = readCoverageReport();
+        if (!summary) {
+          return "📊 No coverage data available. Run tests with coverage first.";
+        }
+        return formatCoverageReport(summary);
+      },
+
       quality: async () => {
         const { runQualityCheck, formatQualityReport } = await import("./quality/code-quality.js");
         const result = await runQualityCheck();
@@ -195,6 +204,7 @@ async function main(): Promise<void> {
           "/perf - Show performance metrics report",
           "/costs - Show API usage costs and recent calls",
           "/pricing - Show API pricing information",
+          "/coverage - Show test coverage report",
           "/quality - Run code quality checks",
           "/search - Search the web",
           "/restart - Request process restart",
