@@ -26,6 +26,16 @@ import {
   recordSkillUsage,
   SKILL_TEMPLATES,
 } from "../skills/library.js";
+import {
+  encodeMemory,
+  retrieveMemories,
+  createRelationship,
+  findRelatedMemories,
+  consolidateMemories,
+  pruneMemories,
+  getMemoryStats,
+  formatMemoryStats,
+} from "../memory/graph.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -142,6 +152,28 @@ const executeSkillParams = Type.Object({
   skillId: Type.String({ description: "Skill ID to execute" }),
   params: Type.Optional(Type.String({ description: "JSON string of parameters (e.g., '{\"target\": \"all\"}')" })),
 });
+
+const rememberParams = Type.Object({
+  content: Type.String({ description: "Content to remember" }),
+  type: Type.String({ description: "Memory type: concept, fact, experience, entity, skill, goal" }),
+  tags: Type.Optional(Type.String({ description: "Comma-separated tags" })),
+  importance: Type.Optional(Type.Number({ description: "Importance 0-1 (default 0.5)" })),
+  relatedTo: Type.Optional(Type.String({ description: "Comma-separated related memory IDs" })),
+});
+
+const recallParams = Type.Object({
+  query: Type.String({ description: "Search query" }),
+  type: Type.Optional(Type.String({ description: "Filter by type" })),
+  limit: Type.Optional(Type.Number({ description: "Max results (default 10)" })),
+});
+
+const relateParams = Type.Object({
+  fromId: Type.String({ description: "Source memory ID" }),
+  toId: Type.String({ description: "Target memory ID" }),
+  relationship: Type.String({ description: "Relationship type: relates_to, part_of, leads_to, contradicts, supports, similar_to, prerequisite_for" }),
+});
+
+const memoryStatsParams = Type.Object({}); // No parameters needed
 
 // ── Tools ──────────────────────────────────────────────────────────
 
@@ -988,6 +1020,190 @@ export const executeSkillTool: ToolDefinition = {
   },
 };
 
+// ── Memory System Tools ────────────────────────────────────────────
+
+/**
+ * Store a memory in the knowledge graph.
+ */
+export const rememberTool: ToolDefinition = {
+  name: "remember",
+  label: "Remember",
+  description:
+    "Store a memory in the knowledge graph memory system. Memories are nodes " +
+    "that can be connected to other memories via relationships. Supports semantic " +
+    "search and automatic consolidation. Types: concept, fact, experience, entity, skill, goal.",
+  parameters: rememberParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const content = params.content as string;
+      const type = params.type as string;
+      const tagsStr = (params.tags as string) || "";
+      const importance = (params.importance as number) ?? 0.5;
+      const relatedToStr = (params.relatedTo as string) || "";
+
+      const validTypes = ["concept", "fact", "experience", "entity", "skill", "goal"];
+      if (!validTypes.includes(type)) {
+        return textResult(
+          `❌ Invalid type: ${type}. Valid types: ${validTypes.join(", ")}`
+        );
+      }
+
+      const tags = tagsStr.split(",").map(t => t.trim()).filter(Boolean);
+      const relatedTo = relatedToStr.split(",").map(t => t.trim()).filter(Boolean);
+
+      const relationships = relatedTo.map(id => ({
+        toId: id,
+        type: "relates_to" as const,
+        strength: 0.7,
+      }));
+
+      const node = encodeMemory({
+        content,
+        type: type as any,
+        tags,
+        importance,
+        relationships: relationships.length > 0 ? relationships : undefined,
+      });
+
+      return textResult(
+        `✅ Memory stored\nID: ${node.id}\nType: ${type}\nSummary: ${node.summary.slice(0, 100)}...`
+      );
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error storing memory: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Recall memories from the knowledge graph.
+ */
+export const recallTool: ToolDefinition = {
+  name: "recall",
+  label: "Recall",
+  description:
+    "Search and retrieve memories from the knowledge graph using semantic search. " +
+    "Returns memories ranked by relevance to the query. Supports filtering by type.",
+  parameters: recallParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const query = params.query as string;
+      const type = params.type as string | undefined;
+      const limit = (params.limit as number) || 10;
+
+      const results = retrieveMemories({
+        text: query,
+        type: type as any,
+        limit,
+      });
+
+      if (results.length === 0) {
+        return textResult("No memories found matching your query.");
+      }
+
+      const lines: string[] = [
+        `🧠 Retrieved ${results.length} memories:`,
+        "",
+      ];
+
+      for (const result of results) {
+        const relevance = Math.round(result.relevance * 100);
+        lines.push(`[${relevance}%] ${result.node.type}: ${result.node.summary.slice(0, 80)}...`);
+        lines.push(`    ID: ${result.node.id} | Tags: ${result.node.tags.join(", ") || "none"}`);
+        lines.push("");
+      }
+
+      return textResult(lines.join("\n"));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error recalling memories: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Create a relationship between memories.
+ */
+export const relateTool: ToolDefinition = {
+  name: "relate_memories",
+  label: "Relate Memories",
+  description:
+    "Create a relationship between two memories in the knowledge graph. " +
+    "Relationships enable graph traversal and associative recall.",
+  parameters: relateParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const fromId = params.fromId as string;
+      const toId = params.toId as string;
+      const relationship = params.relationship as string;
+
+      const validRelations = ["relates_to", "part_of", "leads_to", "contradicts", "supports", "similar_to", "prerequisite_for"];
+      if (!validRelations.includes(relationship)) {
+        return textResult(
+          `❌ Invalid relationship: ${relationship}. Valid: ${validRelations.join(", ")}`
+        );
+      }
+
+      const edge = createRelationship(fromId, toId, relationship as any);
+
+      if (edge) {
+        return textResult(
+          `✅ Relationship created\n${fromId} ${relationship} ${toId}`
+        );
+      } else {
+        return textResult("❌ Failed to create relationship. Check that both memory IDs exist.");
+      }
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error creating relationship: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Get memory system statistics.
+ */
+export const memoryStatsTool: ToolDefinition = {
+  name: "memory_stats",
+  label: "Memory Statistics",
+  description:
+    "Get statistics about the knowledge graph memory system including " +
+    "node counts, edge counts, memory types distribution, and average importance.",
+  parameters: memoryStatsParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      return textResult(formatMemoryStats());
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error getting memory stats: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -1013,4 +1229,8 @@ export const jinxTools: ToolDefinition[] = [
   getSkillDetailTool,
   createSkillTool,
   executeSkillTool,
+  rememberTool,
+  recallTool,
+  relateTool,
+  memoryStatsTool,
 ];
