@@ -43,6 +43,22 @@ import {
   findMemoryClusters,
   GraphExport,
 } from "../memory/graph.js";
+import {
+  listIssues,
+  getIssue,
+  createIssue,
+  updateIssue,
+  addIssueComment,
+  listPullRequests,
+  getPullRequest,
+  analyzePullRequest,
+  getRepoStats,
+  listCommits,
+  formatIssueList,
+  formatPRList,
+  formatPRAnalysis,
+  formatRepoStats,
+} from "../github/enhanced.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -198,6 +214,48 @@ const advancedSearchParams = Type.Object({
 });
 
 const memoryClustersParams = Type.Object({}); // No parameters needed
+
+const githubListIssuesParams = Type.Object({
+  state: Type.Optional(Type.String({ description: "Filter by state: 'open', 'closed', or 'all' (default: 'open')" })),
+  labels: Type.Optional(Type.String({ description: "Comma-separated list of labels to filter by" })),
+  limit: Type.Optional(Type.Number({ description: "Maximum number of issues to return (default: 30)" })),
+});
+
+const githubCreateIssueParams = Type.Object({
+  title: Type.String({ description: "Issue title" }),
+  body: Type.String({ description: "Issue body/description" }),
+  labels: Type.Optional(Type.String({ description: "Comma-separated list of labels" })),
+  assignees: Type.Optional(Type.String({ description: "Comma-separated list of assignees" })),
+});
+
+const githubUpdateIssueParams = Type.Object({
+  issueNumber: Type.Number({ description: "Issue number" }),
+  title: Type.Optional(Type.String({ description: "New title" })),
+  body: Type.Optional(Type.String({ description: "New body" })),
+  state: Type.Optional(Type.String({ description: "New state: 'open' or 'closed'" })),
+  labels: Type.Optional(Type.String({ description: "Comma-separated list of labels" })),
+});
+
+const githubAddCommentParams = Type.Object({
+  issueNumber: Type.Number({ description: "Issue or PR number" }),
+  body: Type.String({ description: "Comment body" }),
+});
+
+const githubListPRsParams = Type.Object({
+  state: Type.Optional(Type.String({ description: "Filter by state: 'open', 'closed', or 'all' (default: 'open')" })),
+  limit: Type.Optional(Type.Number({ description: "Maximum number of PRs to return (default: 30)" })),
+});
+
+const githubAnalyzePRParams = Type.Object({
+  prNumber: Type.Number({ description: "Pull request number" }),
+});
+
+const githubRepoStatsParams = Type.Object({}); // No parameters needed
+
+const githubListCommitsParams = Type.Object({
+  branch: Type.Optional(Type.String({ description: "Branch name (default: 'main')" })),
+  limit: Type.Optional(Type.Number({ description: "Maximum number of commits to return (default: 20)" })),
+});
 
 // ── Tools ──────────────────────────────────────────────────────────
 
@@ -1403,6 +1461,273 @@ export const memoryClustersTool: ToolDefinition = {
   },
 };
 
+// ── GitHub Enhanced Tools ──────────────────────────────────────────
+
+/**
+ * List GitHub issues
+ */
+export const githubListIssuesTool: ToolDefinition = {
+  name: "github_list_issues",
+  label: "List GitHub Issues",
+  description:
+    "List issues from the GitHub repository. " +
+    "Supports filtering by state and labels. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubListIssuesParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const state = (params.state as "open" | "closed" | "all") || "open";
+      const labelsStr = (params.labels as string) || "";
+      const labels = labelsStr ? labelsStr.split(",").map(l => l.trim()) : undefined;
+      const limit = (params.limit as number) || 30;
+
+      const issues = await listIssues(state, labels, limit);
+      return textResult(formatIssueList(issues));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error listing issues: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Create a GitHub issue
+ */
+export const githubCreateIssueTool: ToolDefinition = {
+  name: "github_create_issue",
+  label: "Create GitHub Issue",
+  description:
+    "Create a new issue in the GitHub repository. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubCreateIssueParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const title = params.title as string;
+      const body = params.body as string;
+      const labelsStr = (params.labels as string) || "";
+      const labels = labelsStr ? labelsStr.split(",").map(l => l.trim()) : undefined;
+      const assigneesStr = (params.assignees as string) || "";
+      const assignees = assigneesStr ? assigneesStr.split(",").map(a => a.trim()) : undefined;
+
+      const issue = await createIssue(title, body, labels, assignees);
+      return textResult(`✅ Issue created: #${issue.number}\n${issue.html_url}`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error creating issue: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Update a GitHub issue
+ */
+export const githubUpdateIssueTool: ToolDefinition = {
+  name: "github_update_issue",
+  label: "Update GitHub Issue",
+  description:
+    "Update an existing issue in the GitHub repository. " +
+    "Can update title, body, state, and labels. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubUpdateIssueParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const issueNumber = params.issueNumber as number;
+      const updates: { title?: string; body?: string; state?: "open" | "closed"; labels?: string[] } = {};
+
+      if (params.title) updates.title = params.title as string;
+      if (params.body) updates.body = params.body as string;
+      if (params.state) updates.state = params.state as "open" | "closed";
+      if (params.labels) updates.labels = (params.labels as string).split(",").map(l => l.trim());
+
+      const issue = await updateIssue(issueNumber, updates);
+      return textResult(`✅ Issue #${issue.number} updated\nState: ${issue.state}\n${issue.html_url}`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error updating issue: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Add a comment to a GitHub issue or PR
+ */
+export const githubAddCommentTool: ToolDefinition = {
+  name: "github_add_comment",
+  label: "Add GitHub Comment",
+  description:
+    "Add a comment to an issue or pull request. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubAddCommentParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const issueNumber = params.issueNumber as number;
+      const body = params.body as string;
+
+      const comment = await addIssueComment(issueNumber, body);
+      return textResult(`✅ Comment added\n${comment.html_url}`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error adding comment: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * List GitHub pull requests
+ */
+export const githubListPRsTool: ToolDefinition = {
+  name: "github_list_prs",
+  label: "List GitHub PRs",
+  description:
+    "List pull requests from the GitHub repository. " +
+    "Supports filtering by state. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubListPRsParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const state = (params.state as "open" | "closed" | "all") || "open";
+      const limit = (params.limit as number) || 30;
+
+      const prs = await listPullRequests(state, limit);
+      return textResult(formatPRList(prs));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error listing PRs: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Analyze a GitHub pull request
+ */
+export const githubAnalyzePRTool: ToolDefinition = {
+  name: "github_analyze_pr",
+  label: "Analyze GitHub PR",
+  description:
+    "Analyze a pull request for code review. " +
+    "Provides risk assessment, suggestions, and change statistics. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubAnalyzePRParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const prNumber = params.prNumber as number;
+
+      const analysis = await analyzePullRequest(prNumber);
+      return textResult(formatPRAnalysis(analysis));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error analyzing PR: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Get GitHub repository statistics
+ */
+export const githubRepoStatsTool: ToolDefinition = {
+  name: "github_repo_stats",
+  label: "GitHub Repo Stats",
+  description:
+    "Get statistics about the GitHub repository. " +
+    "Includes stars, forks, open issues, language, and size. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubRepoStatsParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const stats = await getRepoStats();
+      return textResult(formatRepoStats(stats));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error getting repo stats: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * List GitHub commits
+ */
+export const githubListCommitsTool: ToolDefinition = {
+  name: "github_list_commits",
+  label: "List GitHub Commits",
+  description:
+    "List recent commits from the GitHub repository. " +
+    "Requires GITHUB_TOKEN environment variable.",
+  parameters: githubListCommitsParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const branch = (params.branch as string) || "main";
+      const limit = (params.limit as number) || 20;
+
+      const commits = await listCommits(branch, limit);
+
+      const lines: string[] = [
+        `📝 Recent Commits (${commits.length})`,
+        "",
+      ];
+
+      for (const commit of commits) {
+        const shortSha = commit.sha.slice(0, 7);
+        const message = commit.commit.message.split("\n")[0].slice(0, 60);
+        lines.push(`${shortSha}: ${message}`);
+      }
+
+      return textResult(lines.join("\n"));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error listing commits: ${err.message}`);
+    }
+  },
+};
+
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -1436,4 +1761,12 @@ export const jinxTools: ToolDefinition[] = [
   memoryImportTool,
   advancedMemorySearchTool,
   memoryClustersTool,
+  githubListIssuesTool,
+  githubCreateIssueTool,
+  githubUpdateIssueTool,
+  githubAddCommentTool,
+  githubListPRsTool,
+  githubAnalyzePRTool,
+  githubRepoStatsTool,
+  githubListCommitsTool,
 ];
