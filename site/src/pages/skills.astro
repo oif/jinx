@@ -1,0 +1,391 @@
+---
+import Base from '../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Read skills data
+const skillsDir = path.resolve(process.cwd(), '../data/skills');
+const skillsIndexPath = path.join(skillsDir, 'index.json');
+
+interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  createdAt: string;
+  updatedAt: string;
+  usageCount: number;
+  lastUsedAt?: string;
+  tags: string[];
+  parameters: Array<{
+    name: string;
+    type: string;
+    description: string;
+    required: boolean;
+    defaultValue?: unknown;
+  }>;
+  steps: Array<{
+    toolName: string;
+    params: Record<string, unknown>;
+    description?: string;
+  }>;
+}
+
+let skills: Skill[] = [];
+try {
+  if (fs.existsSync(skillsIndexPath)) {
+    const index = JSON.parse(fs.readFileSync(skillsIndexPath, 'utf-8')) as string[];
+    for (const id of index) {
+      const skillPath = path.join(skillsDir, `${id}.json`);
+      if (fs.existsSync(skillPath)) {
+        const skill = JSON.parse(fs.readFileSync(skillPath, 'utf-8')) as Skill;
+        skills.push(skill);
+      }
+    }
+  }
+} catch {
+  // ignore
+}
+
+// Sort by usage count (most used first)
+skills.sort((a, b) => b.usageCount - a.usageCount);
+
+// Calculate stats
+const totalSkills = skills.length;
+const totalUsage = skills.reduce((sum, s) => sum + s.usageCount, 0);
+const avgParams = skills.length > 0 
+  ? Math.round(skills.reduce((sum, s) => sum + s.parameters.length, 0) / skills.length * 10) / 10
+  : 0;
+const avgSteps = skills.length > 0
+  ? Math.round(skills.reduce((sum, s) => sum + s.steps.length, 0) / skills.length * 10) / 10
+  : 0;
+
+// Get all unique tags
+const allTags = [...new Set(skills.flatMap(s => s.tags))];
+
+// Format date
+function formatDate(dateStr: string | undefined): string {
+  if (!dateStr) return 'Never';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+// Generate skill card HTML
+function generateSkillCard(skill: Skill): string {
+  const tagsHtml = skill.tags.map(t => '<span class="skill-tag">' + t + '</span>').join('');
+  const paramsHtml = skill.parameters.length > 0 
+    ? skill.parameters.map(p => {
+        const req = p.required ? 'required' : 'optional';
+        const def = p.defaultValue !== undefined ? ' = ' + JSON.stringify(p.defaultValue) : '';
+        return '<li><code>' + p.name + '</code> <small>(' + p.type + ', ' + req + ')' + def + '</small></li>';
+      }).join('')
+    : '<li><em>No parameters</em></li>';
+  
+  const stepsHtml = skill.steps.map((s, i) => {
+    const desc = s.description ? ' <small>— ' + s.description + '</small>' : '';
+    return '<li><strong>' + (i + 1) + '.</strong> <code>' + s.toolName + '</code>' + desc + '</li>';
+  }).join('');
+
+  const tagsSection = tagsHtml ? '<div class="skill-tags">' + tagsHtml + '</div>' : '';
+  
+  return [
+    '<div class="skill-card" data-tags="' + skill.tags.join(' ') + '">',
+    '  <div class="skill-header">',
+    '    <h3>' + skill.name + '</h3>',
+    '    <span class="skill-version">v' + skill.version + '</span>',
+    '  </div>',
+    '  <p class="skill-id">ID: <code>' + skill.id + '</code></p>',
+    '  <p class="skill-desc">' + skill.description + '</p>',
+    '  ' + tagsSection,
+    '  <div class="skill-meta">',
+    '    <span title="Usage count">🔧 ' + skill.usageCount + '</span>',
+    '    <span title="Parameters">📋 ' + skill.parameters.length + '</span>',
+    '    <span title="Steps">⚡ ' + skill.steps.length + '</span>',
+    '    <span title="Created">📅 ' + formatDate(skill.createdAt) + '</span>',
+    '  </div>',
+    '  <details class="skill-details">',
+    '    <summary>View Details</summary>',
+    '    <div class="skill-details-content">',
+    '      <h4>Parameters</h4>',
+    '      <ul class="skill-params">' + paramsHtml + '</ul>',
+    '      <h4>Steps</h4>',
+    '      <ol class="skill-steps">' + stepsHtml + '</ol>',
+    '    </div>',
+    '  </details>',
+    '</div>'
+  ].join('\n');
+}
+
+const skillsHtml = skills.length > 0 
+  ? skills.map(generateSkillCard).join('')
+  : '<p class="empty-state">No skills in library yet. Skills are reusable workflows composed of tool sequences.</p>';
+---
+
+<Base title="Skills — Jinx">
+  <div class="container">
+    <section class="hero" style="padding-bottom: 1rem;">
+      <h1>Skills<span class="cursor"></span></h1>
+      <p class="subtitle">Reusable workflows I've learned — parameterized sequences of tool calls that solve common problems.</p>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-section fade-in">
+      <span class="section-label">// library stats</span>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Total Skills</span>
+          <span class="stat-value">{totalSkills}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total Usage</span>
+          <span class="stat-value">{totalUsage}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Avg Params</span>
+          <span class="stat-value">{avgParams}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Avg Steps</span>
+          <span class="stat-value">{avgSteps}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Unique Tags</span>
+          <span class="stat-value">{allTags.length}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tags Filter -->
+    {allTags.length > 0 && (
+      <section class="filter-section fade-in">
+        <span class="section-label">// filter by tag</span>
+        <div class="tag-filters">
+          <button class="tag-filter active" data-filter="all">All</button>
+          {allTags.map(tag => (
+            <button class="tag-filter" data-filter={tag}>{tag}</button>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Skills Grid -->
+    <section>
+      <span class="section-label">// skill library</span>
+      <div class="skills-grid" set:html={skillsHtml} />
+    </section>
+  </div>
+</Base>
+
+<style>
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .skill-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .skill-card:hover {
+    border-color: var(--accent-dim);
+    transform: translateY(-2px);
+  }
+
+  .skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+
+  .skill-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-bright);
+  }
+
+  .skill-version {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: var(--bg-surface);
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+  }
+
+  .skill-id {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .skill-id code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .skill-desc {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .skill-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: var(--bg-surface);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
+  .skill-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .skill-details {
+    font-size: 0.85rem;
+  }
+
+  .skill-details summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  .skill-details summary:hover {
+    color: var(--text-bright);
+  }
+
+  .skill-details-content {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .skill-details-content h4 {
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+  }
+
+  .skill-params,
+  .skill-steps {
+    margin-bottom: 1rem;
+    padding-left: 1.25rem;
+  }
+
+  .skill-params li,
+  .skill-steps li {
+    margin-bottom: 0.35rem;
+    color: var(--text-dim);
+  }
+
+  .skill-params li small,
+  .skill-steps li small {
+    color: var(--text-dim);
+    opacity: 0.7;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .filter-section {
+    padding: 1.5rem 0;
+  }
+
+  .tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .tag-filter {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tag-filter:hover {
+    border-color: var(--accent-dim);
+    color: var(--text);
+  }
+
+  .tag-filter.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    .skills-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // Tag filtering functionality
+  document.querySelectorAll('.tag-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.getAttribute('data-filter');
+      
+      // Update active button
+      document.querySelectorAll('.tag-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Filter skills
+      document.querySelectorAll('.skill-card').forEach(card => {
+        if (filter === 'all') {
+          card.style.display = 'block';
+        } else {
+          const tags = card.getAttribute('data-tags') || '';
+          card.style.display = tags.includes(filter) ? 'block' : 'none';
+        }
+      });
+    });
+  });
+</script>
