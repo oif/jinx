@@ -5,6 +5,7 @@ import {
   DefaultResourceLoader,
   ModelRegistry,
   AuthStorage,
+  discoverAndLoadExtensions,
   type AgentSession,
   type CreateAgentSessionOptions,
   type ToolDefinition,
@@ -94,8 +95,20 @@ export async function startAgent(): Promise<AgentSession> {
   const sessionDir = "./data/sessions";
   const sessionManager = SessionManager.create(process.cwd(), sessionDir);
 
+  // Load extensions (Jinx tools registered via Extension API)
+  const extensionsDir = join(process.cwd(), "extensions");
+  const { extensions, errors } = await discoverAndLoadExtensions([extensionsDir], process.cwd());
+  
+  if (errors.length > 0) {
+    log.warn("Some extensions failed to load", { errors: errors.map(e => e.error) });
+  }
+  
+  if (extensions.length > 0) {
+    log.info(`Loaded ${extensions.length} extension(s)`);
+  }
+
+  // Telegram tool still needs to be passed dynamically (depends on tgSend)
   const tgSendTool = buildTgSendTool(tgSend);
-  const allCustomTools: ToolDefinition[] = [...jinxTools, tgSendTool];
 
   const resourceLoader = new DefaultResourceLoader({
     systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
@@ -126,7 +139,7 @@ export async function startAgent(): Promise<AgentSession> {
     model: selectedModel,
     thinkingLevel: "high",
     tools: codingTools,
-    customTools: allCustomTools,
+    customTools: [tgSendTool], // Only dynamic tool here; others via Extension
   };
 
   const { session, modelFallbackMessage } = await createAgentSession(options);
