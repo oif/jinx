@@ -13,6 +13,7 @@ import type {
 import { formatPerformanceReport } from "../observability/metrics.js";
 import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
 import { runSelfDiagnosis, formatDiagnosisReport, executeRepairAction } from "../diagnosis/engine.js";
+import { forceStrategy, getCurrentStrategy, formatStrategyStatus, enableAutoSelect, disableAutoSelect } from "../evolution/strategy.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -102,6 +103,13 @@ const selfDiagnosisParams = Type.Object({}); // No parameters needed
 const repairActionParams = Type.Object({
   command: Type.String({ description: "Repair command to execute (e.g., 'disk_cleanup', 'memory_optimization')" }),
 });
+
+const setStrategyParams = Type.Object({
+  strategy: Type.String({ description: "Strategy to set: 'innovate', 'harden', 'repair-only', or 'balanced'" }),
+  reason: Type.Optional(Type.String({ description: "Optional reason for the strategy change" })),
+});
+
+const strategyStatusParams = Type.Object({}); // No parameters needed
 
 // ── Tools ──────────────────────────────────────────────────────────
 
@@ -635,6 +643,130 @@ export const executeRepairTool: ToolDefinition = {
   },
 };
 
+// ── Strategy Tools ─────────────────────────────────────────────────
+
+/**
+ * Set the evolution strategy manually.
+ */
+export const setStrategyTool: ToolDefinition = {
+  name: "set_evolution_strategy",
+  label: "Set Evolution Strategy",
+  description:
+    "Set the evolution strategy to guide how Jinx approaches improvements. " +
+    "Strategies: 'innovate' (explore new features), 'harden' (focus on stability), " +
+    "'repair-only' (emergency fixes only), 'balanced' (normal mode). " +
+    "Use this to manually control the evolution direction, or use enable_strategy_auto_select " +
+    "to let the system choose based on health metrics.",
+  parameters: setStrategyParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const strategy = params.strategy as string;
+      const reason = (params.reason as string) || "Manual strategy change";
+      
+      if (!["innovate", "harden", "repair-only", "balanced"].includes(strategy)) {
+        return textResult(`❌ Invalid strategy: ${strategy}. Valid options: innovate, harden, repair-only, balanced`);
+      }
+      
+      forceStrategy(strategy as "innovate" | "harden" | "repair-only" | "balanced", reason);
+      return textResult(`✅ Evolution strategy set to: ${strategy}\nReason: ${reason}`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error setting strategy: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Get the current evolution strategy status.
+ */
+export const getStrategyStatusTool: ToolDefinition = {
+  name: "get_strategy_status",
+  label: "Get Strategy Status",
+  description:
+    "Get detailed information about the current evolution strategy, system state, " +
+    "and strategy recommendation. Shows strategy history, auto-select status, " +
+    "and reasons for the current strategy choice.",
+  parameters: strategyStatusParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const status = formatStrategyStatus();
+      return textResult(status);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error getting strategy status: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Enable automatic strategy selection.
+ */
+export const enableAutoStrategyTool: ToolDefinition = {
+  name: "enable_strategy_auto_select",
+  label: "Enable Auto Strategy",
+  description:
+    "Enable automatic strategy selection based on system health and performance metrics. " +
+    "When enabled, the system will automatically switch between innovate/harden/repair-only " +
+    "based on failure rates, health status, and consecutive successes.",
+  parameters: Type.Object({}),
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      enableAutoSelect();
+      const current = getCurrentStrategy();
+      return textResult(`✅ Auto strategy selection enabled.\nCurrent strategy: ${current}`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error enabling auto strategy: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Disable automatic strategy selection.
+ */
+export const disableAutoStrategyTool: ToolDefinition = {
+  name: "disable_strategy_auto_select",
+  label: "Disable Auto Strategy",
+  description:
+    "Disable automatic strategy selection. The current strategy will remain fixed " +
+    "until manually changed via set_evolution_strategy.",
+  parameters: Type.Object({}),
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      disableAutoSelect();
+      const current = getCurrentStrategy();
+      return textResult(`✅ Auto strategy selection disabled.\nCurrent strategy: ${current} (fixed)`);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error disabling auto strategy: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -652,4 +784,8 @@ export const jinxTools: ToolDefinition[] = [
   webSearchTool,
   selfDiagnosisTool,
   executeRepairTool,
+  setStrategyTool,
+  getStrategyStatusTool,
+  enableAutoStrategyTool,
+  disableAutoStrategyTool,
 ];

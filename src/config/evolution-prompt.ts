@@ -1,4 +1,5 @@
 import { log } from "../util/log.js";
+import { getStrategyPromptModifier } from "../evolution/strategy.js";
 
 /**
  * Evolution prompt templates — configurable via environment variables.
@@ -41,13 +42,15 @@ const DEFAULT_TEMPLATES = {
 
   /**
    * Task-driven evolution cycle prompt.
-   * Variables: {cycle}, {taskId}, {taskTitle}, {recentHistory}, {totalCycles}, {currentStreak}
+   * Variables: {cycle}, {taskId}, {taskTitle}, {recentHistory}, {totalCycles}, {currentStreak}, {strategyModifier}
    */
   EVOLUTION_CYCLE: `这是你的第 {cycle} 次进化循环。
 
 【任务】{taskId}: {taskTitle}
 
 【历史】总循环: {totalCycles} | 当前连胜: {currentStreak} | 最近: {recentHistory}
+
+{strategyModifier}
 
 按照 BORN.md 的进化协议执行：
 1. 理解 —— 明确任务要做什么，查看相关代码
@@ -108,6 +111,7 @@ export function getEvolutionCyclePrompt(
   ctx: EvolutionCycleContext,
 ): string {
   const template = process.env.EVOLUTION_CYCLE_PROMPT || DEFAULT_TEMPLATES.EVOLUTION_CYCLE;
+  const strategyModifier = getStrategyPromptModifier();
   return substituteVariables(template, {
     cycle: cycle.toString(),
     taskId,
@@ -115,6 +119,7 @@ export function getEvolutionCyclePrompt(
     recentHistory: ctx.recentHistory,
     totalCycles: ctx.totalCycles.toString(),
     currentStreak: ctx.currentStreak.toString(),
+    strategyModifier,
   });
 }
 
