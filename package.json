@@ -1,6 +1,6 @@
 {
   "name": "jinx",
-  "version": "0.1.106",
+  "version": "0.1.107",
   "description": "A self-iterating AI agent built on Pi",
   "type": "module",
   "main": "dist/main.js",
@@ -36,6 +36,9 @@
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "fast-xml-parser": "^5.3.8"
   },
   "private": true
 }
