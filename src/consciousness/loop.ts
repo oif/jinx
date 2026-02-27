@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { log } from "../util/log.js";
 import { readState, type State } from "../util/state.js";
-import { recordEvolutionResult } from "./history.js";
+import { recordEvolutionResult, loadEvolutionHistory, calculateEvolutionStats } from "./history.js";
 import {
   startEvolutionProgress,
   setEvolutionStage,
@@ -10,6 +10,78 @@ import {
 } from "./evolution-progress.js";
 
 import { STATE_PATH } from "../supervisor/paths.js";
+import { execSync } from "node:child_process";
+
+// Empty cycle detection: files that don't count as "real work"
+const METADATA_FILES = new Set([
+  "data/scratchpad.md",
+  "EVOLOG.md",
+  "data/state.json",
+]);
+
+const META_EMPTY_INDICATORS = [
+  "update EVOLOG",
+  "update scratchpad",
+  "update state",
+  "fix EVOLOG",
+  "update statistics",
+];
+
+/**
+ * Check if the last commit was a "trivial" update (metadata only).
+ * Returns true if the cycle should NOT count toward evolution stats.
+ */
+function isEmptyCycle(): boolean {
+  try {
+    // Get files changed in last commit
+    const filesChanged = execSync("git diff HEAD~1 --name-only", { encoding: "utf-8" })
+      .trim()
+      .split("\n")
+      .filter(f => f.length > 0);
+
+    // If no files changed, it's empty
+    if (filesChanged.length === 0) return true;
+
+    // If all changes are to metadata files, it's empty
+    const allMetadata = filesChanged.every(f => METADATA_FILES.has(f));
+    if (allMetadata) return true;
+
+    // Check commit message for empty indicators
+    const commitMsg = execSync("git log -1 --pretty=%B", { encoding: "utf-8" }).toLowerCase();
+    const hasEmptyIndicator = META_EMPTY_INDICATORS.some(indicator =>
+      commitMsg.includes(indicator.toLowerCase())
+    );
+    if (hasEmptyIndicator) return true;
+
+    return false;
+  } catch {
+    // If git commands fail, assume it's not empty (safer)
+    return false;
+  }
+}
+
+/** Track consecutive empty cycles */
+let consecutiveEmptyCycles = 0;
+const MAX_EMPTY_CYCLES_BEFORE_PAUSE = 3;
+
+/**
+ * Check if evolution should be auto-paused due to empty cycles.
+ * Resets counter if this cycle has real work.
+ */
+function checkEmptyCyclePause(): boolean {
+  if (isEmptyCycle()) {
+    consecutiveEmptyCycles++;
+    log.warn(`Empty cycle detected (${consecutiveEmptyCycles}/${MAX_EMPTY_CYCLES_BEFORE_PAUSE})`);
+
+    if (consecutiveEmptyCycles >= MAX_EMPTY_CYCLES_BEFORE_PAUSE) {
+      log.error(`Auto-pausing evolution: ${MAX_EMPTY_CYCLES_BEFORE_PAUSE} consecutive empty cycles`);
+      return true;
+    }
+  } else {
+    consecutiveEmptyCycles = 0;
+  }
+  return false;
+}
 
 // Consciousness loop interval: configurable via env, default 5 seconds
 function getLoopIntervalMs(): number {
@@ -110,6 +182,17 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
   const cycle = state.cycle + 1;
   const startTime = Date.now();
 
+  // Check for empty cycle pause BEFORE starting
+  if (checkEmptyCyclePause()) {
+    await notifyFn(
+      `⚠️ Evolution auto-paused after ${MAX_EMPTY_CYCLES_BEFORE_PAUSE} empty cycles. ` +
+      `Last changes were only metadata updates. Please review and re-enable evolution manually.`
+    );
+    // Disable evolution in state
+    saveState({ evolutionEnabled: false });
+    return;
+  }
+
   log.info(`Evolution cycle #${cycle} starting`);
 
   // Start tracking progress
@@ -118,14 +201,25 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
 
   try {
     setEvolutionStage("implementing", "Executing evolution cycle");
+
+    // Get recent history for context
+    const history = loadEvolutionHistory();
+    const stats = calculateEvolutionStats();
+
     const result = await promptFn(
       `这是你第 ${cycle} 次进化循环。\n\n` +
+      `【进化历史】\n` +
+      `- 总循环: ${stats.totalCycles} | 成功: ${stats.successfulCycles} | 当前连胜: ${stats.currentStreak}\n` +
+      `- 最近3次: ${history.slice(-3).map(h => `#${h.cycle} ${h.status}`).join(", ") || "无"}\n\n` +
       `按照 BORN.md 中的进化循环执行：\n` +
       `1. 评估 —— 查看 codebase，找出最有价值的改进\n` +
       `2. 选择 —— 选一件事（只选一件）\n` +
       `3. 实现 —— 完整实现 + 测试\n` +
       `4. 提交 —— git commit，版本递增\n` +
       `5. 汇报 —— 告诉我我做了什么\n\n` +
+      `【重要】空循环检测已启用：\n` +
+      `如果本次循环只修改了 scratchpad.md 或元数据文件，将被标记为空循环。\n` +
+      `连续 ${MAX_EMPTY_CYCLES_BEFORE_PAUSE} 次空循环会自动暂停进化。\n\n` +
       `【重要】进度汇报要求：\n` +
       `在每个阶段完成后，必须使用 send_owner_message 工具向创造者发送进度更新：\n` +
       `- 评估完成后: "🧬 Evolution #${cycle} - 评估完成：找到 X 个改进点"\n` +

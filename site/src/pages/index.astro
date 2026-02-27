@@ -6,7 +6,7 @@ import { join } from 'node:path';
 // Read runtime state from parent directory
 const DATA_DIR = join(process.cwd(), '..', 'data');
 const STATE_PATH = join(DATA_DIR, 'state.json');
-const EVOLOG_PATH = join(process.cwd(), '..', 'EVOLOG.md');
+const HISTORY_PATH = join(DATA_DIR, 'evolution-history.json');
 const HEALTH_HISTORY_PATH = join(process.cwd(), '..', 'health-history.json');
 const PKG_PATH = join(process.cwd(), '..', 'package.json');
 
@@ -36,13 +36,15 @@ try {
   // ignore
 }
 
-// Read cycle from EVOLOG.md
+// Read cycle from evolution-history.json
+interface EvolutionRecord {
+  cycle: number;
+}
 try {
-  if (existsSync(EVOLOG_PATH)) {
-    const evolog = readFileSync(EVOLOG_PATH, 'utf-8');
-    const match = evolog.match(/\|\s*Total Cycles\s*\|\s*(\d+)\s*\|/);
-    if (match) {
-      state.cycle = parseInt(match[1], 10);
+  if (existsSync(HISTORY_PATH)) {
+    const history: EvolutionRecord[] = JSON.parse(readFileSync(HISTORY_PATH, 'utf-8'));
+    if (history.length > 0) {
+      state.cycle = Math.max(...history.map(h => h.cycle));
     }
   }
 } catch {

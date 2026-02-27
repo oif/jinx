@@ -4,62 +4,7 @@ import { log } from "../util/log.js";
 import { DATA_DIR } from "../supervisor/paths.js";
 
 const HISTORY_PATH = join(DATA_DIR, "evolution-history.json");
-const EVOLOG_PATH = "EVOLOG.md";
 const MAX_HISTORY_ENTRIES = 100;
-
-// File system interface for dependency injection (testing)
-export interface FileSystem {
-  readFile(path: string): string;
-  writeFile(path: string, content: string): void;
-  exists(path: string): boolean;
-}
-
-// Real file system implementation
-const realFileSystem: FileSystem = {
-  readFile(path: string): string {
-    return readFileSync(path, "utf-8");
-  },
-  writeFile(path: string, content: string): void {
-    writeFileSync(path, content);
-  },
-  exists(path: string): boolean {
-    return existsSync(path);
-  },
-};
-
-// In-memory file system for testing
-export function createMemoryFileSystem(initialFiles: Record<string, string> = {}): FileSystem {
-  const files = { ...initialFiles };
-  return {
-    readFile(path: string): string {
-      if (!(path in files)) {
-        throw new Error(`File not found: ${path}`);
-      }
-      return files[path];
-    },
-    writeFile(path: string, content: string): void {
-      files[path] = content;
-    },
-    exists(path: string): boolean {
-      return path in files;
-    },
-  };
-}
-
-// Global file system instance (can be overridden for testing)
-let _fileSystem: FileSystem = realFileSystem;
-
-export function setFileSystem(fs: FileSystem): void {
-  _fileSystem = fs;
-}
-
-export function resetFileSystem(): void {
-  _fileSystem = realFileSystem;
-}
-
-export function getFileSystem(): FileSystem {
-  return _fileSystem;
-}
 
 export interface EvolutionRecord {
   cycle: number;
@@ -100,86 +45,6 @@ export function saveEvolutionHistory(history: EvolutionRecord[]): void {
   }
 }
 
-function updateEvolog(record: EvolutionRecord): void {
-  try {
-    const fs = getFileSystem();
-    let content = "";
-    if (fs.exists(EVOLOG_PATH)) {
-      content = fs.readFile(EVOLOG_PATH);
-    }
-
-    const date = new Date(record.timestamp).toLocaleString("en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    const entry = `### ${record.status === "success" ? "✅" : "❌"} Cycle #${record.cycle} — ${record.version}
-
-- **Date:** ${date}
-- **Status:** ${record.status}
-
-> ${record.summary.slice(0, 200)}${record.summary.length > 200 ? "..." : ""}
-
-`;
-
-    const totalCyclesMatch = content.match(/\|\s*Total Cycles\s*\|\s*(\d+)\s*\|/);
-    if (totalCyclesMatch) {
-      const currentTotal = parseInt(totalCyclesMatch[1], 10);
-      if (record.cycle > currentTotal) {
-        content = content.replace(
-          /\|\s*Total Cycles\s*\|\s*\d+\s*\|/,
-          `| Total Cycles | ${record.cycle} |`
-        );
-      }
-    }
-
-    const successfulMatch = content.match(/\|\s*Successful\s*\|\s*(\d+)\s*\|/);
-    const failedMatch = content.match(/\|\s*Failed\s*\|\s*(\d+)\s*\|/);
-    const skippedMatch = content.match(/\|\s*Skipped\s*\|\s*(\d+)\s*\|/);
-
-    if (successfulMatch && record.status === "success") {
-      const current = parseInt(successfulMatch[1], 10);
-      content = content.replace(
-        /\|\s*Successful\s*\|\s*\d+\s*\|/,
-        `| Successful | ${current + 1} |`
-      );
-    }
-    if (failedMatch && record.status === "failed") {
-      const current = parseInt(failedMatch[1], 10);
-      content = content.replace(
-        /\|\s*Failed\s*\|\s*\d+\s*\|/,
-        `| Failed | ${current + 1} |`
-      );
-    }
-    if (skippedMatch && record.status === "skipped") {
-      const current = parseInt(skippedMatch[1], 10);
-      content = content.replace(
-        /\|\s*Skipped\s*\|\s*\d+\s*\|/,
-        `| Skipped | ${current + 1} |`
-      );
-    }
-
-    const historyMarker = "## 📜 Evolution History\n";
-    const insertPos = content.indexOf(historyMarker);
-
-    if (insertPos >= 0) {
-      const before = content.slice(0, insertPos + historyMarker.length);
-      const after = content.slice(insertPos + historyMarker.length);
-      content = before + "\n" + entry + after;
-    } else {
-      content += "\n" + entry;
-    }
-
-    fs.writeFile(EVOLOG_PATH, content);
-    log.info(`EVOLOG.md updated with cycle #${record.cycle}`);
-  } catch (e) {
-    log.warn("Failed to update EVOLOG.md", { error: (e as Error).message });
-  }
-}
-
 export function recordEvolutionResult(
   cycle: number,
   version: string,
@@ -201,7 +66,6 @@ export function recordEvolutionResult(
   history.push(record);
 
   saveEvolutionHistory(history);
-  updateEvolog(record);
   log.info(`Evolution #${cycle} recorded`, { status, version });
 }
 

@@ -1,18 +1,25 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { readVersion, readState, type State } from "../src/util/state.js";
-import { existsSync, unlinkSync, writeFileSync, readFileSync } from "node:fs";
+import { existsSync, unlinkSync, writeFileSync, readFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 const TEST_STATE_PATH = join(process.cwd(), "data", "state.json");
 const PACKAGE_PATH = join(process.cwd(), "package.json");
-const EVOLOG_PATH = join(process.cwd(), "EVOLOG.md");
+const HISTORY_PATH = join(process.cwd(), "data", "evolution-history.json");
 
 describe("state utilities", () => {
   // Store original files content
   let originalPackageContent: string;
-  let originalEvologContent: string;
+  let originalHistoryContent: string | null = null;
 
   beforeEach(() => {
+    // Ensure data directory exists
+    try {
+      mkdirSync(join(process.cwd(), "data"), { recursive: true });
+    } catch {
+      // Directory may already exist
+    }
+
     // Clean up test state file
     if (existsSync(TEST_STATE_PATH)) {
       unlinkSync(TEST_STATE_PATH);
@@ -20,16 +27,16 @@ describe("state utilities", () => {
 
     // Store original content
     originalPackageContent = readFileSync(PACKAGE_PATH, "utf-8");
-    originalEvologContent = existsSync(EVOLOG_PATH) ? readFileSync(EVOLOG_PATH, "utf-8") : "";
+    originalHistoryContent = existsSync(HISTORY_PATH) ? readFileSync(HISTORY_PATH, "utf-8") : null;
   });
 
   afterEach(() => {
     // Restore original content
     writeFileSync(PACKAGE_PATH, originalPackageContent);
-    if (originalEvologContent) {
-      writeFileSync(EVOLOG_PATH, originalEvologContent);
-    } else if (existsSync(EVOLOG_PATH)) {
-      unlinkSync(EVOLOG_PATH);
+    if (originalHistoryContent !== null) {
+      writeFileSync(HISTORY_PATH, originalHistoryContent);
+    } else if (existsSync(HISTORY_PATH)) {
+      unlinkSync(HISTORY_PATH);
     }
   });
 
@@ -60,13 +67,13 @@ describe("state utilities", () => {
   });
 
   describe("readState", () => {
-    it("should return state with version from package.json and cycle from EVOLOG.md", () => {
+    it("should return state with version from package.json and cycle from history", () => {
       const state = readState();
       const pkg = JSON.parse(originalPackageContent);
 
       // Version should come from package.json
       expect(state.version).toBe(pkg.version);
-      // Cycle should come from EVOLOG.md
+      // Cycle should come from evolution-history.json
       expect(typeof state.cycle).toBe("number");
       expect(state.cycle).toBeGreaterThanOrEqual(0);
     });
@@ -102,51 +109,56 @@ describe("state utilities", () => {
       expect(state.lastEvolution).toBeNull();
     });
 
-    it("should read cycle from EVOLOG.md Total Cycles table", () => {
-      // Create EVOLOG.md with specific cycle count
-      const evologContent = `# Evolution Log
-
-## 📊 Statistics
-
-| Metric | Value |
-|--------|-------|
-| Total Cycles | 42 |
-
-## 📜 Evolution History
-`;
-      writeFileSync(EVOLOG_PATH, evologContent);
+    it("should read max cycle from evolution-history.json", () => {
+      // Create evolution-history.json with specific records
+      const history = [
+        { cycle: 10, timestamp: "2026-02-26T00:00:00Z", version: "0.0.10", status: "success", summary: "Test 10" },
+        { cycle: 25, timestamp: "2026-02-26T01:00:00Z", version: "0.0.25", status: "success", summary: "Test 25" },
+        { cycle: 42, timestamp: "2026-02-26T02:00:00Z", version: "0.0.42", status: "success", summary: "Test 42" },
+      ];
+      writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2));
 
       const state = readState();
       expect(state.cycle).toBe(42);
     });
 
-    it("should fallback to counting Cycle headers in EVOLOG.md", () => {
-      // Create EVOLOG.md without Total Cycles table
-      const evologContent = `# Evolution Log
-
-### ✅ Cycle #1 — 0.0.1
-Some content
-
-### ✅ Cycle #2 — 0.0.2
-More content
-
-### ✅ Cycle #3 — 0.0.3
-Final content
-`;
-      writeFileSync(EVOLOG_PATH, evologContent);
+    it("should handle evolution-history.json with single record", () => {
+      const history = [
+        { cycle: 5, timestamp: "2026-02-26T00:00:00Z", version: "0.0.5", status: "success", summary: "Test 5" },
+      ];
+      writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2));
 
       const state = readState();
-      expect(state.cycle).toBe(3);
+      expect(state.cycle).toBe(5);
     });
 
-    it("should return cycle 0 when EVOLOG.md does not exist", () => {
-      // Remove EVOLOG.md
-      if (existsSync(EVOLOG_PATH)) {
-        unlinkSync(EVOLOG_PATH);
+    it("should return cycle 0 when evolution-history.json does not exist", () => {
+      // Remove evolution-history.json
+      if (existsSync(HISTORY_PATH)) {
+        unlinkSync(HISTORY_PATH);
       }
 
       const state = readState();
       expect(state.cycle).toBe(0);
+    });
+
+    it("should return cycle 0 when evolution-history.json is empty", () => {
+      writeFileSync(HISTORY_PATH, "[]");
+
+      const state = readState();
+      expect(state.cycle).toBe(0);
+    });
+
+    it("should handle evolution-history.json with non-sequential cycles", () => {
+      const history = [
+        { cycle: 100, timestamp: "2026-02-26T00:00:00Z", version: "0.1.0", status: "success", summary: "Test 100" },
+        { cycle: 50, timestamp: "2026-02-26T01:00:00Z", version: "0.0.50", status: "success", summary: "Test 50" },
+        { cycle: 200, timestamp: "2026-02-26T02:00:00Z", version: "0.2.0", status: "success", summary: "Test 200" },
+      ];
+      writeFileSync(HISTORY_PATH, JSON.stringify(history, null, 2));
+
+      const state = readState();
+      expect(state.cycle).toBe(200);
     });
   });
 });

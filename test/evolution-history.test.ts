@@ -5,9 +5,6 @@ import {
   recordEvolutionResult,
   calculateEvolutionStats,
   formatEvolutionReport,
-  setFileSystem,
-  resetFileSystem,
-  createMemoryFileSystem,
   type EvolutionRecord,
 } from "../src/consciousness/history.js";
 import { existsSync, unlinkSync } from "node:fs";
@@ -15,46 +12,19 @@ import { join } from "node:path";
 
 const TEST_HISTORY_PATH = join(process.cwd(), "data", "evolution-history.json");
 
-// Sample EVOLOG content for testing
-const sampleEvolog = `# Evolution Log
-
-> Auto-generated record of Jinx's growth and evolution cycles.
-
-## 📊 Statistics
-
-| Metric | Value |
-|--------|-------|
-| Total Cycles | 50 |
-| Successful | 49 |
-| Failed | 1 |
-| Skipped | 0 |
-| Current Streak | 34 |
-| Longest Streak | 35 |
-
-**Last Success:** 2/26/2026, 2:57:15 PM
-
-## 📜 Evolution History
-
-Test fixture file for evolution-history tests.
-`;
-
 describe("evolution history", () => {
   beforeEach(() => {
     // Clean up test file
     if (existsSync(TEST_HISTORY_PATH)) {
       unlinkSync(TEST_HISTORY_PATH);
     }
-    
-    // Set up memory file system for EVOLOG.md to prevent test pollution
-    const memoryFs = createMemoryFileSystem({
-      "EVOLOG.md": sampleEvolog,
-    });
-    setFileSystem(memoryFs);
   });
 
   afterEach(() => {
-    // Reset to real file system
-    resetFileSystem();
+    // Clean up after tests
+    if (existsSync(TEST_HISTORY_PATH)) {
+      unlinkSync(TEST_HISTORY_PATH);
+    }
   });
 
   it("should return empty array when no history exists", () => {
@@ -121,9 +91,13 @@ describe("evolution history", () => {
     expect(report).toBe("No evolution history recorded yet.");
   });
 
-  it("should not pollute real EVOLOG.md during tests", () => {
-    recordEvolutionResult(999, "9.9.9", "success", "Test should not appear in real EVOLOG");
-    const history = loadEvolutionHistory();
-    expect(history[0].cycle).toBe(999);
+  it("should track skipped cycles in stats", () => {
+    recordEvolutionResult(1, "0.1.0", "success", "Test 1");
+    recordEvolutionResult(2, "0.1.0", "skipped", "Test 2");
+
+    const stats = calculateEvolutionStats();
+    expect(stats.totalCycles).toBe(2);
+    expect(stats.successfulCycles).toBe(1);
+    expect(stats.skippedCycles).toBe(1);
   });
 });

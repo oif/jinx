@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
-import { STATE_PATH, EVOLOG_PATH, PACKAGE_PATH } from "../supervisor/paths.js";
+import { join } from "node:path";
+import { STATE_PATH, PACKAGE_PATH, DATA_DIR } from "../supervisor/paths.js";
 
 export interface State {
   version: string;
@@ -10,22 +11,21 @@ export interface State {
   [key: string]: unknown;
 }
 
+const HISTORY_PATH = join(DATA_DIR, "evolution-history.json");
+
 /**
- * Read cycle count from EVOLOG.md (git-tracked).
- * Falls back to 0 if EVOLOG.md doesn't exist or has no cycles.
+ * Read cycle count from evolution-history.json.
+ * Falls back to 0 if file doesn't exist or is empty.
  */
-function readCycleFromEvolog(): number {
+function readCycleFromHistory(): number {
   try {
-    const content = readFileSync(EVOLOG_PATH, "utf-8");
-    // Match "Total Cycles | N" or "Cycle #N" patterns
-    const match = content.match(/\|\s*Total Cycles\s*\|\s*(\d+)\s*\|/);
-    if (match) {
-      return parseInt(match[1], 10);
+    if (!existsSync(HISTORY_PATH)) {
+      return 0;
     }
-    // Fallback: count "### ✅ Cycle #N" occurrences
-    const cycleMatches = content.match(/Cycle\s+#(\d+)/g);
-    if (cycleMatches) {
-      return cycleMatches.length;
+    const history = JSON.parse(readFileSync(HISTORY_PATH, "utf-8"));
+    if (Array.isArray(history) && history.length > 0) {
+      // Get the highest cycle number from history
+      return Math.max(...history.map((h: { cycle?: number }) => h.cycle || 0));
     }
     return 0;
   } catch {
@@ -49,13 +49,13 @@ export function readVersion(): string {
 /**
  * Read the full state, merging:
  * - version from package.json (git-tracked)
- * - cycle from EVOLOG.md (git-tracked, persistent)
+ * - cycle from evolution-history.json (calculated from actual records)
  * - other fields from state.json (runtime state)
  */
 export function readState(): State {
   // Git-tracked values
   const version = readVersion();
-  const cycle = readCycleFromEvolog();
+  const cycle = readCycleFromHistory();
 
   // Runtime state from state.json
   try {

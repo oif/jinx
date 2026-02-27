@@ -21,10 +21,9 @@ describe("Site file paths", () => {
     indexContent = "";
   }
 
-  it("should read evolution-history.json from root directory", () => {
-    // Should reference ../evolution-history.json, not ../data/evolution-history.json
-    expect(evolutionContent).toContain("../evolution-history.json");
-    expect(evolutionContent).not.toContain("../data/evolution-history.json");
+  it("should read evolution-history.json from data directory", () => {
+    // Should reference ../data/evolution-history.json (moved to data dir)
+    expect(evolutionContent).toContain("../data/evolution-history.json");
   });
 
   it("should read health-history.json from root directory", () => {
