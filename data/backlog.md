@@ -12,11 +12,17 @@ Neo 通过 Telegram 消息告知 Jinx 添加任务，Jinx 也可在 consciousnes
 ---
 
 ## Pending
-- [ ] #006: 升级 Memory 系统 - 实现知识图谱式持久记忆，支持语义搜索和关联记忆，替代简单的文件存储
-- [ ] #005: 添加 GitHub 增强工具 - 支持 issues 管理、PR 代码审查、仓库分析等完整 GitHub 工作流
-- [ ] #004: 集成 MCP (Model Context Protocol) 客户端 - 连接外部 MCP servers 扩展能力，如 filesystem、git、memory 等
+- [ ] #013: 实现技能真实执行引擎 - 当前 execute_skill 仅返回执行计划，需实现真正的工具链调用执行，支持顺序执行、错误恢复、参数传递
+- [ ] #014: 将 Browser Automation 暴露为 Pi 工具 - src/browser/automation.ts 已实现但未被 agent 使用，需添加 screenshot/analyze_page/test_interaction 等工具
+- [ ] #015: 增强 Site 公开站点内容 - 添加技能库展示页面、记忆图谱可视化、实时健康状态仪表盘，让站点成为真正的"数字身份展示"
 
 ## Done
+- [x] #010: 重构工具注册为 Pi Extension 形式 - 将 src/agent/tools.ts 中的工具改为 Pi Extension 机制注册 — 2026-02-27
+- [x] #011: 修复 MCP 客户端空壳问题 - 要么完整实现 MCP SDK 集成，要么移除空壳代码 — 2026-02-27
+- [x] #012: 评估并清理 Session 存储冲突 - 检查 data/sessions/ 和 Pi 的 ~/.pi/agent/sessions/ 是否重复 — 2026-02-27
+- [x] #004: 集成 MCP (Model Context Protocol) 客户端 - 连接外部 MCP servers 扩展能力，如 filesystem、git、memory 等 — 2026-02-27
+- [x] #006: 升级 Memory 系统 - 实现知识图谱式持久记忆，支持语义搜索和关联记忆，替代简单的文件存储 — 2026-02-27
+- [x] #005: 添加 GitHub 增强工具 - 支持 issues 管理、PR 代码审查、仓库分析等完整 GitHub 工作流 — 2026-02-27
 - [x] #007: 实现技能库系统 (Skill Library) - 让 Jinx 能创建、存储和复用参数化技能（工具组合），实现从单次执行到经验积累的跨越 — 2026-02-27
 - [x] #008: 添加进化策略系统 - 实现 innovate/harden/repair-only 等策略预设，根据当前状态智能选择进化方向而非固定循环 — 2026-02-27
 - [x] #009: 实现自我诊断与修复引擎 - 分析 health-history.json 和 performance-metrics.json，识别失败模式并生成修复方案 — 2026-02-27

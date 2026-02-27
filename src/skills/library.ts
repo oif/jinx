@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DATA_DIR } from "../supervisor/paths.js";
 import { log } from "../util/log.js";
+import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
 
 const SKILLS_DIR = join(DATA_DIR, "skills");
 const SKILL_INDEX_PATH = join(SKILLS_DIR, "index.json");
@@ -253,7 +254,286 @@ export function findSkillByName(name: string): Skill | null {
   ) || null;
 }
 
-// ── Skill Execution ────────────────────────────────────────────────
+// ── Tool Registry ─────────────────────────────────────────────────
+
+import type { ToolDefinition, AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-coding-agent";
+
+// Tool registry for skill execution
+const toolRegistry = new Map<string, ToolDefinition>();
+
+/**
+ * Register a tool for skill execution
+ */
+export function registerTool(tool: ToolDefinition): void {
+  toolRegistry.set(tool.name, tool);
+  log.info("Tool registered for skill execution", { name: tool.name });
+}
+
+/**
+ * Get a tool from the registry
+ */
+export function getTool(name: string): ToolDefinition | undefined {
+  return toolRegistry.get(name);
+}
+
+/**
+ * Check if a tool is registered
+ */
+export function hasTool(name: string): boolean {
+  return toolRegistry.has(name);
+}
+
+/**
+ * Get all registered tool names
+ */
+export function getRegisteredTools(): string[] {
+  return Array.from(toolRegistry.keys());
+}
+
+// ── Skill Execution Engine ─────────────────────────────────────────
+
+export interface SkillExecutionResult {
+  success: boolean;
+  skillId: string;
+  skillName: string;
+  startTime: string;
+  endTime: string;
+  totalDurationMs: number;
+  stepsExecuted: number;
+  stepsSucceeded: number;
+  stepsFailed: number;
+  stepResults: SkillStepResult[];
+  finalOutput?: string;
+  error?: string;
+}
+
+/**
+ * Execute a skill's steps sequentially with real tool invocation
+ */
+export async function executeSkillSteps(
+  skill: Skill,
+  params: Record<string, unknown>,
+  options?: {
+    onStepStart?: (stepIndex: number, toolName: string) => void;
+    onStepComplete?: (stepIndex: number, result: SkillStepResult) => void;
+    signal?: AbortSignal;
+  }
+): Promise<SkillExecutionResult> {
+  const startTime = new Date().toISOString();
+  const startMs = Date.now();
+  const stepResults: SkillStepResult[] = [];
+  
+  log.info("Starting skill execution", { 
+    skillId: skill.id, 
+    skillName: skill.name, 
+    stepCount: skill.steps.length 
+  });
+
+  // Get retry configuration
+  const maxRetries = skill.errorRecovery?.retryCount ?? 0;
+
+  for (let i = 0; i < skill.steps.length; i++) {
+    const step = skill.steps[i];
+    const stepStartMs = Date.now();
+    
+    options?.onStepStart?.(i, step.toolName);
+    
+    // Check for abort signal
+    if (options?.signal?.aborted) {
+      const error = "Skill execution aborted";
+      const failedResult: SkillStepResult = {
+        stepIndex: i,
+        toolName: step.toolName,
+        params: {},
+        success: false,
+        error,
+        durationMs: Date.now() - stepStartMs,
+      };
+      stepResults.push(failedResult);
+      options?.onStepComplete?.(i, failedResult);
+      
+      return {
+        success: false,
+        skillId: skill.id,
+        skillName: skill.name,
+        startTime,
+        endTime: new Date().toISOString(),
+        totalDurationMs: Date.now() - startMs,
+        stepsExecuted: i + 1,
+        stepsSucceeded: stepResults.filter(r => r.success).length,
+        stepsFailed: stepResults.filter(r => !r.success).length,
+        stepResults,
+        error,
+      };
+    }
+
+    // Interpolate parameters
+    const interpolatedParams = interpolateParams(step.params, params);
+    
+    // Get tool from registry
+    const tool = getTool(step.toolName);
+    if (!tool) {
+      const error = `Tool not found: ${step.toolName}`;
+      log.error(error, { skillId: skill.id, stepIndex: i });
+      
+      const failedResult: SkillStepResult = {
+        stepIndex: i,
+        toolName: step.toolName,
+        params: interpolatedParams,
+        success: false,
+        error,
+        durationMs: Date.now() - stepStartMs,
+      };
+      stepResults.push(failedResult);
+      options?.onStepComplete?.(i, failedResult);
+      
+      // Continue or fail based on error recovery settings
+      if (maxRetries === 0) {
+        return {
+          success: false,
+          skillId: skill.id,
+          skillName: skill.name,
+          startTime,
+          endTime: new Date().toISOString(),
+          totalDurationMs: Date.now() - startMs,
+          stepsExecuted: i + 1,
+          stepsSucceeded: stepResults.filter(r => r.success).length,
+          stepsFailed: stepResults.filter(r => !r.success).length,
+          stepResults,
+          error,
+        };
+      }
+      continue;
+    }
+
+    // Execute tool with retries
+    let attempt = 0;
+    let lastError: string | undefined;
+    let stepSuccess = false;
+    let stepResult: AgentToolResult<unknown> | undefined;
+
+    while (attempt <= maxRetries && !stepSuccess) {
+      try {
+        if (attempt > 0) {
+          log.info(`Retrying step ${i + 1}`, { toolName: step.toolName, attempt });
+          await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
+        }
+
+        stepResult = await tool.execute(
+          `skill-${skill.id}-step-${i}`,
+          interpolatedParams,
+          options?.signal,
+          undefined as unknown as AgentToolUpdateCallback,
+          {} as ExtensionContext
+        );
+        
+        stepSuccess = true;
+      } catch (e) {
+        lastError = (e as Error).message;
+        attempt++;
+        log.warn(`Step ${i + 1} failed`, { toolName: step.toolName, attempt, error: lastError });
+      }
+    }
+
+    const stepDurationMs = Date.now() - stepStartMs;
+    const resultText = stepResult?.content
+      ?.filter(c => c.type === "text")
+      ?.map(c => (c as { text: string }).text)
+      ?.join("\n") ?? "";
+
+    const stepResultEntry: SkillStepResult = {
+      stepIndex: i,
+      toolName: step.toolName,
+      params: interpolatedParams,
+      success: stepSuccess,
+      result: stepSuccess ? resultText : undefined,
+      error: stepSuccess ? undefined : lastError,
+      durationMs: stepDurationMs,
+    };
+
+    stepResults.push(stepResultEntry);
+    options?.onStepComplete?.(i, stepResultEntry);
+
+    if (!stepSuccess && maxRetries === 0) {
+      // Hard fail on first error if no retries configured
+      return {
+        success: false,
+        skillId: skill.id,
+        skillName: skill.name,
+        startTime,
+        endTime: new Date().toISOString(),
+        totalDurationMs: Date.now() - startMs,
+        stepsExecuted: i + 1,
+        stepsSucceeded: stepResults.filter(r => r.success).length,
+        stepsFailed: stepResults.filter(r => !r.success).length,
+        stepResults,
+        error: lastError,
+      };
+    }
+  }
+
+  const endMs = Date.now();
+  const allSucceeded = stepResults.every(r => r.success);
+  const finalResult = stepResults[stepResults.length - 1];
+
+  log.info("Skill execution completed", { 
+    skillId: skill.id, 
+    success: allSucceeded,
+    durationMs: endMs - startMs
+  });
+
+  return {
+    success: allSucceeded,
+    skillId: skill.id,
+    skillName: skill.name,
+    startTime,
+    endTime: new Date().toISOString(),
+    totalDurationMs: endMs - startMs,
+    stepsExecuted: skill.steps.length,
+    stepsSucceeded: stepResults.filter(r => r.success).length,
+    stepsFailed: stepResults.filter(r => !r.success).length,
+    stepResults,
+    finalOutput: finalResult?.result,
+  };
+}
+
+/**
+ * Format skill execution result for display
+ */
+export function formatExecutionResult(result: SkillExecutionResult): string {
+  const lines: string[] = [
+    `🎯 Skill Execution: ${result.skillName}`,
+    `Status: ${result.success ? "✅ Success" : "❌ Failed"}`,
+    `Duration: ${result.totalDurationMs}ms`,
+    `Steps: ${result.stepsSucceeded}/${result.stepsExecuted} succeeded`,
+    "",
+  ];
+
+  if (result.error) {
+    lines.push(`Error: ${result.error}`);
+    lines.push("");
+  }
+
+  lines.push("Step Results:");
+  for (const step of result.stepResults) {
+    const icon = step.success ? "✅" : "❌";
+    lines.push(`  ${icon} Step ${step.stepIndex + 1}: ${step.toolName} (${step.durationMs}ms)`);
+    if (step.error) {
+      lines.push(`     Error: ${step.error}`);
+    }
+  }
+
+  if (result.finalOutput) {
+    lines.push("");
+    lines.push("Final Output:");
+    lines.push(result.finalOutput.slice(0, 500));
+    if (result.finalOutput.length > 500) {
+      lines.push("... (truncated)");
+    }
+  }
+
+  return lines.join("\n");
+}
 
 export function validateSkillParams(
   skill: Skill, 

@@ -11,6 +11,7 @@ import type {
   AgentToolUpdateCallback,
 } from "@mariozechner/pi-coding-agent";
 import { formatPerformanceReport } from "../observability/metrics.js";
+import { log } from "../util/log.js";
 import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
 import { runSelfDiagnosis, formatDiagnosisReport, executeRepairAction } from "../diagnosis/engine.js";
 import { forceStrategy, getCurrentStrategy, formatStrategyStatus, enableAutoSelect, disableAutoSelect } from "../evolution/strategy.js";
@@ -25,6 +26,9 @@ import {
   validateSkillParams,
   recordSkillUsage,
   SKILL_TEMPLATES,
+  executeSkillSteps,
+  formatExecutionResult,
+  registerTool,
 } from "../skills/library.js";
 import {
   encodeMemory,
@@ -1044,39 +1048,39 @@ export const createSkillTool: ToolDefinition = {
 };
 
 /**
- * Execute a skill.
+ * Execute a skill with real tool invocation.
  */
 export const executeSkillTool: ToolDefinition = {
   name: "execute_skill",
   label: "Execute Skill",
   description:
     "Execute a skill from the skill library. Skills are reusable workflows " +
-    "that run a sequence of tools. Use list_skills to see available skills " +
-    "and get_skill_detail to see required parameters.",
+    "that run a sequence of tools sequentially with real execution. " +
+    "Use list_skills to see available skills and get_skill_detail to see required parameters.",
   parameters: executeSkillParams,
   execute: async (
     _toolCallId: string,
     params: Record<string, unknown>,
-    _signal?: AbortSignal,
+    signal?: AbortSignal,
     _onUpdate?: AgentToolUpdateCallback,
     _ctx?: ExtensionContext
   ): Promise<AgentToolResult<unknown>> => {
     try {
       const skillId = params.skillId as string;
       const paramJson = (params.params as string) || "{}";
-      
+
       const skill = loadSkill(skillId);
       if (!skill) {
         return textResult(`❌ Skill not found: ${skillId}`);
       }
-      
+
       let parsedParams: Record<string, unknown>;
       try {
         parsedParams = JSON.parse(paramJson);
       } catch {
         return textResult(`❌ Invalid parameters JSON: ${paramJson}`);
       }
-      
+
       // Validate parameters
       const validation = validateSkillParams(skill, parsedParams);
       if (!validation.valid) {
@@ -1084,20 +1088,31 @@ export const executeSkillTool: ToolDefinition = {
           `❌ Parameter validation failed:\n${validation.errors.join("\n")}`
         );
       }
-      
+
       // Record usage
       recordSkillUsage(skillId);
-      
-      // Return execution plan (actual execution would need tool invocation system)
-      const steps = skill.steps.map((s, i) => `${i + 1}. ${s.toolName}`).join("\n");
-      return textResult(
-        `🚀 Executing skill: ${skill.name}\n\nSteps:\n${steps}\n\n` +
-        `Parameters: ${JSON.stringify(parsedParams, null, 2)}\n\n` +
-        `Note: Skill execution requires running the actual tools in sequence.`
-      );
+
+      // Execute the skill with real tool invocation
+      const result = await executeSkillSteps(skill, parsedParams, {
+        signal,
+        onStepStart: (stepIndex, toolName) => {
+          log.info(`Skill step starting`, { skillId, stepIndex, toolName });
+        },
+        onStepComplete: (stepIndex, stepResult) => {
+          log.info(`Skill step completed`, {
+            skillId,
+            stepIndex,
+            success: stepResult.success,
+            durationMs: stepResult.durationMs,
+          });
+        },
+      });
+
+      const formatted = formatExecutionResult(result);
+      return textResult(formatted);
     } catch (e) {
       const err = e as Error;
-      return textResult(`Error executing skill: ${err.message}`);
+      return textResult(`❌ Error executing skill: ${err.message}`);
     }
   },
 };
@@ -1770,3 +1785,54 @@ export const jinxTools: ToolDefinition[] = [
   githubRepoStatsTool,
   githubListCommitsTool,
 ];
+
+// ── Tool Registration ──────────────────────────────────────────────
+
+// Register all tools for skill execution engine
+const allTools = [
+  claudeCodeTool,
+  requestRestartTool,
+  updateIdentityTool,
+  updateScratchpadTool,
+  updateStateTool,
+  knowledgeWriteTool,
+  fetchWebpageTool,
+  createPrTool,
+  addBacklogTaskTool,
+  getPerformanceReportTool,
+  checkCodeQualityTool,
+  webSearchTool,
+  selfDiagnosisTool,
+  executeRepairTool,
+  setStrategyTool,
+  getStrategyStatusTool,
+  enableAutoStrategyTool,
+  disableAutoStrategyTool,
+  listSkillsTool,
+  getSkillDetailTool,
+  createSkillTool,
+  rememberTool,
+  recallTool,
+  relateTool,
+  memoryStatsTool,
+  memoryExportTool,
+  memoryImportTool,
+  advancedMemorySearchTool,
+  memoryClustersTool,
+  githubListIssuesTool,
+  githubCreateIssueTool,
+  githubUpdateIssueTool,
+  githubAddCommentTool,
+  githubListPRsTool,
+  githubAnalyzePRTool,
+  githubRepoStatsTool,
+  githubListCommitsTool,
+  // Note: executeSkillTool is intentionally excluded to prevent recursive execution
+];
+
+// Register tools when this module loads
+for (const tool of allTools) {
+  registerTool(tool);
+}
+
+log.info("Tool registration complete", { count: allTools.length });
