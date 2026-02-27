@@ -10,6 +10,7 @@
 
 import { execSync } from "node:child_process";
 import { log } from "../util/log.js";
+import { recordGitHubUsage } from "../costs/tracker.js";
 
 // Re-export all types and functions
 export * from "./enhanced.js";
@@ -126,6 +127,9 @@ async function githubApi(path: string, options: RequestInit = {}): Promise<any> 
     const error = await response.json().catch(() => ({})) as { message?: string };
     throw new Error(`GitHub API error: ${response.status} - ${error.message || response.statusText}`);
   }
+
+  // Track GitHub API usage
+  recordGitHubUsage(path);
 
   return response.json();
 }

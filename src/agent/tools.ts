@@ -12,6 +12,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { formatPerformanceReport } from "../observability/metrics.js";
 import { log } from "../util/log.js";
+import { recordClaudeUsage } from "../costs/tracker.js";
 import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
 import { runSelfDiagnosis, formatDiagnosisReport, executeRepairAction } from "../diagnosis/engine.js";
 import { forceStrategy, getCurrentStrategy, formatStrategyStatus, enableAutoSelect, disableAutoSelect } from "../evolution/strategy.js";
@@ -322,9 +323,20 @@ export const claudeCodeTool: ToolDefinition = {
         `claude --print --dangerously-skip-permissions "${task.replace(/"/g, '\\"')}"`,
         { cwd, timeout: 600_000, env }
       );
+      
+      // Estimate and record cost based on task length and result length
+      const inputTokens = Math.ceil(task.length / 4);  // ~4 chars per token
+      const outputTokens = Math.ceil((result || "").length / 4);
+      recordClaudeUsage(inputTokens, outputTokens, { task: task.slice(0, 100) });
+      
       return textResult(result || "(Claude Code completed with no output)");
     } catch (e) {
       const err = e as Error & { status?: number; stderr?: string };
+      
+      // Still record the attempt with zero output
+      const inputTokens = Math.ceil(task.length / 4);
+      recordClaudeUsage(inputTokens, 500, { task: task.slice(0, 100), error: true });
+      
       return textResult(
         `Claude Code error (exit ${err.status ?? "?"}): ${err.stderr || err.message}`
       );

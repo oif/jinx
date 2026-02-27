@@ -4,6 +4,7 @@
  */
 
 import { log } from "../util/log.js";
+import { recordSearchUsage } from "../costs/tracker.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -228,6 +229,7 @@ export async function webSearch(options: SearchOptions): Promise<SearchResponse>
     try {
       const result = await searchExa(options);
       log.info("Exa search completed", { results: result.results.length });
+      recordSearchUsage("exa", options.query);
       return result;
     } catch (e) {
       const error = e as Error;
@@ -241,6 +243,7 @@ export async function webSearch(options: SearchOptions): Promise<SearchResponse>
     try {
       const result = await searchBrave(options);
       log.info("Brave search completed", { results: result.results.length });
+      recordSearchUsage("brave", options.query);
       return result;
     } catch (e) {
       const error = e as Error;
@@ -254,6 +257,7 @@ export async function webSearch(options: SearchOptions): Promise<SearchResponse>
     try {
       const result = await searchSerper(options);
       log.info("Serper search completed", { results: result.results.length });
+      recordSearchUsage("serper", options.query);
       return result;
     } catch (e) {
       const error = e as Error;

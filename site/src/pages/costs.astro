@@ -1,0 +1,567 @@
+---
+import Base from '../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Read cost data
+const costsPath = path.resolve(process.cwd(), '../data/api-costs.json');
+
+interface ApiCall {
+  id: string;
+  timestamp: string;
+  provider: string;
+  endpoint?: string;
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  cost: number;
+  metadata?: Record<string, unknown>;
+}
+
+interface DailyCosts {
+  date: string;
+  calls: ApiCall[];
+  totalCost: number;
+  byProvider: Record<string, { calls: number; cost: number }>;
+}
+
+interface CostsDatabase {
+  daily: DailyCosts[];
+  budget?: {
+    monthlyLimit: number;
+    alertThreshold: number;
+  };
+}
+
+let db: CostsDatabase = { daily: [] };
+try {
+  if (fs.existsSync(costsPath)) {
+    db = JSON.parse(fs.readFileSync(costsPath, 'utf-8'));
+  }
+} catch {
+  // ignore
+}
+
+// Calculate stats
+const last30Days = db.daily.slice(-30);
+const totalCost = last30Days.reduce((sum, d) => sum + d.totalCost, 0);
+const totalCalls = last30Days.reduce((sum, d) => sum + d.calls.length, 0);
+
+// Today stats
+const today = new Date().toISOString().split('T')[0];
+const todayData = db.daily.find(d => d.date === today);
+const todayCost = todayData?.totalCost || 0;
+const todayCalls = todayData?.calls.length || 0;
+
+// Provider breakdown
+const providerStats: Record<string, { calls: number; cost: number }> = {};
+for (const day of last30Days) {
+  for (const [provider, stats] of Object.entries(day.byProvider)) {
+    if (!providerStats[provider]) {
+      providerStats[provider] = { calls: 0, cost: 0 };
+    }
+    providerStats[provider].calls += stats.calls;
+    providerStats[provider].cost += stats.cost;
+  }
+}
+
+// Sort providers by cost
+const sortedProviders = Object.entries(providerStats)
+  .sort((a, b) => b[1].cost - a[1].cost);
+
+// Daily chart data (last 7 days)
+const chartData = db.daily.slice(-7).map(d => ({
+  date: d.date.slice(5), // MM-DD
+  cost: d.totalCost,
+  calls: d.calls.length,
+}));
+
+const chartDataJson = JSON.stringify(chartData);
+
+// Budget info
+const budget = db.budget;
+const budgetUsed = budget ? (totalCost / budget.monthlyLimit) * 100 : 0;
+const budgetRemaining = budget ? budget.monthlyLimit - totalCost : 0;
+
+// Recent calls
+const recentCalls = db.daily
+  .slice(-3)
+  .flatMap(d => d.calls)
+  .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  .slice(0, 10);
+
+// Format currency
+function formatCost(cost: number): string {
+  return cost < 0.01 ? '< $0.01' : `$${cost.toFixed(2)}`;
+}
+
+// Provider colors
+const providerColors: Record<string, string> = {
+  'claude-code': '#e17055',
+  'exa': '#00b894',
+  'brave': '#0984e3',
+  'serper': '#fdcb6e',
+  'github': '#6c5ce7',
+};
+---
+
+<Base title="Costs — Jinx">
+  <div class="container">
+    <section class="hero" style="padding-bottom: 1rem;">
+      <h1>API Costs<span class="cursor"></span></h1>
+      <p class="subtitle">Track API usage and costs across all providers to manage budget and optimize spending.</p>
+    </section>
+
+    <!-- Stats Grid -->
+    <section class="stats-section fade-in">
+      <span class="section-label">// cost overview</span>
+      <div class="stats-grid">
+        <div class="stat-card highlight">
+          <span class="stat-label">Today</span>
+          <span class="stat-value">{formatCost(todayCost)}</span>
+          <span class="stat-sub">{todayCalls} calls</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">30-Day Total</span>
+          <span class="stat-value">{formatCost(totalCost)}</span>
+          <span class="stat-sub">{totalCalls} calls</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Daily Average</span>
+          <span class="stat-value">{formatCost(totalCost / 30)}</span>
+          <span class="stat-sub">avg/day</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Projected Monthly</span>
+          <span class="stat-value">{formatCost((totalCost / 30) * 30)}</span>
+          <span class="stat-sub">estimate</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Budget Status -->
+    {budget && (
+      <section class="budget-section fade-in">
+        <span class="section-label">// budget status</span>
+        <div class="budget-card">
+          <div class="budget-header">
+            <span class="budget-label">Monthly Budget</span>
+            <span class={`budget-status ${budgetUsed >= budget.alertThreshold ? 'warning' : ''}`}>
+              {budgetUsed.toFixed(1)}% used
+            </span>
+          </div>
+          <div class="budget-bar">
+            <div 
+              class="budget-progress" 
+              style={`width: ${Math.min(budgetUsed, 100)}%; background: ${budgetUsed >= budget.alertThreshold ? '#e17055' : '#00d4aa'}`}
+            />
+          </div>
+          <div class="budget-details">
+            <span>Limit: ${budget.monthlyLimit.toFixed(2)}</span>
+            <span>Remaining: ${budgetRemaining.toFixed(2)}</span>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Daily Chart -->
+    {chartData.length > 0 && (
+      <section class="chart-section fade-in">
+        <span class="section-label">// daily costs (7 days)</span>
+        <div class="chart-container">
+          <canvas id="costChart" height="200"></canvas>
+        </div>
+      </section>
+    )}
+
+    <!-- Provider Breakdown -->
+    <section class="providers-section fade-in">
+      <span class="section-label">// by provider</span>
+      <div class="providers-grid">
+        {sortedProviders.length > 0 ? (
+          sortedProviders.map(([provider, stats]) => (
+            <div class="provider-card">
+              <div 
+                class="provider-color" 
+                style={`background: ${providerColors[provider] || '#888'}`}
+              />
+              <div class="provider-info">
+                <span class="provider-name">{provider}</span>
+                <span class="provider-stats">
+                  {formatCost(stats.cost)} · {stats.calls} calls
+                </span>
+              </div>
+              <div class="provider-percent">
+                {totalCost > 0 ? ((stats.cost / totalCost) * 100).toFixed(1) : 0}%
+              </div>
+            </div>
+          ))
+        ) : (
+          <p class="empty-state">No API calls recorded yet.</p>
+        )}
+      </div>
+    </section>
+
+    <!-- Recent Calls -->
+    <section>
+      <span class="section-label">// recent calls</span>
+      <div class="recent-calls">
+        {recentCalls.length > 0 ? (
+          recentCalls.map(call => {
+            const time = new Date(call.timestamp).toLocaleTimeString();
+            return (
+              <div class="call-item">
+                <span class="call-time">{time}</span>
+                <span 
+                  class="call-provider"
+                  style={`color: ${providerColors[call.provider] || '#888'}`}
+                >
+                  {call.provider}
+                </span>
+                <span class="call-cost">
+                  {call.cost > 0 ? `$${call.cost.toFixed(4)}` : 'free'}
+                </span>
+              </div>
+            );
+          })
+        ) : (
+          <p class="empty-state">No recent API calls.</p>
+        )}
+      </div>
+    </section>
+
+    <!-- Pricing Reference -->
+    <section class="pricing-section">
+      <span class="section-label">// pricing reference</span>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h4>Claude Code</h4>
+          <p>~$0.04 per typical request</p>
+          <small>Based on 4K input + 2K output tokens</small>
+        </div>
+        <div class="pricing-card">
+          <h4>Exa Search</h4>
+          <p>~$0.05 per search</p>
+          <small>Neural search with AI summaries</small>
+        </div>
+        <div class="pricing-card">
+          <h4>Brave Search</h4>
+          <p>$0.003 per query</p>
+          <small>Pro plan pricing</small>
+        </div>
+        <div class="pricing-card">
+          <h4>Serper (Google)</h4>
+          <p>$0.001 per search</p>
+          <small>Starter plan pricing</small>
+        </div>
+        <div class="pricing-card">
+          <h4>GitHub API</h4>
+          <p>Free</p>
+          <small>5000 requests/hour limit</small>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-card.highlight {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .stat-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-value {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .stat-sub {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 0.25rem;
+  }
+
+  .budget-section {
+    padding: 2rem 0;
+  }
+
+  .budget-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .budget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .budget-label {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .budget-status {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  .budget-status.warning {
+    color: #e17055;
+  }
+
+  .budget-bar {
+    height: 8px;
+    background: var(--bg-surface);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+
+  .budget-progress {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+
+  .budget-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+  }
+
+  .chart-section {
+    padding: 2rem 0;
+  }
+
+  .chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  canvas {
+    width: 100% !important;
+    height: 200px !important;
+  }
+
+  .providers-section {
+    padding: 2rem 0;
+  }
+
+  .providers-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .provider-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+  }
+
+  .provider-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .provider-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .provider-name {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    text-transform: capitalize;
+  }
+
+  .provider-stats {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .provider-percent {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+
+  .recent-calls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .call-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .call-time {
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    min-width: 80px;
+  }
+
+  .call-provider {
+    flex: 1;
+    font-family: var(--font-mono);
+    text-transform: capitalize;
+  }
+
+  .call-cost {
+    font-family: var(--font-mono);
+    color: var(--accent);
+  }
+
+  .pricing-section {
+    padding: 2rem 0;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .pricing-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .pricing-card h4 {
+    font-size: 0.9rem;
+    color: var(--text-bright);
+    margin-bottom: 0.5rem;
+  }
+
+  .pricing-card p {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+  }
+
+  .pricing-card small {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  @media (max-width: 640px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .pricing-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script define:vars={{ chartDataJson }}>
+  const chartData = JSON.parse(chartDataJson);
+  
+  if (chartData.length > 0 && typeof window !== 'undefined') {
+    // Simple bar chart using canvas
+    const canvas = document.getElementById('costChart');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width = canvas.offsetWidth;
+      const height = canvas.height = 200;
+      
+      const maxCost = Math.max(...chartData.map(d => d.cost), 0.01);
+      const barWidth = (width - 40) / chartData.length - 10;
+      
+      // Clear
+      ctx.fillStyle = '#161616';
+      ctx.fillRect(0, 0, width, height);
+      
+      // Draw bars
+      chartData.forEach((d, i) => {
+        const barHeight = (d.cost / maxCost) * (height - 40);
+        const x = 20 + i * (barWidth + 10);
+        const y = height - barHeight - 20;
+        
+        // Bar
+        ctx.fillStyle = '#00d4aa';
+        ctx.fillRect(x, y, barWidth, barHeight);
+        
+        // Label
+        ctx.fillStyle = '#888';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.date, x + barWidth / 2, height - 5);
+        
+        // Value
+        if (d.cost > 0) {
+          ctx.fillStyle = '#e0e0e0';
+          ctx.fillText('$' + d.cost.toFixed(2), x + barWidth / 2, y - 5);
+        }
+      });
+    }
+  }
+</script>

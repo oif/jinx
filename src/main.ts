@@ -136,6 +136,25 @@ async function main(): Promise<void> {
         return formatPerformanceReport();
       },
 
+      costs: async () => {
+        const { getCostSummary, formatCostReport, getRecentCalls, formatRecentCalls } = await import("./costs/tracker.js");
+        const { formatPricingInfo } = await import("./costs/pricing.js");
+        const summary = getCostSummary(30);
+        const recent = getRecentCalls(10);
+        return [
+          formatCostReport(summary),
+          "",
+          formatRecentCalls(recent),
+          "",
+          "💡 Use /pricing to see API pricing details",
+        ].join("\n");
+      },
+
+      pricing: async () => {
+        const { formatPricingInfo } = await import("./costs/pricing.js");
+        return formatPricingInfo();
+      },
+
       quality: async () => {
         const { runQualityCheck, formatQualityReport } = await import("./quality/code-quality.js");
         const result = await runQualityCheck();
@@ -174,6 +193,8 @@ async function main(): Promise<void> {
           "/recent - Show recent 5 evolutions summary",
           "/history - Show health history with statistics",
           "/perf - Show performance metrics report",
+          "/costs - Show API usage costs and recent calls",
+          "/pricing - Show API pricing information",
           "/quality - Run code quality checks",
           "/search - Search the web",
           "/restart - Request process restart",
