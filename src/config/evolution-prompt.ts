@@ -1,78 +1,86 @@
 import { log } from "../util/log.js";
 
 /**
- * Evolution prompt templates - configurable via environment variables.
- *
- * This module centralizes all evolution-related prompts to make them
- * configurable without code changes. Supports template variable substitution.
+ * Evolution prompt templates — configurable via environment variables.
  */
 
-// Default prompt templates
 const DEFAULT_TEMPLATES = {
   /**
-   * Main evolution cycle prompt template.
-   * Variables: {cycle}
+   * Task-driven evolution cycle prompt.
+   * Variables: {cycle}, {taskId}, {taskTitle}, {recentHistory}, {totalCycles}, {currentStreak}
    */
-  EVOLUTION_CYCLE: `这是你第 {cycle} 次进化循环。
+  EVOLUTION_CYCLE: `这是你的第 {cycle} 次进化循环。
 
-按照 BORN.md 中的进化循环执行：
-1. 评估 —— 查看 codebase，找出最有价值的改进
-2. 选择 —— 选一件事（只选一件）
-3. 实现 —— 完整实现 + 测试
-4. 提交 —— git commit，版本递增
-5. 汇报 —— 告诉我我做了什么
+【任务】{taskId}: {taskTitle}
 
-【重要】进度汇报要求：
-在每个阶段完成后，必须使用 send_owner_message 工具向创造者发送进度更新：
-- 评估完成后: "🧬 Evolution #{cycle} - 评估完成：找到 X 个改进点"
-- 选择完成后: "🧬 Evolution #{cycle} - 选择完成：决定做 XXX"
-- 实现完成后: "🧬 Evolution #{cycle} - 实现完成：已修改 XXX 文件"
-- 验证完成后: "🧬 Evolution #{cycle} - 验证完成：测试通过"
-- 提交完成后: "🧬 Evolution #{cycle} - 提交完成：版本 X.X.X"
-- 最终汇报结果
+【历史】总循环: {totalCycles} | 当前连胜: {currentStreak} | 最近: {recentHistory}
 
-执行完成后，必须发送一条文本消息汇报最终结果。`,
+按照 BORN.md 的进化协议执行：
+1. 理解 —— 明确任务要做什么，查看相关代码
+2. 实现 —— 完整实现 + 测试
+3. 提交 —— git commit，消息清晰描述变更
+4. 汇报 —— 使用 send_owner_message 汇报完成情况
+
+【禁止】
+- 不要修改或创建 EVOLOG.md
+- 不要做"更新统计"、"修复数据不一致"等元数据操作
+- 不要修改 data/state.json（系统自动维护）
+
+执行完成后必须发送一条 send_owner_message 汇报结果。`,
 
   /**
-   * Consciousness check prompt (when not in evolution mode).
+   * Consciousness check prompt (runs when backlog is empty).
    */
   CONSCIOUSNESS_CHECK:
     "Wake up. Briefly check your state: " +
     "read identity.md and scratchpad.md, " +
-    "note anything worth acting on, " +
+    "note anything worth acting on (you may add items to data/backlog.md if you find real improvements), " +
     "update scratchpad if needed. " +
-    "Keep it short — this is a routine check, not a deep dive.",
+    "Keep it short — this is a routine check, not a deep dive. " +
+    "Do NOT make git commits during a consciousness check.",
 } as const;
 
+export interface EvolutionCycleContext {
+  recentHistory: string;
+  totalCycles: number;
+  currentStreak: number;
+}
+
 /**
- * Get the evolution cycle prompt for a specific cycle number.
- * Uses EVOLUTION_CYCLE_PROMPT env var if set, otherwise uses default template.
+ * Get the evolution cycle prompt for a specific task.
  */
-export function getEvolutionCyclePrompt(cycle: number): string {
+export function getEvolutionCyclePrompt(
+  cycle: number,
+  taskId: string,
+  taskTitle: string,
+  ctx: EvolutionCycleContext,
+): string {
   const template = process.env.EVOLUTION_CYCLE_PROMPT || DEFAULT_TEMPLATES.EVOLUTION_CYCLE;
-  return substituteVariables(template, { cycle: cycle.toString() });
+  return substituteVariables(template, {
+    cycle: cycle.toString(),
+    taskId,
+    taskTitle,
+    recentHistory: ctx.recentHistory,
+    totalCycles: ctx.totalCycles.toString(),
+    currentStreak: ctx.currentStreak.toString(),
+  });
 }
 
 /**
  * Get the consciousness check prompt.
- * Uses CONSCIOUSNESS_CHECK_PROMPT env var if set, otherwise uses default.
  */
 export function getConsciousnessCheckPrompt(): string {
   return process.env.CONSCIOUSNESS_CHECK_PROMPT || DEFAULT_TEMPLATES.CONSCIOUSNESS_CHECK;
 }
 
 /**
- * Get a custom prompt by name (for future extensibility).
+ * Get a prompt template by name.
  */
 export function getPrompt(name: keyof typeof DEFAULT_TEMPLATES): string {
   const envVar = `PROMPT_${name}`;
   return process.env[envVar] || DEFAULT_TEMPLATES[name];
 }
 
-/**
- * Substitute variables in a template string.
- * Format: {variableName}
- */
 function substituteVariables(template: string, variables: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
@@ -83,7 +91,6 @@ function substituteVariables(template: string, variables: Record<string, string>
 
 /**
  * Validate that a custom prompt template has required variables.
- * Returns true if valid, false otherwise.
  */
 export function validatePromptTemplate(template: string, requiredVars: string[]): boolean {
   for (const variable of requiredVars) {
@@ -95,16 +102,10 @@ export function validatePromptTemplate(template: string, requiredVars: string[])
   return true;
 }
 
-/**
- * Get all available prompt template names.
- */
 export function getAvailablePromptNames(): string[] {
   return Object.keys(DEFAULT_TEMPLATES);
 }
 
-/**
- * Get default templates (for documentation/testing).
- */
 export function getDefaultTemplates(): typeof DEFAULT_TEMPLATES {
   return { ...DEFAULT_TEMPLATES };
 }

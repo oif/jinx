@@ -34,12 +34,13 @@ describe("Telegram commands", () => {
     expect(mainContent).toContain('history:');
   });
 
-  it("should have /evolve command", () => {
-    expect(mainContent).toContain('evolve:');
+  it("should have /backlog command", () => {
+    expect(mainContent).toContain('backlog:');
+    expect(mainContent).toContain('/backlog');
   });
 
-  it("should have /stop_evolve command", () => {
-    expect(mainContent).toContain('stop_evolve:');
+  it("should have /evolve command (trigger now)", () => {
+    expect(mainContent).toContain('evolve:');
   });
 
   it("should have /restart command", () => {
@@ -52,5 +53,9 @@ describe("Telegram commands", () => {
 
   it("should have /start command", () => {
     expect(mainContent).toContain('start:');
+  });
+
+  it("should NOT have stop_evolve command (removed)", () => {
+    expect(mainContent).not.toContain('stop_evolve:');
   });
 });

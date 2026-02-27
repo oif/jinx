@@ -89,5 +89,18 @@ export function buildJinxSystemPrompt(defaultPrompt: string): string {
 
   sections.push(`\n\n# Runtime\n\n${runtimeInfo}`);
 
+  // Hard prohibitions — enforced at system level
+  sections.push(`\n\n# System Prohibitions
+
+The following files are managed automatically by the system. **Never create or modify them manually:**
+
+- \`EVOLOG.md\` — deprecated, do not create or touch this file
+- \`data/state.json\` — updated only via internal saveState() calls
+
+During an Evolution Cycle:
+- Focus exclusively on the assigned task from backlog.md
+- Do not make "update statistics", "fix data inconsistency", or metadata-only commits
+- Every commit must correspond to real, functional work on the task`);
+
   return sections.join("");
 }

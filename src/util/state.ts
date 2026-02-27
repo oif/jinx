@@ -5,7 +5,6 @@ import { STATE_PATH, PACKAGE_PATH, DATA_DIR } from "../supervisor/paths.js";
 export interface State {
   version: string;
   cycle: number;
-  evolutionEnabled: boolean;
   lastRestart: string | null;
   lastEvolution: string | null;
   [key: string]: unknown;
@@ -64,7 +63,6 @@ export function readState(): State {
       ...runtimeState,
       version, // Always use git-tracked version
       cycle,   // Always use git-tracked cycle
-      evolutionEnabled: runtimeState.evolutionEnabled ?? false,
       lastRestart: runtimeState.lastRestart || null,
       lastEvolution: runtimeState.lastEvolution || null,
     };
@@ -73,7 +71,6 @@ export function readState(): State {
     return {
       version,
       cycle,
-      evolutionEnabled: false,
       lastRestart: null,
       lastEvolution: null,
     };

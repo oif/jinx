@@ -80,7 +80,6 @@ describe("state utilities", () => {
 
     it("should merge runtime state from state.json with git-tracked values", () => {
       const runtimeState = {
-        evolutionEnabled: true,
         lastRestart: "2026-02-25T12:00:00Z",
         lastEvolution: "2026-02-25T13:00:00Z",
         customField: "custom value",
@@ -95,7 +94,6 @@ describe("state utilities", () => {
       expect(typeof state.cycle).toBe("number");
 
       // Runtime state is preserved
-      expect(state.evolutionEnabled).toBe(true);
       expect(state.lastRestart).toBe("2026-02-25T12:00:00Z");
       expect(state.lastEvolution).toBe("2026-02-25T13:00:00Z");
       expect(state.customField).toBe("custom value");
@@ -104,7 +102,6 @@ describe("state utilities", () => {
     it("should return default runtime values when state.json does not exist", () => {
       const state = readState();
 
-      expect(state.evolutionEnabled).toBe(false);
       expect(state.lastRestart).toBeNull();
       expect(state.lastEvolution).toBeNull();
     });

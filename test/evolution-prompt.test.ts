@@ -8,6 +8,12 @@ import {
   getDefaultTemplates,
 } from "../src/config/evolution-prompt.js";
 
+const TEST_CTX = {
+  recentHistory: "#1 success, #2 success",
+  totalCycles: 10,
+  currentStreak: 5,
+};
+
 describe("config/evolution-prompt", () => {
   const originalEnv = process.env;
 
@@ -20,29 +26,32 @@ describe("config/evolution-prompt", () => {
   });
 
   describe("getEvolutionCyclePrompt", () => {
-    it("should return default prompt with cycle number substituted", () => {
-      const prompt = getEvolutionCyclePrompt(15);
+    it("should return prompt containing cycle number, task id and title", () => {
+      const prompt = getEvolutionCyclePrompt(15, "#001", "Fix login bug", TEST_CTX);
       expect(prompt).toContain("15");
-      expect(prompt).toContain("进化循环");
-      expect(prompt).toContain("评估 —— 查看 codebase");
+      expect(prompt).toContain("#001");
+      expect(prompt).toContain("Fix login bug");
       expect(prompt).toContain("BORN.md");
     });
 
-    it("should substitute cycle variable multiple times", () => {
-      const prompt = getEvolutionCyclePrompt(42);
-      const matches = prompt.match(/42/g);
-      expect(matches?.length).toBeGreaterThan(1);
+    it("should substitute all variables", () => {
+      const prompt = getEvolutionCyclePrompt(42, "#007", "Refactor scheduler", TEST_CTX);
+      expect(prompt).toContain("42");
+      expect(prompt).toContain("#007");
+      expect(prompt).toContain("Refactor scheduler");
+      expect(prompt).toContain("10"); // totalCycles
+      expect(prompt).toContain("5");  // currentStreak
     });
 
     it("should use custom prompt from environment variable", () => {
-      process.env.EVOLUTION_CYCLE_PROMPT = "Custom prompt for cycle {cycle}";
-      const prompt = getEvolutionCyclePrompt(5);
-      expect(prompt).toBe("Custom prompt for cycle 5");
+      process.env.EVOLUTION_CYCLE_PROMPT = "Custom: {cycle} {taskId}";
+      const prompt = getEvolutionCyclePrompt(5, "#003", "Test task", TEST_CTX);
+      expect(prompt).toBe("Custom: 5 #003");
     });
 
     it("should handle large cycle numbers", () => {
-      const prompt = getEvolutionCyclePrompt(999999);
-      expect(prompt).toContain("999999");
+      const prompt = getEvolutionCyclePrompt(999, "#999", "Big task", TEST_CTX);
+      expect(prompt).toContain("999");
     });
   });
 
@@ -64,7 +73,7 @@ describe("config/evolution-prompt", () => {
   describe("getPrompt", () => {
     it("should return EVOLUTION_CYCLE template", () => {
       const prompt = getPrompt("EVOLUTION_CYCLE");
-      expect(prompt).toContain("进化循环");
+      expect(prompt).toContain("BORN.md");
     });
 
     it("should return CONSCIOUSNESS_CHECK template", () => {
@@ -102,12 +111,13 @@ describe("config/evolution-prompt", () => {
   describe("getDefaultTemplates", () => {
     it("should return copy of default templates", () => {
       const templates = getDefaultTemplates();
-      expect(templates.EVOLUTION_CYCLE).toContain("进化循环");
+      expect(templates.EVOLUTION_CYCLE).toContain("BORN.md");
       expect(templates.CONSCIOUSNESS_CHECK).toContain("Wake up");
     });
 
-    it("should return a copy (modification doesn't affect original)", () => {
+    it("should return a copy (modification does not affect original)", () => {
       const templates = getDefaultTemplates();
+      // @ts-ignore — intentional mutation test
       templates.EVOLUTION_CYCLE = "modified";
       const templates2 = getDefaultTemplates();
       expect(templates2.EVOLUTION_CYCLE).not.toBe("modified");

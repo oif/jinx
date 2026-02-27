@@ -6,9 +6,9 @@ export const STATE_PATH = join(DATA_DIR, "state.json");
 export const SESSIONS_DIR = join(DATA_DIR, "sessions");
 
 // Git-tracked files
-export const EVOLOG_PATH = join(PROJECT_ROOT, "EVOLOG.md");
 export const PACKAGE_PATH = join(PROJECT_ROOT, "package.json");
 export const BORN_PATH = join(PROJECT_ROOT, "BORN.md");
+export const BACKLOG_PATH = join(PROJECT_ROOT, "data", "backlog.md");
 
 // Evolution progress tracking
 export const PROGRESS_PATH = join(DATA_DIR, "evolution-progress.json");

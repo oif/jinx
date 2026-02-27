@@ -5,11 +5,14 @@ import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
 import { startConsciousness } from "./consciousness/loop.js";
+import { loadNextTask } from "./consciousness/loop.js";
 import { checkHealth, registerHealthNotifier } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
 import { cleanupOldSessions } from "./supervisor/cleanup.js";
 import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
 import { formatProgress, isEvolutionActive } from "./consciousness/evolution-progress.js";
+import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
 
 async function main(): Promise<void> {
   // Step 0: Emergency crash loop detection
@@ -48,12 +51,13 @@ async function main(): Promise<void> {
         const branch = getCurrentBranch();
         const sha = getCurrentSha().slice(0, 8);
         const health = await checkHealth();
+        const nextTask = loadNextTask();
 
         const lines: string[] = [
           `Version: ${state.version}`,
           `Branch: ${branch} (${sha})`,
           `Cycle: ${state.cycle}`,
-          `Evolution: ${state.evolutionEnabled ? "ON" : "OFF"}`,
+          `Next task: ${nextTask ? `${nextTask.id}: ${nextTask.title}` : "none (backlog empty)"}`,
           `PID: ${process.pid}`,
           `Uptime: ${formatUptime(process.uptime())}`,
           `Health: ${health.status.toUpperCase()} (Mem: ${health.memory.usedPercent}%, CPU: ${health.cpu.loadPercent}%, Disk: ${health.disk.usedPercent}%)`,
@@ -76,29 +80,33 @@ async function main(): Promise<void> {
         return formatEvolutionReport();
       },
 
+      backlog: async () => {
+        const backlogPath = join(process.cwd(), "data", "backlog.md");
+        if (!existsSync(backlogPath)) return "No backlog file found.";
+        const content = readFileSync(backlogPath, "utf-8");
+        // Return just the Pending section (first ~50 lines)
+        const lines = content.split("\n");
+        const result: string[] = [];
+        let inPending = false;
+        for (const line of lines) {
+          if (line.trim() === "## Pending") { inPending = true; result.push(line); continue; }
+          if (inPending && line.trim().startsWith("## ")) break;
+          if (inPending) result.push(line);
+        }
+        const pendingItems = result.filter(l => l.trim().startsWith("- [ ]"));
+        if (pendingItems.length === 0) return "📋 Backlog: empty (no pending tasks)";
+        return `📋 Backlog (${pendingItems.length} pending):\n${pendingItems.slice(0, 10).join("\n")}`;
+      },
+
       evolve: async () => {
         if (consciousness.handle) {
-          consciousness.handle.triggerEvolution();
-          return "🧬 Evolution mode activated.";
+          consciousness.handle.triggerNow();
+          const task = loadNextTask();
+          if (task) return `🧬 Triggering evolution for: ${task.id}: ${task.title}`;
+          return "📋 Backlog is empty — nothing to evolve. Add tasks first.";
         }
         return "Consciousness loop not running.";
       },
-
-      stop_evolve: async () => {
-        if (consciousness.handle) {
-          consciousness.handle.stopEvolution();
-          return "Evolution mode deactivated.";
-        }
-        return "Consciousness loop not running.";
-      },
-
-      restart: async () => {
-        const { requestRestart } = await import("./supervisor/restart.js");
-        await requestRestart("Manual restart requested via Telegram");
-        return "🔄 Restart requested. Supervisor will restart me shortly.";
-      },
-
-      ping: async () => "pong 🏓",
 
       recent: async () => {
         const { loadEvolutionHistory } = await import("./consciousness/history.js");
@@ -123,22 +131,30 @@ async function main(): Promise<void> {
         return lines.join("\n");
       },
 
+      restart: async () => {
+        const { requestRestart } = await import("./supervisor/restart.js");
+        await requestRestart("Manual restart requested via Telegram");
+        return "🔄 Restart requested. Supervisor will restart me shortly.";
+      },
+
+      ping: async () => "pong 🏓",
+
       help: async () => {
         return [
           "📋 Available Commands:",
           "",
           "/start - Check if Jinx is alive",
-          "/status - Show system status (version, health, uptime)",
-          "/history - Show health history with statistics",
+          "/status - Show system status (version, health, next task)",
+          "/backlog - Show pending tasks",
+          "/evolve - Trigger evolution immediately (if tasks pending)",
           "/evolution - Show evolution history report",
-          "/evolve - Start evolution mode",
-          "/stop_evolve - Stop evolution mode",
           "/recent - Show recent 5 evolutions summary",
+          "/history - Show health history with statistics",
           "/restart - Request process restart",
           "/ping - Ping Jinx",
           "/help - Show this help message",
           "",
-          "💬 You can also send me messages directly for agent mode.",
+          "💬 Send a message to add tasks, ask questions, or give instructions.",
         ].join("\n");
       },
     }
