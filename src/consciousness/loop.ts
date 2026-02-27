@@ -11,9 +11,10 @@ import {
 } from "./evolution-progress.js";
 import { STATE_PATH } from "../supervisor/paths.js";
 import { recordHealthSnapshot } from "../health/history.js";
-import { getEvolutionCyclePrompt, getConsciousnessCheckPrompt } from "../config/evolution-prompt.js";
+import { getEvolutionCyclePrompt, getGoalDiscoveryPrompt } from "../config/evolution-prompt.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
+const GOALS_PATH = join(process.cwd(), "data", "goals.md");
 
 // ── Backlog ────────────────────────────────────────────────────────
 
@@ -22,9 +23,9 @@ export interface Task {
   title: string;
 }
 
-function safeReadBacklog(): string {
+function safeRead(path: string): string {
   try {
-    if (existsSync(BACKLOG_PATH)) return readFileSync(BACKLOG_PATH, "utf-8");
+    if (existsSync(path)) return readFileSync(path, "utf-8");
   } catch {
     // Not fatal
   }
@@ -36,7 +37,7 @@ function safeReadBacklog(): string {
  * Format: `- [ ] #001: Task title`
  */
 export function loadNextTask(): Task | null {
-  const content = safeReadBacklog();
+  const content = safeRead(BACKLOG_PATH);
   const lines = content.split("\n");
   let inPending = false;
 
@@ -84,6 +85,24 @@ export function markTaskDone(task: Task): void {
   }
 }
 
+/** Load recent Done entries from backlog for context */
+function loadRecentDone(limit = 5): string {
+  const content = safeRead(BACKLOG_PATH);
+  const lines = content.split("\n");
+  const done: string[] = [];
+  let inDone = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed === "## Done") { inDone = true; continue; }
+    if (trimmed.startsWith("## ")) { inDone = false; continue; }
+    if (inDone && trimmed.startsWith("- [x]")) done.push(trimmed);
+  }
+
+  const recent = done.slice(-limit);
+  return recent.length > 0 ? recent.join(", ") : "none yet";
+}
+
 // ── Loop interval ──────────────────────────────────────────────────
 
 function getLoopIntervalMs(): number {
@@ -95,9 +114,10 @@ function getLoopIntervalMs(): number {
   return 5 * 1000; // default: 5 seconds
 }
 
-// Consciousness check runs at most once every 6 hours when backlog is empty
-const CONSCIOUSNESS_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
-let lastConsciousnessCheckAt = 0;
+// Goal discovery cooldown: at least 2 hours between discoveries
+// This prevents tight loops when discovery finds nothing or fails
+const GOAL_DISCOVERY_COOLDOWN_MS = 2 * 60 * 60 * 1000;
+let lastGoalDiscoveryAt = 0;
 
 // ── State helpers ──────────────────────────────────────────────────
 
@@ -118,7 +138,7 @@ type PromptFn = (message: string) => Promise<string>;
 type NotifyFn = (message: string) => Promise<void>;
 
 export interface ConsciousnessHandle {
-  /** Immediately trigger one cycle if a task is pending. */
+  /** Immediately trigger one cycle if a task is pending, or goal discovery if not. */
   triggerNow: () => void;
   stop: () => void;
 }
@@ -146,12 +166,13 @@ export function startConsciousness(
       if (task) {
         await runEvolutionCycle(task, promptFn, notifyFn);
       } else {
-        // No tasks: run consciousness check at most every 6 hours
+        // Backlog empty: run goal discovery if cooldown has elapsed
         const now = Date.now();
-        if (now - lastConsciousnessCheckAt >= CONSCIOUSNESS_CHECK_INTERVAL_MS) {
-          lastConsciousnessCheckAt = now;
-          await runConsciousnessCheck(promptFn);
+        if (now - lastGoalDiscoveryAt >= GOAL_DISCOVERY_COOLDOWN_MS) {
+          lastGoalDiscoveryAt = now;
+          await runGoalDiscovery(promptFn, notifyFn);
         }
+        // else: nothing to do this tick
       }
     } catch (e) {
       log.error("Consciousness tick failed", { error: (e as Error).message });
@@ -172,6 +193,8 @@ export function startConsciousness(
   return {
     triggerNow: () => {
       if (!running && !isAgentBusy()) {
+        // Force goal discovery on next trigger even if within cooldown
+        lastGoalDiscoveryAt = 0;
         if (timer) clearTimeout(timer);
         tick();
       }
@@ -209,9 +232,7 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
     const durationMs = Date.now() - startTime;
     setEvolutionStage("committing", "Saving results");
 
-    // Mark task done in backlog
     markTaskDone(task);
-
     saveState({ cycle, lastEvolution: new Date().toISOString() });
     recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs);
     completeEvolutionProgress(durationMs);
@@ -232,14 +253,37 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
   }
 }
 
-// ── Consciousness check ────────────────────────────────────────────
+// ── Goal discovery ─────────────────────────────────────────────────
 
-async function runConsciousnessCheck(promptFn: PromptFn): Promise<void> {
-  log.info("Consciousness check");
+async function runGoalDiscovery(promptFn: PromptFn, notifyFn: NotifyFn): Promise<void> {
+  log.info("Goal discovery starting");
+
   try {
     await recordHealthSnapshot();
-    await promptFn(getConsciousnessCheckPrompt());
+
+    const stats = calculateEvolutionStats();
+    const goals = safeRead(GOALS_PATH) || "No direction set yet. Explore freely.";
+    const recentDone = loadRecentDone(5);
+
+    const prompt = getGoalDiscoveryPrompt({
+      goals,
+      recentDone,
+      totalCycles: stats.totalCycles,
+    });
+
+    const result = await promptFn(prompt);
+
+    // Check if new tasks were added
+    const taskAfter = loadNextTask();
+    if (taskAfter) {
+      log.info("Goal discovery added tasks to backlog");
+      await notifyFn(`🔍 Goal discovery complete. New task queued: ${taskAfter.id}: ${taskAfter.title}`);
+    } else {
+      log.info("Goal discovery found nothing to add");
+    }
+
+    log.info("Goal discovery completed", { result: result.slice(0, 100) });
   } catch (e) {
-    log.error("Consciousness check failed", { error: (e as Error).message });
+    log.error("Goal discovery failed", { error: (e as Error).message });
   }
 }

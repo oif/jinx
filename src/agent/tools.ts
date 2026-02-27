@@ -83,6 +83,10 @@ const createPrParams = Type.Object({
   base: Type.Optional(Type.String({ description: "Branch to merge into (default: main)" })),
 });
 
+const addBacklogTaskParams = Type.Object({
+  title: Type.String({ description: "Concise, actionable task title (e.g. 'Add rate limiting to Telegram bot')" }),
+});
+
 // ── Tools ──────────────────────────────────────────────────────────
 
 /**
@@ -390,6 +394,63 @@ export const createPrTool: ToolDefinition = {
   },
 };
 
+// ── Backlog helpers ────────────────────────────────────────────────
+
+const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
+
+function getNextBacklogId(content: string): string {
+  const matches = [...content.matchAll(/#(\d+)/g)];
+  const maxId = matches.reduce((max, m) => {
+    const n = parseInt(m[1], 10);
+    return n > max ? n : max;
+  }, 0);
+  return `#${String(maxId + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Add a task to the backlog's Pending section.
+ * Automatically assigns the next sequential ID.
+ */
+export const addBacklogTaskTool: ToolDefinition = {
+  name: "add_backlog_task",
+  label: "Add Backlog Task",
+  description:
+    "Add a new task to data/backlog.md for future execution. " +
+    "Use during goal discovery to queue discovered improvements. " +
+    "The task will be assigned a sequential ID automatically.",
+  parameters: addBacklogTaskParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const title = (params.title as string).trim();
+      const content = existsSync(BACKLOG_PATH)
+        ? readFileSync(BACKLOG_PATH, "utf-8")
+        : "# Backlog\n\n## Pending\n\n## Done\n";
+
+      const id = getNextBacklogId(content);
+      const taskLine = `- [ ] ${id}: ${title}`;
+
+      // Insert after "## Pending" heading
+      const pendingIdx = content.indexOf("## Pending");
+      if (pendingIdx === -1) {
+        return textResult("Error: could not find '## Pending' section in backlog.md");
+      }
+      const afterHeading = content.indexOf("\n", pendingIdx) + 1;
+      const updated = content.slice(0, afterHeading) + taskLine + "\n" + content.slice(afterHeading);
+
+      writeFileSync(BACKLOG_PATH, updated);
+      return textResult(`Task added to backlog: ${id}: ${title}`);
+    } catch (e) {
+      return textResult(`Error adding task: ${(e as Error).message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -401,4 +462,5 @@ export const jinxTools: ToolDefinition[] = [
   knowledgeWriteTool,
   fetchWebpageTool,
   createPrTool,
+  addBacklogTaskTool,
 ];

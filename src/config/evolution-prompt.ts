@@ -6,6 +6,40 @@ import { log } from "../util/log.js";
 
 const DEFAULT_TEMPLATES = {
   /**
+   * Goal discovery prompt — runs when backlog is empty.
+   * Variables: {goals}, {recentDone}, {totalCycles}
+   */
+  GOAL_DISCOVERY: `你是 Jinx，现在进入目标探索阶段。backlog 已清空，需要主动发现下一步的成长方向。
+
+【Neo 给的方向性目标】
+{goals}
+
+【历史】总循环: {totalCycles} | 最近完成: {recentDone}
+
+【你的任务】
+深度探索，发现 1-3 个真正值得做的改进。
+
+**可用的探索方式：**
+- 用 claude_code 工具让 Claude Code 搜索最新技术动态（"搜索最近有趣的 AI 工具"、"搜索 Node.js 最佳实践"等）
+- 用 fetch_webpage 工具抓取具体文章或文档
+- 分析自己的 codebase（通过 claude_code 工具）
+- 读 data/backlog.md 里的 Done 列表，避免重复
+
+**发现后用 add_backlog_task 工具写入 backlog。**
+
+【标准】只写真正有价值的任务，不要凑数：
+- ✅ 集成一个新工具/能力
+- ✅ 修复一个真实的痛点
+- ✅ 实现 Neo 方向里的具体想法
+- ❌ "更新统计"、"整理文件"等无意义操作
+
+【严格禁止】
+- 不要 git commit，不要修改代码
+- 只能操作 backlog.md 和 scratchpad.md
+
+探索完成后告诉我发现了什么，以及为什么这些任务值得做。`,
+
+  /**
    * Task-driven evolution cycle prompt.
    * Variables: {cycle}, {taskId}, {taskTitle}, {recentHistory}, {totalCycles}, {currentStreak}
    */
@@ -44,6 +78,24 @@ export interface EvolutionCycleContext {
   recentHistory: string;
   totalCycles: number;
   currentStreak: number;
+}
+
+export interface GoalDiscoveryContext {
+  goals: string;
+  recentDone: string;
+  totalCycles: number;
+}
+
+/**
+ * Get the goal discovery prompt (runs when backlog is empty).
+ */
+export function getGoalDiscoveryPrompt(ctx: GoalDiscoveryContext): string {
+  const template = process.env.GOAL_DISCOVERY_PROMPT || DEFAULT_TEMPLATES.GOAL_DISCOVERY;
+  return substituteVariables(template, {
+    goals: ctx.goals,
+    recentDone: ctx.recentDone,
+    totalCycles: ctx.totalCycles.toString(),
+  });
 }
 
 /**
