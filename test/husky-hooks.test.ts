@@ -24,7 +24,7 @@ describe("husky hooks", () => {
 
   it("should run build and quality checks in pre-commit", () => {
     const content = readFileSync(".husky/pre-commit", "utf-8");
-    expect(content).toContain("npm run build");
+    expect(content).toContain("npx tsc");
     expect(content).toContain("npm run quality");
   });
 

@@ -91,6 +91,11 @@ const addBacklogTaskParams = Type.Object({
 
 const getPerformanceReportParams = Type.Object({}); // No parameters needed
 
+const webSearchParams = Type.Object({
+  query: Type.String({ description: "Search query" }),
+  count: Type.Optional(Type.Number({ description: "Number of results (1-20, default 10)" })),
+});
+
 // ── Tools ──────────────────────────────────────────────────────────
 
 /**
@@ -521,6 +526,42 @@ export const getPerformanceReportTool: ToolDefinition = {
   },
 };
 
+// ── Web Search Tool ────────────────────────────────────────────────
+
+import { webSearch, formatSearchResults } from "../search/web-search.js";
+
+/**
+ * Search the web using Brave Search or Serper API
+ */
+export const webSearchTool: ToolDefinition = {
+  name: "web_search",
+  label: "Web Search",
+  description:
+    "Search the web for information. Uses Brave Search API (primary) or Serper API (fallback). " +
+    "Returns a list of search results with titles, URLs, and descriptions. " +
+    "Requires BRAVE_API_KEY or SERPER_API_KEY environment variable.",
+  parameters: webSearchParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const result = await webSearch({
+        query: params.query as string,
+        count: (params.count as number) || 10,
+      });
+      const formatted = formatSearchResults(result);
+      return textResult(formatted);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Search error: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -535,4 +576,5 @@ export const jinxTools: ToolDefinition[] = [
   addBacklogTaskTool,
   getPerformanceReportTool,
   checkCodeQualityTool,
+  webSearchTool,
 ];

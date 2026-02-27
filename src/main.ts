@@ -142,6 +142,18 @@ async function main(): Promise<void> {
         return formatQualityReport(result);
       },
 
+      search: async (args) => {
+        const { webSearch, formatSearchResults } = await import("./search/web-search.js");
+        const query = args.trim();
+        if (!query) return "Usage: /search <query>";
+        try {
+          const result = await webSearch({ query, count: 10 });
+          return formatSearchResults(result);
+        } catch (e) {
+          return `Search error: ${(e as Error).message}`;
+        }
+      },
+
       restart: async () => {
         const { requestRestart } = await import("./supervisor/restart.js");
         await requestRestart("Manual restart requested via Telegram");
@@ -163,6 +175,7 @@ async function main(): Promise<void> {
           "/history - Show health history with statistics",
           "/perf - Show performance metrics report",
           "/quality - Run code quality checks",
+          "/search - Search the web",
           "/restart - Request process restart",
           "/ping - Ping Jinx",
           "/help - Show this help message",
