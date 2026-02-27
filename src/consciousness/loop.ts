@@ -13,6 +13,7 @@ import { STATE_PATH } from "../supervisor/paths.js";
 import { recordHealthSnapshot } from "../health/history.js";
 import { recordEvolutionCycle } from "../observability/metrics.js";
 import { getEvolutionCyclePrompt, getGoalDiscoveryPrompt } from "../config/evolution-prompt.js";
+import { reviewChanges, formatChangeReview } from "../quality/change-review.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -248,8 +249,20 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
 
     log.info(`Evolution cycle #${cycle} completed`, { durationMs, task: task.id });
 
+    // Run automatic code change review
+    let reviewReport = "";
+    try {
+      setEvolutionStage("reviewing", "Running automated code review");
+      const reviewResult = await reviewChanges();
+      reviewReport = formatChangeReview(reviewResult);
+      log.info("Code change review complete", { cycle, passed: reviewResult.passed });
+    } catch (reviewErr) {
+      log.error("Code change review failed", { error: (reviewErr as Error).message });
+      reviewReport = "⚠️ Code review failed to run";
+    }
+
     const notifySummary = result.length > 500 ? result.slice(0, 500) + "..." : result;
-    await notifyFn(`🧬 Evolution #${cycle} complete [${task.id}]:\n${notifySummary}`);
+    await notifyFn(`🧬 Evolution #${cycle} complete [${task.id}]:\n${notifySummary}\n\n${reviewReport}`);
   } catch (e) {
     const err = e as Error;
     const durationMs = Date.now() - startTime;

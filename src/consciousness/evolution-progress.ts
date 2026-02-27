@@ -10,6 +10,7 @@ export type EvolutionStage =
   | "implementing"
   | "validating"
   | "committing"
+  | "reviewing"
   | "reporting"
   | "completed"
   | "failed";
@@ -140,6 +141,7 @@ function getStageEmoji(stage: EvolutionStage): string {
     implementing: "🔨",
     validating: "🧪",
     committing: "💾",
+    reviewing: "🔍",
     reporting: "📢",
     completed: "✅",
     failed: "❌",
@@ -189,7 +191,7 @@ export function formatProgress(): string {
   }
 
   // Add stage progression bar
-  const stages: EvolutionStage[] = ["evaluating", "selecting", "implementing", "validating", "committing", "reporting"];
+  const stages: EvolutionStage[] = ["evaluating", "selecting", "implementing", "validating", "committing", "reviewing", "reporting"];
   const currentIndex = stages.indexOf(progress.stage);
 
   if (currentIndex >= 0) {
@@ -199,7 +201,7 @@ export function formatProgress(): string {
       return "○"; // Pending
     }).join(" ");
 
-    const labels = ["eval", "select", "implement", "validate", "commit", "report"];
+    const labels = ["eval", "select", "implement", "validate", "commit", "review", "report"];
     lines.push(`\nProgress: ${bar}`);
     lines.push(`          ${labels.map((l, i) => i === currentIndex ? l.padEnd(8) : "".padEnd(8)).join("")}`);
   }
