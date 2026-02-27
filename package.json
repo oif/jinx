@@ -1,6 +1,6 @@
 {
   "name": "jinx",
-  "version": "0.1.110",
+  "version": "0.1.111",
   "description": "A self-iterating AI agent built on Pi",
   "type": "module",
   "main": "dist/main.js",
