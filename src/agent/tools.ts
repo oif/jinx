@@ -12,6 +12,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { formatPerformanceReport } from "../observability/metrics.js";
 import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
+import { runSelfDiagnosis, formatDiagnosisReport, executeRepairAction } from "../diagnosis/engine.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -94,6 +95,12 @@ const getPerformanceReportParams = Type.Object({}); // No parameters needed
 const webSearchParams = Type.Object({
   query: Type.String({ description: "Search query" }),
   count: Type.Optional(Type.Number({ description: "Number of results (1-20, default 10)" })),
+});
+
+const selfDiagnosisParams = Type.Object({}); // No parameters needed
+
+const repairActionParams = Type.Object({
+  command: Type.String({ description: "Repair command to execute (e.g., 'disk_cleanup', 'memory_optimization')" }),
 });
 
 // ── Tools ──────────────────────────────────────────────────────────
@@ -562,6 +569,72 @@ export const webSearchTool: ToolDefinition = {
   },
 };
 
+// ── Self-Diagnosis Tool ───────────────────────────────────────────
+
+/**
+ * Run self-diagnosis to identify failure patterns and generate repair recommendations.
+ */
+export const selfDiagnosisTool: ToolDefinition = {
+  name: "run_self_diagnosis",
+  label: "Run Self-Diagnosis",
+  description:
+    "Analyze health history and performance metrics to identify failure patterns " +
+    "and generate actionable repair recommendations. This tool helps Jinx understand " +
+    "its own operational issues and suggests fixes for health, performance, evolution, " +
+    "and tool-related problems. Use this when investigating system issues or " +
+    "as part of regular maintenance.",
+  parameters: selfDiagnosisParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const report = runSelfDiagnosis();
+      const formatted = formatDiagnosisReport(report);
+      return textResult(formatted);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error running self-diagnosis: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Execute an automated repair action.
+ */
+export const executeRepairTool: ToolDefinition = {
+  name: "execute_repair",
+  label: "Execute Repair",
+  description:
+    "Execute an automated repair action based on self-diagnosis recommendations. " +
+    "Currently supports: 'disk_cleanup' and 'memory_optimization'. " +
+    "Use this after running self-diagnosis to automatically fix detected issues.",
+  parameters: repairActionParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const command = params.command as string;
+      const success = await executeRepairAction(command);
+      if (success) {
+        return textResult(`✅ Repair action '${command}' executed successfully.`);
+      } else {
+        return textResult(`❌ Repair action '${command}' failed. Check logs for details.`);
+      }
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error executing repair: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -577,4 +650,6 @@ export const jinxTools: ToolDefinition[] = [
   getPerformanceReportTool,
   checkCodeQualityTool,
   webSearchTool,
+  selfDiagnosisTool,
+  executeRepairTool,
 ];
