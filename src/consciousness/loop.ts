@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { log } from "../util/log.js";
 import { readState, type State } from "../util/state.js";
-import { recordEvolutionResult, loadEvolutionHistory, calculateEvolutionStats } from "./history.js";
+import { recordEvolutionResult, loadRecentHistory, calculateEvolutionStats } from "./history.js";
 import {
   startEvolutionProgress,
   setEvolutionStage,
@@ -202,15 +202,15 @@ async function runEvolutionCycle(promptFn: PromptFn, notifyFn: NotifyFn): Promis
   try {
     setEvolutionStage("implementing", "Executing evolution cycle");
 
-    // Get recent history for context
-    const history = loadEvolutionHistory();
+    // Get recent history for context (memory-efficient: only loads last 3)
+    const recentHistory = loadRecentHistory(3);
     const stats = calculateEvolutionStats();
 
     const result = await promptFn(
       `这是你第 ${cycle} 次进化循环。\n\n` +
       `【进化历史】\n` +
       `- 总循环: ${stats.totalCycles} | 成功: ${stats.successfulCycles} | 当前连胜: ${stats.currentStreak}\n` +
-      `- 最近3次: ${history.slice(-3).map(h => `#${h.cycle} ${h.status}`).join(", ") || "无"}\n\n` +
+      `- 最近3次: ${recentHistory.map(h => `#${h.cycle} ${h.status}`).join(", ") || "无"}\n\n` +
       `按照 BORN.md 中的进化循环执行：\n` +
       `1. 评估 —— 查看 codebase，找出最有价值的改进\n` +
       `2. 选择 —— 选一件事（只选一件）\n` +
