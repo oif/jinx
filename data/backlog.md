@@ -12,8 +12,8 @@ Neo 通过 Telegram 消息告知 Jinx 添加任务，Jinx 也可在 consciousnes
 ---
 
 ## Pending
-- [ ] #001: 添加网页搜索工具 - 集成 Brave Search API 或 Serper，支持主动搜索获取信息
 
 ## Done
+- [x] #001: 添加网页搜索工具 - 集成 Brave Search API 或 Serper，支持主动搜索获取信息 — 2026-02-27
 - [x] #002: 添加代码质量检查工具 - 在构建流程中集成代码复杂度/安全扫描 — 2026-02-27
 - [x] #003: 添加性能追踪工具 - 集成 AgentOps 或自定义性能指标收集，增强可观测性 — 2026-02-27

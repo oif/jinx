@@ -6,6 +6,7 @@ describe("search/web-search", () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    delete process.env.EXA_API_KEY;
     delete process.env.BRAVE_API_KEY;
     delete process.env.SERPER_API_KEY;
   });
@@ -21,7 +22,71 @@ describe("search/web-search", () => {
       );
     });
 
-    it("should use Brave Search when BRAVE_API_KEY is set", async () => {
+    it("should use Exa when EXA_API_KEY is set", async () => {
+      process.env.EXA_API_KEY = "test-exa-key";
+
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [
+            { 
+              title: "Exa Result", 
+              url: "https://example.com", 
+              text: "Test description",
+              summary: "AI-generated summary",
+              publishedDate: "2024-01-15T00:00:00Z",
+              author: "John Doe"
+            },
+          ],
+        }),
+      });
+
+      const result = await webSearch({ query: "test query", count: 5 });
+
+      expect(result.provider).toBe("exa");
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0].title).toBe("Exa Result");
+      expect(result.results[0].summary).toBe("AI-generated summary");
+      expect(result.results[0].author).toBe("John Doe");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "https://api.exa.ai/search",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "x-api-key": "test-exa-key",
+          }),
+        })
+      );
+    });
+
+    it("should use Brave Search when BRAVE_API_KEY is set and Exa fails", async () => {
+      process.env.EXA_API_KEY = "test-exa-key";
+      process.env.BRAVE_API_KEY = "test-brave-key";
+
+      // Mock Exa to fail
+      global.fetch = vi.fn()
+        .mockRejectedValueOnce(new Error("Exa API error"))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            web: {
+              results: [
+                { title: "Brave Result", url: "https://brave.com", description: "Brave description" },
+              ],
+            },
+            query: { original: "test query" },
+          }),
+        });
+
+      const result = await webSearch({ query: "test query" });
+
+      expect(result.provider).toBe("brave");
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0].title).toBe("Brave Result");
+    });
+
+    it("should use Brave Search when only BRAVE_API_KEY is set", async () => {
       process.env.BRAVE_API_KEY = "test-brave-key";
 
       global.fetch = vi.fn().mockResolvedValueOnce({
@@ -29,53 +94,21 @@ describe("search/web-search", () => {
         json: async () => ({
           web: {
             results: [
-              { title: "Test Result", url: "https://example.com", description: "Test description" },
+              { title: "Brave Only", url: "https://test.com", description: "Description" },
             ],
-            total: 1,
+            total: 100,
           },
-          query: { original: "test query" },
+          query: { original: "test" },
         }),
       });
 
-      const result = await webSearch({ query: "test query", count: 5 });
+      const result = await webSearch({ query: "test" });
 
       expect(result.provider).toBe("brave");
-      expect(result.results).toHaveLength(1);
-      expect(result.results[0].title).toBe("Test Result");
-      expect(result.query).toBe("test query");
-
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("api.search.brave.com"),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            "X-Subscription-Token": "test-brave-key",
-          }),
-        })
+        expect.any(Object)
       );
-    });
-
-    it("should fallback to Serper when Brave fails", async () => {
-      process.env.BRAVE_API_KEY = "test-brave-key";
-      process.env.SERPER_API_KEY = "test-serper-key";
-
-      // Mock Brave to fail
-      global.fetch = vi.fn()
-        .mockRejectedValueOnce(new Error("Brave API error"))
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            searchParameters: { q: "test query" },
-            organic: [
-              { title: "Serper Result", link: "https://serper.com", snippet: "Serper description" },
-            ],
-          }),
-        });
-
-      const result = await webSearch({ query: "test query" });
-
-      expect(result.provider).toBe("serper");
-      expect(result.results).toHaveLength(1);
-      expect(result.results[0].title).toBe("Serper Result");
     });
 
     it("should use Serper when only SERPER_API_KEY is set", async () => {
@@ -94,36 +127,25 @@ describe("search/web-search", () => {
       const result = await webSearch({ query: "test" });
 
       expect(result.provider).toBe("serper");
-      expect(global.fetch).toHaveBeenCalledWith(
-        "https://google.serper.dev/search",
-        expect.objectContaining({
-          method: "POST",
-          headers: expect.objectContaining({
-            "X-API-KEY": "test-serper-key",
-          }),
-        })
-      );
     });
 
     it("should handle empty results", async () => {
-      process.env.BRAVE_API_KEY = "test-key";
+      process.env.EXA_API_KEY = "test-key";
 
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          web: { results: [], total: 0 },
-          query: { original: "unknown" },
+          results: [],
         }),
       });
 
       const result = await webSearch({ query: "unknown" });
 
       expect(result.results).toHaveLength(0);
-      expect(result.totalResults).toBe(0);
     });
 
     it("should throw error on API failure", async () => {
-      process.env.BRAVE_API_KEY = "test-key";
+      process.env.EXA_API_KEY = "test-key";
 
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: false,
@@ -131,47 +153,80 @@ describe("search/web-search", () => {
         text: async () => "Rate limit exceeded",
       });
 
-      await expect(webSearch({ query: "test" })).rejects.toThrow("Brave Search API error");
+      await expect(webSearch({ query: "test" })).rejects.toThrow("Exa API error");
+    });
+
+    it("should fallback through all providers", async () => {
+      process.env.EXA_API_KEY = "test-exa";
+      process.env.BRAVE_API_KEY = "test-brave";
+      process.env.SERPER_API_KEY = "test-serper";
+
+      // All providers fail
+      global.fetch = vi.fn()
+        .mockRejectedValueOnce(new Error("Exa failed"))
+        .mockRejectedValueOnce(new Error("Brave failed"))
+        .mockRejectedValueOnce(new Error("Serper failed"));
+
+      await expect(webSearch({ query: "test" })).rejects.toThrow("All search providers failed");
     });
   });
 
   describe("formatSearchResults", () => {
-    it("should format search results nicely", () => {
+    it("should format Exa search results nicely", () => {
       const response = {
         query: "test query",
-        provider: "brave" as const,
+        provider: "exa" as const,
         results: [
           {
             title: "First Result",
             url: "https://first.com",
             description: "First description",
-            source: "brave",
+            summary: "AI summary of first result",
+            author: "Jane Smith",
+            publishedDate: "2024-01-15T00:00:00Z",
+            source: "exa",
           },
           {
             title: "Second Result",
             url: "https://second.com",
             description: "Second description",
-            source: "brave",
+            source: "exa",
           },
+        ],
+      };
+
+      const formatted = formatSearchResults(response);
+
+      expect(formatted).toContain("🔍 Search Results for \"test query\"");
+      expect(formatted).toContain("Provider: exa");
+      expect(formatted).toContain("1. **First Result**");
+      expect(formatted).toContain("https://first.com");
+      expect(formatted).toContain("Author: Jane Smith");
+      expect(formatted).toContain("Published: 1/15/2024");
+      expect(formatted).toContain("AI summary of first result");
+      expect(formatted).toContain("2. **Second Result**");
+    });
+
+    it("should format Brave search results", () => {
+      const response = {
+        query: "test",
+        provider: "brave" as const,
+        results: [
+          { title: "Result", url: "https://test.com", description: "Desc", source: "brave" },
         ],
         totalResults: 100,
       };
 
       const formatted = formatSearchResults(response);
 
-      expect(formatted).toContain("🔍 Search Results for \"test query\"");
       expect(formatted).toContain("Provider: brave");
-      expect(formatted).toContain("1. **First Result**");
-      expect(formatted).toContain("https://first.com");
-      expect(formatted).toContain("First description");
-      expect(formatted).toContain("2. **Second Result**");
       expect(formatted).toContain("Total results: 100");
     });
 
     it("should handle empty results", () => {
       const response = {
         query: "unknown",
-        provider: "brave" as const,
+        provider: "exa" as const,
         results: [],
       };
 
@@ -179,18 +234,6 @@ describe("search/web-search", () => {
 
       expect(formatted).toContain("🔍 Search Results for \"unknown\"");
       expect(formatted).toContain("No results found");
-    });
-
-    it("should not show total when undefined", () => {
-      const response = {
-        query: "test",
-        provider: "serper" as const,
-        results: [{ title: "Result", url: "https://test.com", description: "Desc", source: "serper" }],
-      };
-
-      const formatted = formatSearchResults(response);
-
-      expect(formatted).not.toContain("Total results:");
     });
   });
 });

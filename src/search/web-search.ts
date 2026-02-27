@@ -1,6 +1,6 @@
 /**
  * Web search functionality for Jinx
- * Supports multiple search providers: Brave Search, Serper (Google)
+ * Supports multiple search providers: Exa (primary), Brave Search, Serper (fallback)
  */
 
 import { log } from "../util/log.js";
@@ -11,13 +11,17 @@ export interface SearchOptions {
   query: string;
   count?: number;
   offset?: number;
+  includeContents?: boolean; // For Exa: fetch page contents/summary
 }
 
 export interface SearchResult {
   title: string;
   url: string;
   description: string;
+  publishedDate?: string;
+  author?: string;
   source?: string;
+  summary?: string; // Exa provides AI-generated summaries
 }
 
 export interface SearchResponse {
@@ -25,6 +29,77 @@ export interface SearchResponse {
   totalResults?: number;
   query: string;
   provider: string;
+}
+
+// ── Exa API (Primary) ──────────────────────────────────────────────
+
+const EXA_API_URL = "https://api.exa.ai/search";
+
+async function searchExa(options: SearchOptions): Promise<SearchResponse> {
+  const apiKey = process.env.EXA_API_KEY;
+  if (!apiKey) {
+    throw new Error("EXA_API_KEY environment variable not set");
+  }
+
+  const requestBody: Record<string, unknown> = {
+    query: options.query,
+    numResults: Math.min(options.count || 10, 25),
+    type: "auto", // auto intelligently combines neural and other search methods
+  };
+
+  // Request contents if enabled (includes summary and highlights)
+  if (options.includeContents !== false) {
+    requestBody.contents = {
+      text: {
+        maxCharacters: 2000,
+      },
+      highlights: {
+        maxCharacters: 500,
+      },
+    };
+  }
+
+  const response = await fetch(EXA_API_URL, {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Exa API error: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json() as {
+    results?: Array<{
+      title?: string;
+      url: string;
+      text?: string;
+      summary?: string;
+      highlights?: string[];
+      publishedDate?: string;
+      author?: string;
+    }>;
+  };
+
+  const results: SearchResult[] = (data.results || []).map((item) => ({
+    title: item.title || item.url,
+    url: item.url,
+    description: item.summary || item.highlights?.[0] || item.text?.slice(0, 200) || "",
+    publishedDate: item.publishedDate,
+    author: item.author,
+    source: "exa",
+    summary: item.summary,
+  }));
+
+  return {
+    results,
+    query: options.query,
+    provider: "exa",
+  };
 }
 
 // ── Brave Search API ───────────────────────────────────────────────
@@ -145,10 +220,23 @@ async function searchSerper(options: SearchOptions): Promise<SearchResponse> {
 export async function webSearch(options: SearchOptions): Promise<SearchResponse> {
   log.info("Starting web search", { query: options.query, count: options.count });
 
-  // Try providers in order of preference
+  // Try providers in order: Exa (primary) → Brave → Serper
   const errors: string[] = [];
 
-  // Try Brave first if API key is available
+  // Try Exa first if API key is available
+  if (process.env.EXA_API_KEY) {
+    try {
+      const result = await searchExa(options);
+      log.info("Exa search completed", { results: result.results.length });
+      return result;
+    } catch (e) {
+      const error = e as Error;
+      log.warn("Exa search failed", { error: error.message });
+      errors.push(`Exa: ${error.message}`);
+    }
+  }
+
+  // Fallback to Brave
   if (process.env.BRAVE_API_KEY) {
     try {
       const result = await searchBrave(options);
@@ -161,7 +249,7 @@ export async function webSearch(options: SearchOptions): Promise<SearchResponse>
     }
   }
 
-  // Fallback to Serper if available
+  // Fallback to Serper
   if (process.env.SERPER_API_KEY) {
     try {
       const result = await searchSerper(options);
@@ -177,7 +265,7 @@ export async function webSearch(options: SearchOptions): Promise<SearchResponse>
   // If we get here, no providers worked or no API keys are set
   if (errors.length === 0) {
     throw new Error(
-      "No search provider configured. Set BRAVE_API_KEY or SERPER_API_KEY environment variable."
+      "No search provider configured. Set EXA_API_KEY, BRAVE_API_KEY, or SERPER_API_KEY environment variable."
     );
   }
 
@@ -202,89 +290,25 @@ export function formatSearchResults(response: SearchResponse): string {
     const result = response.results[i];
     lines.push(`${i + 1}. **${result.title}**`);
     lines.push(`   ${result.url}`);
-    lines.push(`   ${result.description}`);
+    
+    if (result.author) {
+      lines.push(`   Author: ${result.author}`);
+    }
+    if (result.publishedDate) {
+      const date = new Date(result.publishedDate).toLocaleDateString();
+      lines.push(`   Published: ${date}`);
+    }
+    
+    const description = result.summary || result.description;
+    if (description) {
+      lines.push(`   ${description.slice(0, 300)}${description.length > 300 ? "..." : ""}`);
+    }
     lines.push("");
   }
 
   if (response.totalResults !== undefined) {
     lines.push(`---`);
     lines.push(`Total results: ${response.totalResults}`);
-  }
-
-  return lines.join("\n");
-}
-
-// ── Fetch and Summarize ────────────────────────────────────────────
-
-import * as cheerio from "cheerio";
-import TurndownService from "turndown";
-
-async function fetchWebpageContent(url: string): Promise<string | null> {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Jinx Bot / pi-coding-agent (Linux x86_64)",
-        "Accept": "text/html,application/xhtml+xml",
-      },
-    });
-
-    if (!response.ok) return null;
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-
-    $("script, style, nav, footer, header, noscript, iframe, svg").remove();
-
-    let mainHtml = "";
-    if ($("main").length > 0) {
-      mainHtml = $("main").html() || "";
-    } else if ($("article").length > 0) {
-      mainHtml = $("article").html() || "";
-    } else if ($("#content, .content, .main").length > 0) {
-      mainHtml = $("#content, .content, .main").html() || "";
-    } else {
-      mainHtml = $("body").html() || "";
-    }
-
-    const turndown = new TurndownService({
-      headingStyle: "atx",
-      codeBlockStyle: "fenced",
-    });
-
-    return turndown.turndown(mainHtml).slice(0, 500);
-  } catch {
-    return null;
-  }
-}
-
-export async function searchAndFetch(
-  query: string,
-  maxResults: number = 3
-): Promise<string> {
-  const searchResponse = await webSearch({ query, count: maxResults });
-
-  if (searchResponse.results.length === 0) {
-    return `No search results found for "${query}".`;
-  }
-
-  const lines: string[] = [
-    `🔍 Search Results for "${searchResponse.query}"`,
-    "",
-  ];
-
-  for (const result of searchResponse.results) {
-    lines.push(`## ${result.title}`);
-    lines.push(`URL: ${result.url}`);
-    lines.push("");
-
-    const content = await fetchWebpageContent(result.url);
-    if (content) {
-      lines.push(`Summary: ${content.replace(/\n/g, " ")}...`);
-    } else {
-      lines.push(`Description: ${result.description}`);
-    }
-
-    lines.push("");
   }
 
   return lines.join("\n");
