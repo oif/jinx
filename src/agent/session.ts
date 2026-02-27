@@ -12,6 +12,7 @@ import {
 import { buildJinxSystemPrompt } from "./system-prompt.js";
 import { jinxTools } from "./tools.js";
 import { log } from "../util/log.js";
+import { recordAgentPrompt, recordToolCall } from "../observability/metrics.js";
 import { Type } from "@sinclair/typebox";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -183,6 +184,8 @@ function sendPromptAndWait(session: AgentSession, message: string, images?: any[
     let text = "";
     let errorMsg = "";
     let timeout: ReturnType<typeof setTimeout> | null = null;
+    const startTime = Date.now();
+    const wasStreaming = session.isStreaming;
 
     const cleanup = () => {
       if (timeout) clearTimeout(timeout);
@@ -205,19 +208,52 @@ function sendPromptAndWait(session: AgentSession, message: string, images?: any[
       }
 
       if (event.type === "agent_end") {
+        const durationMs = Date.now() - startTime;
         cleanup();
+
+        // Record performance metrics
+        recordAgentPrompt({
+          durationMs,
+          hasImages: !!images?.length,
+          wasStreaming,
+          success: !errorMsg,
+          errorType: errorMsg ? 'agent_error' : undefined,
+        });
+
         resolve(errorMsg || text || "(No response)");
       }
     });
 
     const timeoutMs = getPromptTimeoutMs();
     timeout = setTimeout(() => {
+      const durationMs = Date.now() - startTime;
       cleanup();
+
+      // Record timeout as failure
+      recordAgentPrompt({
+        durationMs,
+        hasImages: !!images?.length,
+        wasStreaming,
+        success: false,
+        errorType: 'timeout',
+      });
+
       reject(new Error('Prompt timed out after ' + timeoutMs + 'ms'));
     }, timeoutMs);
 
     session.prompt(message, { images }).catch((e) => {
+      const durationMs = Date.now() - startTime;
       cleanup();
+
+      // Record error
+      recordAgentPrompt({
+        durationMs,
+        hasImages: !!images?.length,
+        wasStreaming,
+        success: false,
+        errorType: 'exception',
+      });
+
       reject(e);
     });
   });
@@ -237,6 +273,7 @@ function queueFollowUpAndWait(session: AgentSession, message: string, images?: a
     let text = "";
     let errorMsg = "";
     let timeout: ReturnType<typeof setTimeout> | null = null;
+    const startTime = Date.now();
 
     const cleanup = () => {
       if (timeout) clearTimeout(timeout);
@@ -265,7 +302,18 @@ function queueFollowUpAndWait(session: AgentSession, message: string, images?: a
         }
 
         if (event.type === "agent_end") {
+          const durationMs = Date.now() - startTime;
           cleanup();
+
+          // Record performance metrics for follow-up
+          recordAgentPrompt({
+            durationMs,
+            hasImages: !!images?.length,
+            wasStreaming: true,
+            success: !errorMsg,
+            errorType: errorMsg ? 'agent_error' : undefined,
+          });
+
           resolve(errorMsg || text || "(No response)");
         }
       }
@@ -278,12 +326,34 @@ function queueFollowUpAndWait(session: AgentSession, message: string, images?: a
 
     const timeoutMs = getFollowUpTimeoutMs();
     timeout = setTimeout(() => {
+      const durationMs = Date.now() - startTime;
       cleanup();
+
+      // Record timeout as failure
+      recordAgentPrompt({
+        durationMs,
+        hasImages: !!images?.length,
+        wasStreaming: true,
+        success: false,
+        errorType: 'timeout',
+      });
+
       reject(new Error('Follow-up timed out after ' + timeoutMs + 'ms'));
     }, timeoutMs);
 
     session.followUp(message, images).catch((e) => {
+      const durationMs = Date.now() - startTime;
       cleanup();
+
+      // Record error
+      recordAgentPrompt({
+        durationMs,
+        hasImages: !!images?.length,
+        wasStreaming: true,
+        success: false,
+        errorType: 'exception',
+      });
+
       reject(e);
     });
   });

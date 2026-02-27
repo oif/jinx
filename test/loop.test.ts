@@ -36,6 +36,7 @@ vi.mock("../src/health/history.js", () => ({
 
 vi.mock("../src/supervisor/paths.js", () => ({
   STATE_PATH: "/tmp/test-state.json",
+  DATA_DIR: "/tmp/test-data",
 }));
 
 vi.mock("../src/config/evolution-prompt.js", () => ({

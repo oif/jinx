@@ -10,6 +10,7 @@ import type {
   AgentToolResult,
   AgentToolUpdateCallback,
 } from "@mariozechner/pi-coding-agent";
+import { formatPerformanceReport } from "../observability/metrics.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -86,6 +87,8 @@ const createPrParams = Type.Object({
 const addBacklogTaskParams = Type.Object({
   title: Type.String({ description: "Concise, actionable task title (e.g. 'Add rate limiting to Telegram bot')" }),
 });
+
+const getPerformanceReportParams = Type.Object({}); // No parameters needed
 
 // ── Tools ──────────────────────────────────────────────────────────
 
@@ -456,6 +459,36 @@ export const addBacklogTaskTool: ToolDefinition = {
   },
 };
 
+// ── Performance Report Tool ───────────────────────────────────────
+
+/**
+ * Get performance metrics report
+ */
+export const getPerformanceReportTool: ToolDefinition = {
+  name: "get_performance_report",
+  label: "Get Performance Report",
+  description:
+    "Get a detailed performance report including agent response times, tool usage statistics, " +
+    "evolution cycle metrics, and system uptime. Use this to understand Jinx's operational performance " +
+    "and identify potential bottlenecks.",
+  parameters: getPerformanceReportParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const report = formatPerformanceReport();
+      return textResult(report);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error generating performance report: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -468,4 +501,5 @@ export const jinxTools: ToolDefinition[] = [
   fetchWebpageTool,
   createPrTool,
   addBacklogTaskTool,
+  getPerformanceReportTool,
 ];

@@ -131,6 +131,11 @@ async function main(): Promise<void> {
         return lines.join("\n");
       },
 
+      perf: async () => {
+        const { formatPerformanceReport } = await import("./observability/metrics.js");
+        return formatPerformanceReport();
+      },
+
       restart: async () => {
         const { requestRestart } = await import("./supervisor/restart.js");
         await requestRestart("Manual restart requested via Telegram");
@@ -150,6 +155,7 @@ async function main(): Promise<void> {
           "/evolution - Show evolution history report",
           "/recent - Show recent 5 evolutions summary",
           "/history - Show health history with statistics",
+          "/perf - Show performance metrics report",
           "/restart - Request process restart",
           "/ping - Ping Jinx",
           "/help - Show this help message",

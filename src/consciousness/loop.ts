@@ -11,6 +11,7 @@ import {
 } from "./evolution-progress.js";
 import { STATE_PATH } from "../supervisor/paths.js";
 import { recordHealthSnapshot } from "../health/history.js";
+import { recordEvolutionCycle } from "../observability/metrics.js";
 import { getEvolutionCyclePrompt, getGoalDiscoveryPrompt } from "../config/evolution-prompt.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
@@ -237,6 +238,14 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
     recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs);
     completeEvolutionProgress(durationMs);
 
+    // Record performance metrics for successful evolution
+    recordEvolutionCycle({
+      cycle,
+      taskId: task.id,
+      durationMs,
+      status: "success",
+    });
+
     log.info(`Evolution cycle #${cycle} completed`, { durationMs, task: task.id });
 
     const notifySummary = result.length > 500 ? result.slice(0, 500) + "..." : result;
@@ -247,6 +256,14 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
 
     recordEvolutionResult(cycle, state.version, "failed", err.message, durationMs);
     failEvolutionProgress(err.message);
+
+    // Record performance metrics for failed evolution
+    recordEvolutionCycle({
+      cycle,
+      taskId: task.id,
+      durationMs,
+      status: "failed",
+    });
 
     log.error(`Evolution cycle #${cycle} failed`, { error: err.message, durationMs });
     await notifyFn(`❌ Evolution #${cycle} failed [${task.id}]: ${err.message}`);
