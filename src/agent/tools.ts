@@ -35,6 +35,13 @@ import {
   pruneMemories,
   getMemoryStats,
   formatMemoryStats,
+  exportGraph,
+  exportForVisualization,
+  importGraph,
+  advancedSemanticSearch,
+  autoConsolidate,
+  findMemoryClusters,
+  GraphExport,
 } from "../memory/graph.js";
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -174,6 +181,23 @@ const relateParams = Type.Object({
 });
 
 const memoryStatsParams = Type.Object({}); // No parameters needed
+
+const memoryExportParams = Type.Object({
+  format: Type.Optional(Type.String({ description: "Export format: 'full' or 'visualization' (default: 'full')" })),
+});
+
+const memoryImportParams = Type.Object({
+  jsonData: Type.String({ description: "JSON string of exported graph data" }),
+});
+
+const advancedSearchParams = Type.Object({
+  query: Type.String({ description: "Search query" }),
+  limit: Type.Optional(Type.Number({ description: "Max results (default 10)" })),
+  boostRecent: Type.Optional(Type.Boolean({ description: "Boost recent memories" })),
+  boostAccessed: Type.Optional(Type.Boolean({ description: "Boost frequently accessed memories" })),
+});
+
+const memoryClustersParams = Type.Object({}); // No parameters needed
 
 // ── Tools ──────────────────────────────────────────────────────────
 
@@ -1204,6 +1228,181 @@ export const memoryStatsTool: ToolDefinition = {
   },
 };
 
+/**
+ * Export memory graph for backup or visualization.
+ */
+export const memoryExportTool: ToolDefinition = {
+  name: "export_memory",
+  label: "Export Memory Graph",
+  description:
+    "Export the memory graph for backup, analysis, or visualization. " +
+    "Can export in 'full' format (complete data) or 'visualization' format (simplified for graph viz tools).",
+  parameters: memoryExportParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const format = (params.format as string) || "full";
+
+      if (format === "visualization") {
+        const viz = exportForVisualization();
+        return textResult(`\`\`\`json\n${JSON.stringify(viz, null, 2)}\n\`\`\``);
+      }
+
+      const graph = exportGraph();
+      return textResult(
+        `Memory graph exported (${graph.stats.totalNodes} nodes, ${graph.stats.totalEdges} edges)\n\n` +
+        `\`\`\`json\n${JSON.stringify(graph, null, 2).slice(0, 50000)}\n\`\`\``
+      );
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error exporting memory: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Import memory graph from backup.
+ */
+export const memoryImportTool: ToolDefinition = {
+  name: "import_memory",
+  label: "Import Memory Graph",
+  description:
+    "Import a memory graph from JSON data. Used for restoring from backup or migrating memory data. " +
+    "WARNING: This will overwrite existing memory data.",
+  parameters: memoryImportParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const jsonData = params.jsonData as string;
+      const data = JSON.parse(jsonData) as GraphExport;
+
+      const result = importGraph(data);
+
+      return textResult(
+        `✅ Memory graph imported\nNodes: ${result.nodes}\nEdges: ${result.edges}`
+      );
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error importing memory: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Advanced semantic search with boosting options.
+ */
+export const advancedMemorySearchTool: ToolDefinition = {
+  name: "advanced_memory_search",
+  label: "Advanced Memory Search",
+  description:
+    "Search memories using enhanced semantic search with TF-IDF weighting. " +
+    "Supports boosting recent memories and frequently accessed memories for better relevance.",
+  parameters: advancedSearchParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const query = params.query as string;
+      const limit = (params.limit as number) || 10;
+      const boostRecent = (params.boostRecent as boolean) || false;
+      const boostAccessed = (params.boostAccessed as boolean) || false;
+
+      const results = advancedSemanticSearch(query, {
+        limit,
+        boostRecent,
+        boostAccessed,
+      });
+
+      if (results.length === 0) {
+        return textResult("No memories found matching your query.");
+      }
+
+      const lines: string[] = [
+        `🧠 Advanced Search Results (${results.length} found):`,
+        "",
+      ];
+
+      for (const result of results) {
+        const relevance = Math.round(result.relevance * 100);
+        lines.push(`[${relevance}%] ${result.node.type}: ${result.node.summary.slice(0, 60)}...`);
+        lines.push(`    ID: ${result.node.id}`);
+        lines.push(`    Matched: ${result.matchedKeywords.join(", ") || "N/A"}`);
+        lines.push("");
+      }
+
+      return textResult(lines.join("\n"));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error searching memories: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Find memory clusters (connected components).
+ */
+export const memoryClustersTool: ToolDefinition = {
+  name: "memory_clusters",
+  label: "Memory Clusters",
+  description:
+    "Find clusters of related memories in the knowledge graph. " +
+    "Clusters represent topics or themes that connect multiple memories.",
+  parameters: memoryClustersParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const clusters = findMemoryClusters();
+
+      if (clusters.length === 0) {
+        return textResult("No memory clusters found. Try creating relationships between memories.");
+      }
+
+      const lines: string[] = [
+        `📊 Memory Clusters (${clusters.length} found):`,
+        "",
+      ];
+
+      for (let i = 0; i < clusters.length; i++) {
+        const cluster = clusters[i];
+        lines.push(`${i + 1}. Topic: ${cluster.topic}`);
+        lines.push(`   Size: ${cluster.size} memories`);
+        lines.push(`   Memories:`);
+        for (const mem of cluster.memories.slice(0, 5)) {
+          lines.push(`     • ${mem.summary.slice(0, 50)}...`);
+        }
+        if (cluster.memories.length > 5) {
+          lines.push(`     ... and ${cluster.memories.length - 5} more`);
+        }
+        lines.push("");
+      }
+
+      return textResult(lines.join("\n"));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error finding clusters: ${err.message}`);
+    }
+  },
+};
+
 // ── Export all tools ───────────────────────────────────────────────
 
 export const jinxTools: ToolDefinition[] = [
@@ -1233,4 +1432,8 @@ export const jinxTools: ToolDefinition[] = [
   recallTool,
   relateTool,
   memoryStatsTool,
+  memoryExportTool,
+  memoryImportTool,
+  advancedMemorySearchTool,
+  memoryClustersTool,
 ];

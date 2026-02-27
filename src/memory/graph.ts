@@ -639,7 +639,7 @@ export function getMemoryStats(): MemoryGraphStats {
 
 export function formatMemoryStats(): string {
   const stats = getMemoryStats();
-  
+
   const lines: string[] = [
     "🧠 Memory Graph Statistics",
     "",
@@ -655,6 +655,355 @@ export function formatMemoryStats(): string {
     `Oldest: ${new Date(stats.oldestMemory).toLocaleDateString()}`,
     `Newest: ${new Date(stats.newestMemory).toLocaleDateString()}`,
   ];
-  
+
   return lines.join("\n");
+}
+
+// ── Enhanced Exports ───────────────────────────────────────────────
+
+export interface GraphExport {
+  nodes: MemoryNode[];
+  edges: MemoryEdge[];
+  exportedAt: string;
+  stats: MemoryGraphStats;
+}
+
+export interface GraphVisualization {
+  nodes: Array<{
+    id: string;
+    label: string;
+    type: MemoryNodeType;
+    importance: number;
+  }>;
+  edges: Array<{
+    from: string;
+    to: string;
+    label: string;
+    strength: number;
+  }>;
+}
+
+/**
+ * Export the entire memory graph for backup or analysis
+ */
+export function exportGraph(): GraphExport {
+  const nodes = loadNodes();
+  const edges = loadEdges();
+
+  return {
+    nodes: Array.from(nodes.values()),
+    edges: Array.from(edges.values()),
+    exportedAt: new Date().toISOString(),
+    stats: getMemoryStats(),
+  };
+}
+
+/**
+ * Export graph in visualization-friendly format
+ */
+export function exportForVisualization(): GraphVisualization {
+  const nodes = loadNodes();
+  const edges = loadEdges();
+
+  return {
+    nodes: Array.from(nodes.values()).map((n) => ({
+      id: n.id,
+      label: n.summary.slice(0, 50),
+      type: n.type,
+      importance: n.importance,
+    })),
+    edges: Array.from(edges.values()).map((e) => ({
+      from: e.fromId,
+      to: e.toId,
+      label: e.type,
+      strength: e.strength,
+    })),
+  };
+}
+
+/**
+ * Import a graph (for restore or migration)
+ */
+export function importGraph(data: GraphExport): { nodes: number; edges: number } {
+  const nodes = new Map<string, MemoryNode>();
+  const edges = new Map<string, MemoryEdge>();
+  const vectors = new Map<string, MemoryVector>();
+
+  // Import nodes
+  for (const node of data.nodes) {
+    nodes.set(node.id, node);
+
+    // Re-create embedding
+    const { vector, keywords } = createEmbedding(node.content);
+    vectors.set(node.id, {
+      nodeId: node.id,
+      embedding: vector,
+      keywords,
+      lastUpdated: node.updatedAt,
+    });
+  }
+
+  // Import edges
+  for (const edge of data.edges) {
+    edges.set(edge.id, edge);
+  }
+
+  saveNodes(nodes);
+  saveVectors(vectors);
+  saveEdges(edges);
+
+  log.info("Graph imported", { nodes: nodes.size, edges: edges.size });
+
+  return { nodes: nodes.size, edges: edges.size };
+}
+
+/**
+ * Enhanced semantic search using TF-IDF weighting
+ */
+export function advancedSemanticSearch(
+  query: string,
+  options: {
+    limit?: number;
+    minRelevance?: number;
+    boostRecent?: boolean;
+    boostAccessed?: boolean;
+  } = {}
+): Array<{ node: MemoryNode; relevance: number; matchedKeywords: string[] }> {
+  const nodes = loadNodes();
+  const vectors = loadVectors();
+
+  const { limit = 10, minRelevance = 0.1, boostRecent = false, boostAccessed = false } = options;
+
+  // Extract query keywords
+  const stopWords = new Set([
+    "the", "and", "for", "are", "but", "not", "you", "all", "can", "had", "her", "was",
+    "one", "our", "out", "day", "get", "has", "him", "his", "how", "man", "new", "now",
+    "old", "see", "two", "way", "who", "boy", "did", "its", "let", "put", "say", "she",
+    "too", "use", "with", "have", "this", "will", "your", "from", "they", "know", "want",
+    "been", "good", "much", "some", "time", "very", "when", "come", "here", "just", "like",
+    "long", "make", "many", "over", "such", "take", "than", "them", "well", "were",
+  ]);
+
+  const queryWords = query
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !stopWords.has(w));
+
+  const results: Array<{ node: MemoryNode; relevance: number; matchedKeywords: string[] }> = [];
+  const now = Date.now();
+
+  for (const [nodeId, node] of nodes) {
+    const vector = vectors.get(nodeId);
+    if (!vector) continue;
+
+    // Calculate keyword overlap with TF-IDF-like weighting
+    let score = 0;
+    const matchedKeywords: string[] = [];
+
+    for (const word of queryWords) {
+      const keywordIndex = vector.keywords.indexOf(word);
+      if (keywordIndex !== -1) {
+        // Higher score for earlier (more frequent) keywords
+        const weight = 1 / (keywordIndex + 1);
+        score += weight;
+        matchedKeywords.push(word);
+      }
+    }
+
+    // Normalize by query length
+    score = score / queryWords.length;
+
+    // Apply boost factors
+    if (boostRecent && node.createdAt) {
+      const age = now - new Date(node.createdAt).getTime();
+      const ageInDays = age / (24 * 60 * 60 * 1000);
+      const recencyBoost = Math.exp(-ageInDays / 30); // Decay over 30 days
+      score *= (1 + recencyBoost);
+    }
+
+    if (boostAccessed && node.accessCount > 0) {
+      const accessBoost = Math.log(node.accessCount + 1) * 0.1;
+      score *= (1 + accessBoost);
+    }
+
+    // Boost by importance
+    score *= (0.5 + node.importance);
+
+    if (score >= minRelevance) {
+      results.push({ node, relevance: score, matchedKeywords });
+    }
+  }
+
+  // Sort by relevance
+  results.sort((a, b) => b.relevance - a.relevance);
+
+  // Limit results
+  return results.slice(0, limit);
+}
+
+/**
+ * Auto-consolidation: Find and merge highly similar memories
+ */
+export function autoConsolidate(options: {
+  similarityThreshold?: number;
+  dryRun?: boolean;
+} = {}): Array<{ kept: MemoryNode; merged: MemoryNode[] }> {
+  const { similarityThreshold = 0.85, dryRun = false } = options;
+
+  const nodes = loadNodes();
+  const vectors = loadVectors();
+
+  const toMerge = new Map<string, string[]>(); // targetId -> sourceIds[]
+  const processed = new Set<string>();
+
+  // Find similar pairs
+  for (const [id1, node1] of nodes) {
+    if (processed.has(id1)) continue;
+
+    const vec1 = vectors.get(id1)?.embedding;
+    if (!vec1) continue;
+
+    const similar: string[] = [];
+
+    for (const [id2, node2] of nodes) {
+      if (id1 >= id2 || processed.has(id2)) continue;
+
+      const vec2 = vectors.get(id2)?.embedding;
+      if (!vec2) continue;
+
+      const similarity = cosineSimilarity(vec1, vec2);
+
+      if (similarity > similarityThreshold) {
+        similar.push(id2);
+        processed.add(id2);
+      }
+    }
+
+    if (similar.length > 0) {
+      toMerge.set(id1, similar);
+      processed.add(id1);
+    }
+  }
+
+  const results: Array<{ kept: MemoryNode; merged: MemoryNode[] }> = [];
+
+  if (!dryRun) {
+    for (const [keptId, mergedIds] of toMerge) {
+      const kept = nodes.get(keptId)!;
+      const merged = mergedIds.map((id) => nodes.get(id)!).filter(Boolean);
+
+      // Merge content
+      for (const m of merged) {
+        kept.content += `\n\n[Consolidated]: ${m.content}`;
+        kept.tags = [...new Set([...kept.tags, ...m.tags])];
+        kept.importance = Math.max(kept.importance, m.importance);
+      }
+
+      kept.updatedAt = new Date().toISOString();
+      nodes.set(keptId, kept);
+
+      // Delete merged nodes
+      for (const id of mergedIds) {
+        nodes.delete(id);
+        vectors.delete(id);
+      }
+
+      results.push({ kept, merged });
+    }
+
+    if (results.length > 0) {
+      saveNodes(nodes);
+      saveVectors(vectors);
+    }
+  } else {
+    // Dry run: just report what would be merged
+    for (const [keptId, mergedIds] of toMerge) {
+      const kept = nodes.get(keptId)!;
+      const merged = mergedIds.map((id) => nodes.get(id)!).filter(Boolean);
+      results.push({ kept, merged });
+    }
+  }
+
+  log.info("Auto-consolidation complete", {
+    groups: results.length,
+    totalMerged: results.reduce((sum, r) => sum + r.merged.length, 0),
+    dryRun,
+  });
+
+  return results;
+}
+
+/**
+ * Find memory clusters using connected components
+ */
+export function findMemoryClusters(): Array<{ topic: string; memories: MemoryNode[]; size: number }> {
+  const nodes = loadNodes();
+  const edges = loadEdges();
+
+  const clusters: Array<{ topic: string; memories: MemoryNode[]; size: number }> = [];
+  const visited = new Set<string>();
+
+  // Build adjacency list
+  const adjacency = new Map<string, Set<string>>();
+  for (const [, edge] of edges) {
+    if (!adjacency.has(edge.fromId)) adjacency.set(edge.fromId, new Set());
+    if (!adjacency.has(edge.toId)) adjacency.set(edge.toId, new Set());
+    adjacency.get(edge.fromId)!.add(edge.toId);
+    adjacency.get(edge.toId)!.add(edge.fromId);
+  }
+
+  // Find connected components
+  for (const [nodeId, node] of nodes) {
+    if (visited.has(nodeId)) continue;
+
+    const cluster: MemoryNode[] = [];
+    const queue: string[] = [nodeId];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      if (visited.has(currentId)) continue;
+      visited.add(currentId);
+
+      const current = nodes.get(currentId);
+      if (current) {
+        cluster.push(current);
+      }
+
+      const neighbors = adjacency.get(currentId);
+      if (neighbors) {
+        for (const neighbor of neighbors) {
+          if (!visited.has(neighbor)) {
+            queue.push(neighbor);
+          }
+        }
+      }
+    }
+
+    if (cluster.length > 1) {
+      // Generate topic from most common keywords
+      const keywordCounts = new Map<string, number>();
+      for (const n of cluster) {
+        for (const tag of n.tags) {
+          keywordCounts.set(tag, (keywordCounts.get(tag) || 0) + 1);
+        }
+      }
+
+      const topKeywords = Array.from(keywordCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([k]) => k);
+
+      clusters.push({
+        topic: topKeywords.join(", ") || "mixed",
+        memories: cluster,
+        size: cluster.length,
+      });
+    }
+  }
+
+  // Sort by size
+  clusters.sort((a, b) => b.size - a.size);
+
+  return clusters;
 }
