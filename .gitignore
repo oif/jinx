@@ -6,6 +6,8 @@ package-lock.json
 # Data — runtime state, managed by Jinx at runtime
 data/
 !data/.gitkeep
+!data/goals.md
+!data/backlog.md
 
 # Environment
 .env
