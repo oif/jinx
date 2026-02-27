@@ -136,6 +136,12 @@ async function main(): Promise<void> {
         return formatPerformanceReport();
       },
 
+      quality: async () => {
+        const { runQualityCheck, formatQualityReport } = await import("./quality/code-quality.js");
+        const result = await runQualityCheck();
+        return formatQualityReport(result);
+      },
+
       restart: async () => {
         const { requestRestart } = await import("./supervisor/restart.js");
         await requestRestart("Manual restart requested via Telegram");
@@ -156,6 +162,7 @@ async function main(): Promise<void> {
           "/recent - Show recent 5 evolutions summary",
           "/history - Show health history with statistics",
           "/perf - Show performance metrics report",
+          "/quality - Run code quality checks",
           "/restart - Request process restart",
           "/ping - Ping Jinx",
           "/help - Show this help message",

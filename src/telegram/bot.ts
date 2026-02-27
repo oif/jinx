@@ -456,6 +456,7 @@ async function registerBotCommands(bot: Bot): Promise<void> {
       { command: "history", description: "Show health history" },
       { command: "evolution", description: "Show evolution history" },
       { command: "perf", description: "Show performance metrics" },
+      { command: "quality", description: "Run code quality checks" },
       { command: "restart", description: "Restart Jinx" },
       { command: "menu", description: "Show quick actions" },
       { command: "ping", description: "Ping Jinx" },

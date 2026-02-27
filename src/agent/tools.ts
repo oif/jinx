@@ -11,6 +11,7 @@ import type {
   AgentToolUpdateCallback,
 } from "@mariozechner/pi-coding-agent";
 import { formatPerformanceReport } from "../observability/metrics.js";
+import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -402,6 +403,37 @@ export const createPrTool: ToolDefinition = {
   },
 };
 
+// ── Quality Check Tool ─────────────────────────────────────────────
+
+/**
+ * Run code quality checks (ESLint, security audit, complexity analysis)
+ */
+export const checkCodeQualityTool: ToolDefinition = {
+  name: "check_code_quality",
+  label: "Check Code Quality",
+  description:
+    "Run comprehensive code quality checks including ESLint linting, npm security audit, " +
+    "and cyclomatic complexity analysis. Returns a detailed report of issues found. " +
+    "Use this before committing important changes or as part of regular maintenance.",
+  parameters: Type.Object({}),
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const result = await runQualityCheck();
+      const report = formatQualityReport(result);
+      return textResult(report);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error running code quality check: ${err.message}`);
+    }
+  },
+};
+
 // ── Backlog helpers ────────────────────────────────────────────────
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
@@ -502,4 +534,5 @@ export const jinxTools: ToolDefinition[] = [
   createPrTool,
   addBacklogTaskTool,
   getPerformanceReportTool,
+  checkCodeQualityTool,
 ];

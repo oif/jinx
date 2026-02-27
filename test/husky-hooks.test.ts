@@ -22,10 +22,10 @@ describe("husky hooks", () => {
     expect(content).not.toContain("pnpm");
   });
 
-  it("should run build and typecheck in pre-commit", () => {
+  it("should run build and quality checks in pre-commit", () => {
     const content = readFileSync(".husky/pre-commit", "utf-8");
     expect(content).toContain("npm run build");
-    expect(content).toContain("npm run typecheck");
+    expect(content).toContain("npm run quality");
   });
 
   it("should run test in pre-push", () => {
