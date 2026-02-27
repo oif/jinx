@@ -197,3 +197,9 @@ Jinx 的宪法。定义了它是谁、它守护什么、它如何成长。
 ## License
 
 Private.
+
+---
+
+<a href="https://llmapis.com?source=https%3A%2F%2Fgithub.com%2Foif%2Fjinx" target="_blank"><img src="https://llmapis.com/api/badge/oif/jinx" alt="LLMAPIS" width="80" /></a>
+
+*Partnership with [https://llmapis.com](https://llmapis.com) - Discover more AI tools and resources*
