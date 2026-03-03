@@ -1,6 +1,6 @@
 import { log } from "./util/log.js";
 import { readVersion, readState } from "./util/state.js";
-import { startAgent, registerTelegramSend, prompt as agentPrompt, abortAgent, isAgentBusy } from "./agent/session.js";
+import { startAgent, registerTelegramSend, promptConversation, abortAgent } from "./agent/session.js";
 import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
         mimeType: img.mimeType,
         data: img.data,
       }));
-      return await agentPrompt(text, imageContents);
+      return await promptConversation(text, imageContents);
     },
     // onCommand: built-in commands
     {
@@ -231,13 +231,7 @@ async function main(): Promise<void> {
   // Register health notifier for proactive alerts
   registerHealthNotifier(tg.sendToOwner);
 
-  consciousness.handle = startConsciousness(
-    async (msg) => {
-      return await agentPrompt(msg);
-    },
-    tg.sendToOwner,
-    isAgentBusy,
-  );
+  consciousness.handle = startConsciousness(tg.sendToOwner);
 
   // Step 6: Register shutdown
   registerShutdownHandlers(async () => {

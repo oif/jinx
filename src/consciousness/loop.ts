@@ -13,7 +13,7 @@ import { STATE_PATH } from "../supervisor/paths.js";
 import { recordHealthSnapshot } from "../health/history.js";
 import { recordEvolutionCycle } from "../observability/metrics.js";
 import { getEvolutionCyclePrompt, getGoalDiscoveryPrompt } from "../config/evolution-prompt.js";
-import { reviewChanges, formatChangeReview } from "../quality/change-review.js";
+import { SessionPool, isConversationBusy } from "../agent/session.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -116,9 +116,9 @@ function getLoopIntervalMs(): number {
   return 5 * 1000; // default: 5 seconds
 }
 
-// Goal discovery cooldown: at least 2 hours between discoveries
+// Goal discovery cooldown: at least 30 minutes between discoveries
 // This prevents tight loops when discovery finds nothing or fails
-const GOAL_DISCOVERY_COOLDOWN_MS = 2 * 60 * 60 * 1000;
+const GOAL_DISCOVERY_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
 let lastGoalDiscoveryAt = 0;
 
 // ── State helpers ──────────────────────────────────────────────────
@@ -136,8 +136,8 @@ function saveState(patch: PartialState): void {
 
 // ── Types ──────────────────────────────────────────────────────────
 
-type PromptFn = (message: string) => Promise<string>;
 type NotifyFn = (message: string) => Promise<void>;
+
 
 export interface ConsciousnessHandle {
   /** Immediately trigger one cycle if a task is pending, or goal discovery if not. */
@@ -148,15 +148,13 @@ export interface ConsciousnessHandle {
 // ── Main loop ──────────────────────────────────────────────────────
 
 export function startConsciousness(
-  promptFn: PromptFn,
   notifyFn: NotifyFn,
-  isAgentBusy: () => boolean,
 ): ConsciousnessHandle {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let running = false;
 
   async function tick(): Promise<void> {
-    if (running || isAgentBusy()) {
+    if (running || isConversationBusy()) {
       scheduleNext();
       return;
     }
@@ -166,13 +164,13 @@ export function startConsciousness(
       const task = loadNextTask();
 
       if (task) {
-        await runEvolutionCycle(task, promptFn, notifyFn);
+        await runEvolutionCycle(task, notifyFn);
       } else {
         // Backlog empty: run goal discovery if cooldown has elapsed
         const now = Date.now();
         if (now - lastGoalDiscoveryAt >= GOAL_DISCOVERY_COOLDOWN_MS) {
           lastGoalDiscoveryAt = now;
-          await runGoalDiscovery(promptFn, notifyFn);
+          await runGoalDiscovery(notifyFn);
         }
         // else: nothing to do this tick
       }
@@ -194,7 +192,7 @@ export function startConsciousness(
 
   return {
     triggerNow: () => {
-      if (!running && !isAgentBusy()) {
+        if (!running && !isConversationBusy()) {
         // Force goal discovery on next trigger even if within cooldown
         lastGoalDiscoveryAt = 0;
         if (timer) clearTimeout(timer);
@@ -210,7 +208,7 @@ export function startConsciousness(
 
 // ── Evolution cycle ────────────────────────────────────────────────
 
-async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: NotifyFn): Promise<void> {
+async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> {
   const state = readState();
   const cycle = state.cycle + 1;
   const startTime = Date.now();
@@ -229,7 +227,13 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
       currentStreak: stats.currentStreak,
     });
 
-    const result = await promptFn(prompt);
+    const worker = await SessionPool.spawn({ label: `evolution-${cycle}`, thinkingLevel: "high" });
+    let result: string;
+    try {
+      result = await worker.prompt(prompt);
+    } finally {
+      worker.dispose();
+    }
 
     const durationMs = Date.now() - startTime;
     setEvolutionStage("committing", "Saving results");
@@ -249,20 +253,8 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
 
     log.info(`Evolution cycle #${cycle} completed`, { durationMs, task: task.id });
 
-    // Run automatic code change review
-    let reviewReport = "";
-    try {
-      setEvolutionStage("reviewing", "Running automated code review");
-      const reviewResult = await reviewChanges();
-      reviewReport = formatChangeReview(reviewResult);
-      log.info("Code change review complete", { cycle, passed: reviewResult.passed });
-    } catch (reviewErr) {
-      log.error("Code change review failed", { error: (reviewErr as Error).message });
-      reviewReport = "⚠️ Code review failed to run";
-    }
-
     const notifySummary = result.length > 500 ? result.slice(0, 500) + "..." : result;
-    await notifyFn(`🧬 Evolution #${cycle} complete [${task.id}]:\n${notifySummary}\n\n${reviewReport}`);
+    await notifyFn(`🧬 Evolution #${cycle} complete [${task.id}]:\n${notifySummary}`);
   } catch (e) {
     const err = e as Error;
     const durationMs = Date.now() - startTime;
@@ -285,7 +277,7 @@ async function runEvolutionCycle(task: Task, promptFn: PromptFn, notifyFn: Notif
 
 // ── Goal discovery ─────────────────────────────────────────────────
 
-async function runGoalDiscovery(promptFn: PromptFn, notifyFn: NotifyFn): Promise<void> {
+async function runGoalDiscovery(notifyFn: NotifyFn): Promise<void> {
   log.info("Goal discovery starting");
 
   try {
@@ -301,7 +293,13 @@ async function runGoalDiscovery(promptFn: PromptFn, notifyFn: NotifyFn): Promise
       totalCycles: stats.totalCycles,
     });
 
-    const result = await promptFn(prompt);
+    const worker = await SessionPool.spawn({ label: "goal-discovery", thinkingLevel: "medium" });
+    let result: string;
+    try {
+      result = await worker.prompt(prompt);
+    } finally {
+      worker.dispose();
+    }
 
     // Check if new tasks were added
     const taskAfter = loadNextTask();

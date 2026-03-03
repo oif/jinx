@@ -11,9 +11,8 @@ import {
   type ToolDefinition,
 } from "@mariozechner/pi-coding-agent";
 import { buildJinxSystemPrompt } from "./system-prompt.js";
-import { jinxTools } from "./tools.js";
 import { log } from "../util/log.js";
-import { recordAgentPrompt, recordToolCall } from "../observability/metrics.js";
+import { recordAgentPrompt } from "../observability/metrics.js";
 import { Type } from "@sinclair/typebox";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -22,38 +21,34 @@ export type { AgentSession };
 
 export type TelegramSendFn = (text: string) => Promise<void>;
 
-// ── Timeout configuration ─────────────────────────────────────────
+// ── Timeout configuration ──────────────────────────────────────────
 
-const DEFAULT_PROMPT_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
-const DEFAULT_FOLLOWUP_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+/** Conversation session: Neo's interactive messages — shorter timeout */
+const DEFAULT_CONVERSATION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
-function getPromptTimeoutMs(): number {
-  const env = process.env.AGENT_PROMPT_TIMEOUT_MS;
+/** Worker sessions: background tasks — longer timeout */
+const DEFAULT_WORKER_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+
+function getConversationTimeoutMs(): number {
+  const env = process.env.AGENT_CONVERSATION_TIMEOUT_MS ?? process.env.AGENT_PROMPT_TIMEOUT_MS;
   if (env) {
     const parsed = parseInt(env, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      return parsed;
-    }
-    log.warn('Invalid AGENT_PROMPT_TIMEOUT_MS value: ' + env + ', using default: ' + DEFAULT_PROMPT_TIMEOUT_MS);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
   }
-  return DEFAULT_PROMPT_TIMEOUT_MS;
+  return DEFAULT_CONVERSATION_TIMEOUT_MS;
 }
 
-function getFollowUpTimeoutMs(): number {
-  const env = process.env.AGENT_FOLLOWUP_TIMEOUT_MS;
+function getWorkerTimeoutMs(): number {
+  const env = process.env.AGENT_WORKER_TIMEOUT_MS ?? process.env.AGENT_PROMPT_TIMEOUT_MS;
   if (env) {
     const parsed = parseInt(env, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      return parsed;
-    }
-    log.warn('Invalid AGENT_FOLLOWUP_TIMEOUT_MS value: ' + env + ', using default: ' + DEFAULT_FOLLOWUP_TIMEOUT_MS);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
   }
-  return DEFAULT_FOLLOWUP_TIMEOUT_MS;
+  return DEFAULT_WORKER_TIMEOUT_MS;
 }
 
-// ── Agent session state ────────────────────────────────────────────
+// ── Telegram send tool ─────────────────────────────────────────────
 
-let currentSession: AgentSession | null = null;
 let tgSend: TelegramSendFn | null = null;
 
 export function registerTelegramSend(fn: TelegramSendFn): void {
@@ -61,10 +56,6 @@ export function registerTelegramSend(fn: TelegramSendFn): void {
 }
 
 function buildTgSendTool(sendFn: TelegramSendFn | null): ToolDefinition {
-  const params = Type.Object({
-    text: Type.String({ description: "Message text (supports Markdown)" }),
-  });
-
   return {
     name: "send_owner_message",
     label: "Send Message to Creator",
@@ -72,8 +63,10 @@ function buildTgSendTool(sendFn: TelegramSendFn | null): ToolDefinition {
       "Send a message to the creator (Neo) via Telegram. " +
       "Use for important notifications, evolution reports, error alerts. " +
       "Do not spam — batch non-urgent updates.",
-    parameters: params,
-    execute: async (_toolCallId, args: Record<string, unknown>, _signal, _onUpdate, _ctx) => {
+    parameters: Type.Object({
+      text: Type.String({ description: "Message text (supports Markdown)" }),
+    }),
+    execute: async (_toolCallId, args: Record<string, unknown>) => {
       if (!sendFn) {
         return {
           content: [{ type: "text", text: "Telegram not connected yet. Message not sent." }],
@@ -89,31 +82,9 @@ function buildTgSendTool(sendFn: TelegramSendFn | null): ToolDefinition {
   };
 }
 
-// ── Create / get session ───────────────────────────────────────────
+// ── Shared model setup ─────────────────────────────────────────────
 
-export async function startAgent(): Promise<AgentSession> {
-  const sessionDir = "./data/sessions";
-  const sessionManager = SessionManager.create(process.cwd(), sessionDir);
-
-  // Load extensions (Jinx tools registered via Extension API)
-  const extensionsDir = join(process.cwd(), "extensions");
-  const { extensions, errors } = await discoverAndLoadExtensions([extensionsDir], process.cwd());
-  
-  if (errors.length > 0) {
-    log.warn("Some extensions failed to load", { errors: errors.map(e => e.error) });
-  }
-  
-  if (extensions.length > 0) {
-    log.info(`Loaded ${extensions.length} extension(s)`);
-  }
-
-  // Telegram tool still needs to be passed dynamically (depends on tgSend)
-  const tgSendTool = buildTgSendTool(tgSend);
-
-  const resourceLoader = new DefaultResourceLoader({
-    systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
-  });
-
+async function buildModelSetup() {
   const agentDir = join(homedir(), ".pi", "agent");
   const authStorage = new AuthStorage(join(agentDir, "auth.json"));
   const modelRegistry = new ModelRegistry(authStorage, join(agentDir, "models.json"));
@@ -126,258 +97,358 @@ export async function startAgent(): Promise<AgentSession> {
       : [undefined, defaultModel];
     selectedModel = provider
       ? modelRegistry.find(provider, modelId)
-      : modelRegistry.getAll().find(m => m.id === modelId || m.name === modelId);
+      : modelRegistry.getAll().find((m) => m.id === modelId || m.name === modelId);
     if (!selectedModel) {
-      log.warn(`Model "${defaultModel}" not found in registry, falling back to first available model`);
+      log.warn(`Model "${defaultModel}" not found, using first available`);
     }
   }
 
-  const options: CreateAgentSessionOptions = {
-    sessionManager,
-    resourceLoader,
-    modelRegistry,
-    model: selectedModel,
-    thinkingLevel: "high",
-    tools: codingTools,
-    customTools: [tgSendTool], // Only dynamic tool here; others via Extension
-  };
-
-  const { session, modelFallbackMessage } = await createAgentSession(options);
-
-  if (modelFallbackMessage) {
-    log.warn(`Model fallback: ${modelFallbackMessage}`);
-  }
-
-  currentSession = session;
-  log.info("Agent session started", { model: selectedModel?.name || "fallback" });
-  return session;
+  return { modelRegistry, selectedModel };
 }
 
-export function getSession(): AgentSession | null {
-  return currentSession;
-}
+// ── Response collection helpers ────────────────────────────────────
 
-/**
- * Check if agent is streaming. Uses Pi's native isStreaming — no race conditions.
- */
-export function isAgentBusy(): boolean {
-  return currentSession?.isStreaming ?? false;
-}
-
-/**
- * Send a prompt to the agent and return the response text.
- *
- * Handles concurrency via Pi's native steer/followUp API:
- * - Agent idle: sends prompt normally
- * - Agent streaming: queues as followUp (waits for current work to finish)
- */
-export async function prompt(message: string, images?: any[]): Promise<string> {
-  if (!currentSession) {
-    throw new Error("Agent session not started");
-  }
-
-  const session = currentSession;
-  const streaming = session.isStreaming;
-
-  log.info(`Prompt: ${message.slice(0, 100)}${message.length > 100 ? "..." : ""}`, {
-    hasImages: !!images?.length,
-    streaming,
-  });
-
-  if (streaming) {
-    log.info("Agent is streaming, queuing as followUp");
-    return queueFollowUpAndWait(session, message, images);
-  }
-
-  return sendPromptAndWait(session, message, images);
-}
-
-function sendPromptAndWait(session: AgentSession, message: string, images?: any[]): Promise<string> {
+function collectResponse(
+  session: AgentSession,
+  timeoutMs: number,
+  label: string,
+  images?: any[],
+): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let text = "";
     let errorMsg = "";
-    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const startTime = Date.now();
     const wasStreaming = session.isStreaming;
 
     const cleanup = () => {
-      if (timeout) clearTimeout(timeout);
-      unsubscribe();
+      if (timer) clearTimeout(timer);
+      unsub();
     };
 
-    const unsubscribe = session.subscribe((event) => {
+    const unsub = session.subscribe((event) => {
       if (event.type === "message_end") {
         const msg = (event as any).message;
         if (msg?.role === "assistant" && msg?.content) {
           for (const block of msg.content) {
-            if (block.type === "text") {
-              text += block.text;
-            }
+            if (block.type === "text") text += block.text;
           }
         }
-        if (msg?.errorMessage) {
-          errorMsg = msg.errorMessage;
-        }
+        if (msg?.errorMessage) errorMsg = msg.errorMessage;
       }
-
       if (event.type === "agent_end") {
-        const durationMs = Date.now() - startTime;
         cleanup();
-
-        // Record performance metrics
         recordAgentPrompt({
-          durationMs,
+          durationMs: Date.now() - startTime,
           hasImages: !!images?.length,
           wasStreaming,
           success: !errorMsg,
-          errorType: errorMsg ? 'agent_error' : undefined,
+          errorType: errorMsg ? "agent_error" : undefined,
         });
-
         resolve(errorMsg || text || "(No response)");
       }
     });
 
-    const timeoutMs = getPromptTimeoutMs();
-    timeout = setTimeout(() => {
-      const durationMs = Date.now() - startTime;
+    timer = setTimeout(() => {
       cleanup();
-
-      // Record timeout as failure
       recordAgentPrompt({
-        durationMs,
+        durationMs: Date.now() - startTime,
         hasImages: !!images?.length,
         wasStreaming,
         success: false,
-        errorType: 'timeout',
+        errorType: "timeout",
       });
-
-      reject(new Error('Prompt timed out after ' + timeoutMs + 'ms'));
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
     }, timeoutMs);
-
-    session.prompt(message, { images }).catch((e) => {
-      const durationMs = Date.now() - startTime;
-      cleanup();
-
-      // Record error
-      recordAgentPrompt({
-        durationMs,
-        hasImages: !!images?.length,
-        wasStreaming,
-        success: false,
-        errorType: 'exception',
-      });
-
-      reject(e);
-    });
   });
 }
 
-/**
- * Queue a followUp when agent is streaming. Waits for current work to end,
- * then collects the response from the followUp's agent cycle.
- *
- * Fixes race condition: checks if agent already finished (isStreaming=false)
- * immediately after subscribing, to handle the case where agent_end fired
- * before our subscription was active.
- */
-function queueFollowUpAndWait(session: AgentSession, message: string, images?: any[]): Promise<string> {
+/** Wait for the NEXT agent_end after current turn finishes (followUp pattern) */
+function collectFollowUpResponse(
+  session: AgentSession,
+  timeoutMs: number,
+  label: string,
+  images?: any[],
+): Promise<string> {
   return new Promise<string>((resolve, reject) => {
-    let waitingForOurTurn = true;
+    let waitingForCurrent = session.isStreaming;
     let text = "";
     let errorMsg = "";
-    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const startTime = Date.now();
 
     const cleanup = () => {
-      if (timeout) clearTimeout(timeout);
-      unsubscribe();
+      if (timer) clearTimeout(timer);
+      unsub();
     };
 
-    const unsubscribe = session.subscribe((event) => {
-      if (waitingForOurTurn && event.type === "agent_end") {
-        waitingForOurTurn = false;
+    const unsub = session.subscribe((event) => {
+      if (waitingForCurrent && event.type === "agent_end") {
+        waitingForCurrent = false;
         return;
       }
-
-      if (!waitingForOurTurn) {
+      if (!waitingForCurrent) {
         if (event.type === "message_end") {
           const msg = (event as any).message;
           if (msg?.role === "assistant" && msg?.content) {
             for (const block of msg.content) {
-              if (block.type === "text") {
-                text += block.text;
-              }
+              if (block.type === "text") text += block.text;
             }
           }
-          if (msg?.errorMessage) {
-            errorMsg = msg.errorMessage;
-          }
+          if (msg?.errorMessage) errorMsg = msg.errorMessage;
         }
-
         if (event.type === "agent_end") {
-          const durationMs = Date.now() - startTime;
           cleanup();
-
-          // Record performance metrics for follow-up
           recordAgentPrompt({
-            durationMs,
+            durationMs: Date.now() - startTime,
             hasImages: !!images?.length,
             wasStreaming: true,
             success: !errorMsg,
-            errorType: errorMsg ? 'agent_error' : undefined,
+            errorType: errorMsg ? "agent_error" : undefined,
           });
-
           resolve(errorMsg || text || "(No response)");
         }
       }
     });
 
-    // Race condition fix: if agent already finished (isStreaming=false), we're next
-    if (!session.isStreaming) {
-      waitingForOurTurn = false;
-    }
-
-    const timeoutMs = getFollowUpTimeoutMs();
-    timeout = setTimeout(() => {
-      const durationMs = Date.now() - startTime;
+    timer = setTimeout(() => {
       cleanup();
-
-      // Record timeout as failure
       recordAgentPrompt({
-        durationMs,
+        durationMs: Date.now() - startTime,
         hasImages: !!images?.length,
         wasStreaming: true,
         success: false,
-        errorType: 'timeout',
+        errorType: "timeout",
       });
-
-      reject(new Error('Follow-up timed out after ' + timeoutMs + 'ms'));
+      reject(new Error(`${label} followUp timed out after ${timeoutMs}ms`));
     }, timeoutMs);
-
-    session.followUp(message, images).catch((e) => {
-      const durationMs = Date.now() - startTime;
-      cleanup();
-
-      // Record error
-      recordAgentPrompt({
-        durationMs,
-        hasImages: !!images?.length,
-        wasStreaming: true,
-        success: false,
-        errorType: 'exception',
-      });
-
-      reject(e);
-    });
   });
 }
 
-export async function abortAgent(): Promise<void> {
-  if (currentSession) {
-    try {
-      await currentSession.abort();
-    } catch {
-      // Abort can fail if nothing is running
-    }
+// ── Session Pool ───────────────────────────────────────────────────
+
+export interface WorkerOptions {
+  /** Human-readable label for logging */
+  label: string;
+  /** Thinking level. Default: "medium" */
+  thinkingLevel?: "low" | "medium" | "high" | "xhigh";
+  /** Custom timeout override in ms */
+  timeoutMs?: number;
+}
+
+export interface WorkerSession {
+  readonly id: string;
+  readonly label: string;
+  readonly session: AgentSession;
+  /** Whether this worker is currently processing */
+  readonly busy: boolean;
+  /** Send a prompt and wait for the response */
+  prompt(message: string): Promise<string>;
+  /** Release resources and remove from pool */
+  dispose(): void;
+}
+
+/**
+ * SessionPool manages dynamically-created worker sessions.
+ *
+ * Jinx uses this for evolution cycles, sub-tasks, and any background work
+ * that must not block the conversation session.
+ *
+ * Usage:
+ *   const worker = await SessionPool.spawn({ label: "evolution-#42" });
+ *   const result = await worker.prompt("implement feature X");
+ *   worker.dispose();
+ */
+export class SessionPool {
+  private static _workers = new Map<string, WorkerSession>();
+  private static _counter = 0;
+
+  static get size(): number {
+    return this._workers.size;
   }
+
+  static getAll(): WorkerSession[] {
+    return Array.from(this._workers.values());
+  }
+
+  static get(id: string): WorkerSession | undefined {
+    return this._workers.get(id);
+  }
+
+  /**
+   * Spawn a new in-memory worker session.
+   * Fully isolated — no shared context with conversation or other workers.
+   */
+  static async spawn(opts: WorkerOptions): Promise<WorkerSession> {
+    const { modelRegistry, selectedModel } = await buildModelSetup();
+    const timeoutMs = opts.timeoutMs ?? getWorkerTimeoutMs();
+    const id = `worker-${++this._counter}`;
+
+    const { session, modelFallbackMessage } = await createAgentSession({
+      sessionManager: SessionManager.inMemory(),
+      resourceLoader: new DefaultResourceLoader({
+        systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
+      }),
+      modelRegistry,
+      model: selectedModel,
+      thinkingLevel: opts.thinkingLevel ?? "medium",
+      tools: codingTools,
+      customTools: [buildTgSendTool(tgSend)],
+    } satisfies CreateAgentSessionOptions);
+
+    if (modelFallbackMessage) {
+      log.warn(`Worker model fallback: ${modelFallbackMessage}`, { id });
+    }
+    log.info("Worker session spawned", { id, label: opts.label });
+
+    const worker: WorkerSession = {
+      id,
+      label: opts.label,
+      session,
+
+      get busy() {
+        return session.isStreaming;
+      },
+
+      async prompt(message: string): Promise<string> {
+        log.info(`Worker [${opts.label}]: ${message.slice(0, 80)}${message.length > 80 ? "..." : ""}`);
+        if (session.isStreaming) {
+          const p = collectFollowUpResponse(session, timeoutMs, opts.label);
+          session.followUp(message).catch((e) =>
+            log.error(`Worker followUp failed [${opts.label}]`, { error: (e as Error).message }),
+          );
+          return p;
+        }
+        const p = collectResponse(session, timeoutMs, opts.label);
+        session.prompt(message).catch((e) =>
+          log.error(`Worker prompt failed [${opts.label}]`, { error: (e as Error).message }),
+        );
+        return p;
+      },
+
+      dispose() {
+        try {
+          session.abort().catch(() => {});
+          session.dispose();
+        } catch {
+          // ignore
+        }
+        SessionPool._workers.delete(id);
+        log.info("Worker session disposed", { id, label: opts.label });
+      },
+    };
+
+    this._workers.set(id, worker);
+    return worker;
+  }
+
+  static disposeAll(): void {
+    for (const worker of this._workers.values()) {
+      worker.dispose();
+    }
+    this._workers.clear();
+  }
+}
+
+// ── Conversation session ────────────────────────────────────────────────
+
+let conversationSession: AgentSession | null = null;
+
+/**
+ * Start the conversation session — permanent, persistent, always-on.
+ * History stored in ./data/sessions, survives restarts.
+ */
+export async function startConversationSession(): Promise<AgentSession> {
+  const { modelRegistry, selectedModel } = await buildModelSetup();
+
+  const extensionsDir = join(process.cwd(), "extensions");
+  const { extensions, errors } = await discoverAndLoadExtensions([extensionsDir], process.cwd());
+  if (errors.length > 0) {
+    log.warn("Some extensions failed to load", { errors: errors.map((e) => e.error) });
+  }
+  if (extensions.length > 0) {
+    log.info(`Loaded ${extensions.length} extension(s)`);
+  }
+
+  const { session, modelFallbackMessage } = await createAgentSession({
+    sessionManager: SessionManager.create(process.cwd(), "./data/sessions"),
+    resourceLoader: new DefaultResourceLoader({
+      systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
+    }),
+    modelRegistry,
+    model: selectedModel,
+    thinkingLevel: "high",
+    tools: codingTools,
+    customTools: [buildTgSendTool(tgSend)],
+  } satisfies CreateAgentSessionOptions);
+
+  if (modelFallbackMessage) {
+    log.warn(`Conversation session model fallback: ${modelFallbackMessage}`);
+  }
+  conversationSession = session;
+  log.info("Conversation session started", { model: selectedModel?.name || "fallback" });
+  return session;
+}
+
+export function getConversationSession(): AgentSession | null {
+  return conversationSession;
+}
+
+export function isConversationBusy(): boolean {
+  return conversationSession?.isStreaming ?? false;
+}
+
+export async function promptConversation(message: string, images?: any[]): Promise<string> {
+  if (!conversationSession) throw new Error("Conversation session not started");
+  const session = conversationSession;
+  const timeoutMs = getConversationTimeoutMs();
+
+  log.info(`Conversation: ${message.slice(0, 100)}${message.length > 100 ? "..." : ""}`, {
+    hasImages: !!images?.length,
+    streaming: session.isStreaming,
+  });
+
+  if (session.isStreaming) {
+    const p = collectFollowUpResponse(session, timeoutMs, "Conversation", images);
+    session.followUp(message, images).catch((e) =>
+      log.error("Conversation followUp failed", { error: (e as Error).message }),
+    );
+    return p;
+  }
+
+  const p = collectResponse(session, timeoutMs, "Conversation", images);
+  session.prompt(message, { images }).catch((e) =>
+    log.error("Conversation prompt failed", { error: (e as Error).message }),
+  );
+  return p;
+}
+
+// ── Startup / Shutdown ─────────────────────────────────────────────
+
+export async function startAgent(): Promise<AgentSession> {
+  return startConversationSession();
+}
+
+export async function abortAgent(): Promise<void> {
+  if (conversationSession) {
+    try { await conversationSession.abort(); } catch { /* ignore */ }
+  }
+  SessionPool.disposeAll();
+}
+
+// ── Legacy shims ───────────────────────────────────────────────────
+
+/** @deprecated Use getConversationSession() */
+export function getSession(): AgentSession | null {
+  return conversationSession;
+}
+
+/** @deprecated Use isConversationBusy() */
+export function isAgentBusy(): boolean {
+  return isConversationBusy();
+}
+
+/** @deprecated Use promptConversation() */
+export async function prompt(message: string, images?: any[]): Promise<string> {
+  return promptConversation(message, images);
 }

@@ -14,6 +14,7 @@ Neo 通过 Telegram 消息告知 Jinx 添加任务，Jinx 也可在 consciousnes
 ## Pending
 - [ ] #017: 实现测试覆盖率报告生成 - 集成 vitest coverage 生成覆盖率报告，在站点展示或定期发送给 Neo，识别未测试的代码区域
 - [ ] #018: 添加数据自动备份机制 - 定期将 data/ 目录（记忆、技能、状态）备份到 GitHub Gist 或外部存储，防止数据丢失
+- [ ] #019: 主动分析 evolution 效率瓶颈并改进 - 读取 evolution-history.json 和实际 git log 时间戳，计算真实 cycle 耗时，识别哪些步骤最慢（如 promptFn 等待时间、tool call 次数），基于数据决定下一步优化方向
 
 ## Done
 - [x] #016: 添加 API 成本与配额监控 - 追踪 Claude Code、Web Search、GitHub API 调用次数和估算成本，设置预算预警，避免意外高额账单 — 2026-02-27
