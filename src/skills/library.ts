@@ -307,9 +307,75 @@ export interface SkillExecutionResult {
   error?: string;
 }
 
+function buildFailResult(
+  skill: Skill,
+  startTime: string,
+  startMs: number,
+  stepResults: SkillStepResult[],
+  stepsExecuted: number,
+  error?: string,
+): SkillExecutionResult {
+  return {
+    success: false,
+    skillId: skill.id,
+    skillName: skill.name,
+    startTime,
+    endTime: new Date().toISOString(),
+    totalDurationMs: Date.now() - startMs,
+    stepsExecuted,
+    stepsSucceeded: stepResults.filter(r => r.success).length,
+    stepsFailed: stepResults.filter(r => !r.success).length,
+    stepResults,
+    error,
+  };
+}
+
+async function executeStepWithRetries(
+  skill: Skill,
+  step: Skill["steps"][0],
+  stepIndex: number,
+  interpolatedParams: Record<string, unknown>,
+  signal: AbortSignal | undefined,
+  maxRetries: number,
+): Promise<{ success: boolean; result?: string; error?: string; durationMs: number }> {
+  const stepStartMs = Date.now();
+  let attempt = 0;
+  let lastError: string | undefined;
+  let stepResult: AgentToolResult<unknown> | undefined;
+  const tool = getTool(step.toolName);
+  if (!tool) return { success: false, error: `Tool not found: ${step.toolName}`, durationMs: Date.now() - stepStartMs };
+
+  while (attempt <= maxRetries) {
+    try {
+      if (attempt > 0) {
+        log.info(`Retrying step ${stepIndex + 1}`, { toolName: step.toolName, attempt });
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
+      stepResult = await tool.execute(
+        `skill-${skill.id}-step-${stepIndex}`,
+        interpolatedParams,
+        signal,
+        undefined as unknown as AgentToolUpdateCallback,
+        {} as ExtensionContext,
+      );
+      const text = stepResult?.content
+        ?.filter(c => c.type === "text")
+        ?.map(c => (c as { text: string }).text)
+        ?.join("\n") ?? "";
+      return { success: true, result: text, durationMs: Date.now() - stepStartMs };
+    } catch (e) {
+      lastError = (e as Error).message;
+      attempt++;
+      log.warn(`Step ${stepIndex + 1} failed`, { toolName: step.toolName, attempt, error: lastError });
+    }
+  }
+  return { success: false, error: lastError, durationMs: Date.now() - stepStartMs };
+}
+
 /**
  * Execute a skill's steps sequentially with real tool invocation
  */
+// eslint-disable-next-line complexity
 export async function executeSkillSteps(
   skill: Skill,
   params: Record<string, unknown>,
@@ -322,165 +388,42 @@ export async function executeSkillSteps(
   const startTime = new Date().toISOString();
   const startMs = Date.now();
   const stepResults: SkillStepResult[] = [];
-  
-  log.info("Starting skill execution", { 
-    skillId: skill.id, 
-    skillName: skill.name, 
-    stepCount: skill.steps.length 
-  });
-
-  // Get retry configuration
   const maxRetries = skill.errorRecovery?.retryCount ?? 0;
+
+  log.info("Starting skill execution", { skillId: skill.id, skillName: skill.name, stepCount: skill.steps.length });
 
   for (let i = 0; i < skill.steps.length; i++) {
     const step = skill.steps[i];
-    const stepStartMs = Date.now();
-    
     options?.onStepStart?.(i, step.toolName);
-    
-    // Check for abort signal
+
     if (options?.signal?.aborted) {
-      const error = "Skill execution aborted";
-      const failedResult: SkillStepResult = {
-        stepIndex: i,
-        toolName: step.toolName,
-        params: {},
-        success: false,
-        error,
-        durationMs: Date.now() - stepStartMs,
-      };
-      stepResults.push(failedResult);
-      options?.onStepComplete?.(i, failedResult);
-      
-      return {
-        success: false,
-        skillId: skill.id,
-        skillName: skill.name,
-        startTime,
-        endTime: new Date().toISOString(),
-        totalDurationMs: Date.now() - startMs,
-        stepsExecuted: i + 1,
-        stepsSucceeded: stepResults.filter(r => r.success).length,
-        stepsFailed: stepResults.filter(r => !r.success).length,
-        stepResults,
-        error,
-      };
+      const abortedResult: SkillStepResult = { stepIndex: i, toolName: step.toolName, params: {}, success: false, error: "Skill execution aborted", durationMs: 0 };
+      stepResults.push(abortedResult);
+      options?.onStepComplete?.(i, abortedResult);
+      return buildFailResult(skill, startTime, startMs, stepResults, i + 1, "Skill execution aborted");
     }
 
-    // Interpolate parameters
     const interpolatedParams = interpolateParams(step.params, params);
-    
-    // Get tool from registry
-    const tool = getTool(step.toolName);
-    if (!tool) {
-      const error = `Tool not found: ${step.toolName}`;
-      log.error(error, { skillId: skill.id, stepIndex: i });
-      
-      const failedResult: SkillStepResult = {
-        stepIndex: i,
-        toolName: step.toolName,
-        params: interpolatedParams,
-        success: false,
-        error,
-        durationMs: Date.now() - stepStartMs,
-      };
-      stepResults.push(failedResult);
-      options?.onStepComplete?.(i, failedResult);
-      
-      // Continue or fail based on error recovery settings
-      if (maxRetries === 0) {
-        return {
-          success: false,
-          skillId: skill.id,
-          skillName: skill.name,
-          startTime,
-          endTime: new Date().toISOString(),
-          totalDurationMs: Date.now() - startMs,
-          stepsExecuted: i + 1,
-          stepsSucceeded: stepResults.filter(r => r.success).length,
-          stepsFailed: stepResults.filter(r => !r.success).length,
-          stepResults,
-          error,
-        };
-      }
-      continue;
-    }
-
-    // Execute tool with retries
-    let attempt = 0;
-    let lastError: string | undefined;
-    let stepSuccess = false;
-    let stepResult: AgentToolResult<unknown> | undefined;
-
-    while (attempt <= maxRetries && !stepSuccess) {
-      try {
-        if (attempt > 0) {
-          log.info(`Retrying step ${i + 1}`, { toolName: step.toolName, attempt });
-          await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
-        }
-
-        stepResult = await tool.execute(
-          `skill-${skill.id}-step-${i}`,
-          interpolatedParams,
-          options?.signal,
-          undefined as unknown as AgentToolUpdateCallback,
-          {} as ExtensionContext
-        );
-        
-        stepSuccess = true;
-      } catch (e) {
-        lastError = (e as Error).message;
-        attempt++;
-        log.warn(`Step ${i + 1} failed`, { toolName: step.toolName, attempt, error: lastError });
-      }
-    }
-
-    const stepDurationMs = Date.now() - stepStartMs;
-    const resultText = stepResult?.content
-      ?.filter(c => c.type === "text")
-      ?.map(c => (c as { text: string }).text)
-      ?.join("\n") ?? "";
+    const { success, result, error, durationMs } = await executeStepWithRetries(
+      skill, step, i, interpolatedParams, options?.signal, maxRetries,
+    );
 
     const stepResultEntry: SkillStepResult = {
-      stepIndex: i,
-      toolName: step.toolName,
-      params: interpolatedParams,
-      success: stepSuccess,
-      result: stepSuccess ? resultText : undefined,
-      error: stepSuccess ? undefined : lastError,
-      durationMs: stepDurationMs,
+      stepIndex: i, toolName: step.toolName, params: interpolatedParams,
+      success, result: success ? result : undefined, error: success ? undefined : error, durationMs,
     };
-
     stepResults.push(stepResultEntry);
     options?.onStepComplete?.(i, stepResultEntry);
 
-    if (!stepSuccess && maxRetries === 0) {
-      // Hard fail on first error if no retries configured
-      return {
-        success: false,
-        skillId: skill.id,
-        skillName: skill.name,
-        startTime,
-        endTime: new Date().toISOString(),
-        totalDurationMs: Date.now() - startMs,
-        stepsExecuted: i + 1,
-        stepsSucceeded: stepResults.filter(r => r.success).length,
-        stepsFailed: stepResults.filter(r => !r.success).length,
-        stepResults,
-        error: lastError,
-      };
+    if (!success && maxRetries === 0) {
+      return buildFailResult(skill, startTime, startMs, stepResults, i + 1, error);
     }
   }
 
   const endMs = Date.now();
   const allSucceeded = stepResults.every(r => r.success);
   const finalResult = stepResults[stepResults.length - 1];
-
-  log.info("Skill execution completed", { 
-    skillId: skill.id, 
-    success: allSucceeded,
-    durationMs: endMs - startMs
-  });
+  log.info("Skill execution completed", { skillId: skill.id, success: allSucceeded, durationMs: endMs - startMs });
 
   return {
     success: allSucceeded,
@@ -535,52 +478,47 @@ export function formatExecutionResult(result: SkillExecutionResult): string {
   return lines.join("\n");
 }
 
+// eslint-disable-next-line complexity
+function validateParamValue(name: string, value: unknown, param: Skill['parameters'][0]): string[] {
+  const errs: string[] = [];
+  const actualType = Array.isArray(value) ? "array" : typeof value;
+  if (actualType !== param.type && !(param.type === "number" && actualType === "number")) {
+    errs.push(`Parameter ${name} should be ${param.type}, got ${actualType}`);
+  }
+  if (param.validation?.pattern && typeof value === "string") {
+    if (!new RegExp(param.validation.pattern).test(value)) {
+      errs.push(`Parameter ${name} does not match required pattern`);
+    }
+  }
+  if (param.type === "number" && typeof value === "number") {
+    if (param.validation?.min !== undefined && value < param.validation.min) {
+      errs.push(`Parameter ${name} must be >= ${param.validation.min}`);
+    }
+    if (param.validation?.max !== undefined && value > param.validation.max) {
+      errs.push(`Parameter ${name} must be <= ${param.validation.max}`);
+    }
+  }
+  if (param.validation?.options && !param.validation.options.includes(value)) {
+    errs.push(`Parameter ${name} must be one of: ${param.validation.options.join(", ")}`);
+  }
+  return errs;
+}
+
 export function validateSkillParams(
-  skill: Skill, 
+  skill: Skill,
   params: Record<string, unknown>
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
-  
   for (const param of skill.parameters) {
     const value = params[param.name];
-    
     if (param.required && (value === undefined || value === null)) {
       errors.push(`Missing required parameter: ${param.name}`);
       continue;
     }
-    
     if (value !== undefined && value !== null) {
-      // Type validation
-      const actualType = Array.isArray(value) ? "array" : typeof value;
-      if (actualType !== param.type && !(param.type === "number" && actualType === "number")) {
-        errors.push(`Parameter ${param.name} should be ${param.type}, got ${actualType}`);
-      }
-      
-      // Pattern validation
-      if (param.validation?.pattern && typeof value === "string") {
-        const regex = new RegExp(param.validation.pattern);
-        if (!regex.test(value)) {
-          errors.push(`Parameter ${param.name} does not match required pattern`);
-        }
-      }
-      
-      // Range validation for numbers
-      if (param.type === "number" && typeof value === "number") {
-        if (param.validation?.min !== undefined && value < param.validation.min) {
-          errors.push(`Parameter ${param.name} must be >= ${param.validation.min}`);
-        }
-        if (param.validation?.max !== undefined && value > param.validation.max) {
-          errors.push(`Parameter ${param.name} must be <= ${param.validation.max}`);
-        }
-      }
-      
-      // Options validation
-      if (param.validation?.options && !param.validation.options.includes(value)) {
-        errors.push(`Parameter ${param.name} must be one of: ${param.validation.options.join(", ")}`);
-      }
+      errors.push(...validateParamValue(param.name, value, param));
     }
   }
-  
   return { valid: errors.length === 0, errors };
 }
 

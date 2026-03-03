@@ -59,7 +59,7 @@ async function handleRestart(req: RestartRequest): Promise<void> {
     try {
       markIntentionalRestart();
       execSync("pm2 restart jinx", { timeout: 30_000, stdio: "pipe" });
-    } catch (e) {
+    } catch {
       log.error("PM2 restart failed, exiting process for auto-restart");
       process.exit(0);
     }

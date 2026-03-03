@@ -4,8 +4,8 @@
  */
 
 import { execSync } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+
+
 import { log } from "../util/log.js";
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -236,6 +236,43 @@ export function runSecurityCheck(): SecurityResult | null {
 
 // ── Complexity Analysis ────────────────────────────────────────────
 
+type EslintJsonMessage = { line: number; message: string; ruleId: string | null };
+type EslintJsonResult = { filePath: string; messages: EslintJsonMessage[] };
+
+function parseComplexityJson(json: string): ComplexityResult {
+  const results = JSON.parse(json) as EslintJsonResult[];
+  const highComplexityFiles: ComplexityInfo[] = [];
+  const complexities: number[] = [];
+
+  for (const result of results) {
+    for (const msg of result.messages) {
+      if (msg.ruleId !== "complexity") continue;
+      const match = msg.message.match(/complexity of (\d+)/);
+      const complexity = match ? parseInt(match[1], 10) : 0;
+      const funcMatch = msg.message.match(/Function '([^']+)'/);
+      const funcName = funcMatch ? funcMatch[1] : "anonymous";
+      highComplexityFiles.push({
+        file: result.filePath.replace(process.cwd(), "."),
+        complexity,
+        function: funcName,
+        line: msg.line,
+      });
+      complexities.push(complexity);
+    }
+  }
+
+  const averageComplexity =
+    complexities.length > 0
+      ? complexities.reduce((a, b) => a + b, 0) / complexities.length
+      : 0;
+
+  return {
+    highComplexityFiles: highComplexityFiles.slice(0, 10),
+    averageComplexity: Math.round(averageComplexity * 10) / 10,
+    maxComplexity: complexities.length > 0 ? Math.max(...complexities) : 0,
+  };
+}
+
 export function runComplexityAnalysis(): ComplexityResult | null {
   try {
     // Use ESLint to find high complexity functions
@@ -247,101 +284,13 @@ export function runComplexityAnalysis(): ComplexityResult | null {
         timeout: 60000,
       }
     );
-
-    // Parse complexity issues
-    const results = JSON.parse(output) as Array<{
-      filePath: string;
-      messages: Array<{
-        line: number;
-        message: string;
-        ruleId: string | null;
-      }>;
-    }>;
-
-    const highComplexityFiles: ComplexityInfo[] = [];
-    const complexities: number[] = [];
-
-    for (const result of results) {
-      for (const msg of result.messages) {
-        if (msg.ruleId === "complexity") {
-          // Extract complexity number from message like "Function has a complexity of 15"
-          const match = msg.message.match(/complexity of (\d+)/);
-          const complexity = match ? parseInt(match[1], 10) : 0;
-
-          // Extract function name from message
-          const funcMatch = msg.message.match(/Function '([^']+)'/);
-          const funcName = funcMatch ? funcMatch[1] : "anonymous";
-
-          highComplexityFiles.push({
-            file: result.filePath.replace(process.cwd(), "."),
-            complexity,
-            function: funcName,
-            line: msg.line,
-          });
-
-          complexities.push(complexity);
-        }
-      }
-    }
-
-    const averageComplexity =
-      complexities.length > 0
-        ? complexities.reduce((a, b) => a + b, 0) / complexities.length
-        : 0;
-
-    return {
-      highComplexityFiles: highComplexityFiles.slice(0, 10),
-      averageComplexity: Math.round(averageComplexity * 10) / 10,
-      maxComplexity: complexities.length > 0 ? Math.max(...complexities) : 0,
-    };
+    return parseComplexityJson(output);
   } catch (e) {
     // ESLint exits with non-zero if complexity issues found
     const error = e as Error & { stdout?: string };
     if (error.stdout) {
       try {
-        const results = JSON.parse(error.stdout) as Array<{
-          filePath: string;
-          messages: Array<{
-            line: number;
-            message: string;
-            ruleId: string | null;
-          }>;
-        }>;
-
-        const highComplexityFiles: ComplexityInfo[] = [];
-        const complexities: number[] = [];
-
-        for (const result of results) {
-          for (const msg of result.messages) {
-            if (msg.ruleId === "complexity") {
-              const match = msg.message.match(/complexity of (\d+)/);
-              const complexity = match ? parseInt(match[1], 10) : 0;
-
-              const funcMatch = msg.message.match(/Function '([^']+)'/);
-              const funcName = funcMatch ? funcMatch[1] : "anonymous";
-
-              highComplexityFiles.push({
-                file: result.filePath.replace(process.cwd(), "."),
-                complexity,
-                function: funcName,
-                line: msg.line,
-              });
-
-              complexities.push(complexity);
-            }
-          }
-        }
-
-        const averageComplexity =
-          complexities.length > 0
-            ? complexities.reduce((a, b) => a + b, 0) / complexities.length
-            : 0;
-
-        return {
-          highComplexityFiles: highComplexityFiles.slice(0, 10),
-          averageComplexity: Math.round(averageComplexity * 10) / 10,
-          maxComplexity: complexities.length > 0 ? Math.max(...complexities) : 0,
-        };
+        return parseComplexityJson(error.stdout);
       } catch {
         log.error("Failed to parse complexity output");
       }
@@ -419,15 +368,7 @@ export async function runQualityCheck(): Promise<QualityCheckResult> {
 
 // ── Formatting ─────────────────────────────────────────────────────
 
-export function formatQualityReport(result: QualityCheckResult): string {
-  const lines: string[] = [
-    result.passed ? "✅ Code Quality Check Passed" : "❌ Code Quality Check Failed",
-    "",
-    "📊 Summary:",
-    `   ${result.summary}`,
-    "",
-  ];
-
+function formatEslintSection(result: QualityCheckResult, lines: string[]): void {
   if (result.eslint && result.eslint.totalErrors > 0) {
     lines.push("🚨 ESLint Errors:");
     for (const issue of result.eslint.issues.filter((i) => i.severity === "error").slice(0, 5)) {
@@ -438,7 +379,6 @@ export function formatQualityReport(result: QualityCheckResult): string {
     }
     lines.push("");
   }
-
   if (result.eslint && result.eslint.totalWarnings > 0) {
     lines.push("⚠️ ESLint Warnings:");
     for (const issue of result.eslint.issues.filter((i) => i.severity === "warning").slice(0, 3)) {
@@ -449,14 +389,9 @@ export function formatQualityReport(result: QualityCheckResult): string {
     }
     lines.push("");
   }
+}
 
-  if (result.security && result.security.vulnerabilities > 0) {
-    lines.push("🔒 Security:");
-    lines.push(`   ${result.security.summary}`);
-    lines.push("   Run 'npm audit fix' to attempt automatic fixes");
-    lines.push("");
-  }
-
+function formatComplexitySection(result: QualityCheckResult, lines: string[]): void {
   if (result.complexity && result.complexity.highComplexityFiles.length > 0) {
     lines.push("📈 High Complexity Functions:");
     for (const info of result.complexity.highComplexityFiles.slice(0, 5)) {
@@ -466,6 +401,27 @@ export function formatQualityReport(result: QualityCheckResult): string {
       lines.push(`   ... and ${result.complexity.highComplexityFiles.length - 5} more`);
     }
   }
+}
+
+export function formatQualityReport(result: QualityCheckResult): string {
+  const lines: string[] = [
+    result.passed ? "✅ Code Quality Check Passed" : "❌ Code Quality Check Failed",
+    "",
+    "📊 Summary:",
+    `   ${result.summary}`,
+    "",
+  ];
+
+  formatEslintSection(result, lines);
+
+  if (result.security && result.security.vulnerabilities > 0) {
+    lines.push("🔒 Security:");
+    lines.push(`   ${result.security.summary}`);
+    lines.push("   Run 'npm audit fix' to attempt automatic fixes");
+    lines.push("");
+  }
+
+  formatComplexitySection(result, lines);
 
   return lines.join("\n");
 }

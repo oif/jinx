@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { DATA_DIR } from "../supervisor/paths.js";
 import { log } from "../util/log.js";
 import type { HealthHistoryEntry } from "../health/history.js";
-import type { PerformanceMetrics, AgentPromptMetric, ToolCallMetric, EvolutionCycleMetric } from "../observability/metrics.js";
+import type { PerformanceMetrics } from "../observability/metrics.js";
 
 const HISTORY_PATH = join(DATA_DIR, "health-history.json");
 const METRICS_PATH = join(DATA_DIR, "performance-metrics.json");

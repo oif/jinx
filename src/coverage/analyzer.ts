@@ -52,6 +52,22 @@ export interface CoverageHistory {
 /**
  * Read vitest coverage summary report
  */
+function parseFileEntry(path: string, fileData: unknown): FileCoverage {
+  return {
+    path: path.replace(process.cwd(), "").replace(/^\//, ""),
+    metrics: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      lines: (fileData as any).lines || { total: 0, covered: 0, pct: 0 },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      statements: (fileData as any).statements || { total: 0, covered: 0, pct: 0 },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      functions: (fileData as any).functions || { total: 0, covered: 0, pct: 0 },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      branches: (fileData as any).branches || { total: 0, covered: 0, pct: 0 },
+    },
+  };
+}
+
 export function readCoverageReport(): CoverageSummary | null {
   try {
     if (!existsSync(COVERAGE_REPORT_PATH)) {
@@ -77,25 +93,11 @@ export function readCoverageReport(): CoverageSummary | null {
 
     for (const [path, fileData] of Object.entries(data)) {
       if (path === "total") continue;
-
-      const fileMetrics: CoverageMetrics = {
-        lines: (fileData as any).lines || { total: 0, covered: 0, pct: 0 },
-        statements: (fileData as any).statements || { total: 0, covered: 0, pct: 0 },
-        functions: (fileData as any).functions || { total: 0, covered: 0, pct: 0 },
-        branches: (fileData as any).branches || { total: 0, covered: 0, pct: 0 },
-      };
-
-      const fileCoverage: FileCoverage = {
-        path: path.replace(process.cwd(), "").replace(/^\//, ""),
-        metrics: fileMetrics,
-      };
-
+      const fileCoverage = parseFileEntry(path, fileData);
       files.push(fileCoverage);
-
-      // Categorize files
-      if (fileMetrics.lines.pct === 0) {
+      if (fileCoverage.metrics.lines.pct === 0) {
         untestedFiles.push(fileCoverage.path);
-      } else if (fileMetrics.lines.pct < 50) {
+      } else if (fileCoverage.metrics.lines.pct < 50) {
         lowCoverageFiles.push(fileCoverage);
       }
     }

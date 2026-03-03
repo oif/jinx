@@ -100,7 +100,7 @@ export function formatPricingInfo(): string {
     `  Typical request (~4K in, ~2K out): ~$0.04`,
     "",
     "Web Search:",
-    ...Object.entries(SEARCH_PRICING).map(([key, p]) => 
+    ...Object.entries(SEARCH_PRICING).map(([, p]) => 
       `  ${p.name}: $${p.costPerRequest}/request`
     ),
     "",

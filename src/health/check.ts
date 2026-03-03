@@ -68,6 +68,31 @@ function formatHealthAlert(health: HealthStatus): string {
   return `${emoji} Health Alert: ${health.status.toUpperCase()}\n${issues.join(" | ")}`;
 }
 
+async function sendHealthNotifications(
+  health: HealthStatus,
+  silent: boolean,
+): Promise<void> {
+  const { status } = health;
+  if (!silent && status !== "healthy" && status !== lastNotifiedStatus && notifyFn) {
+    try {
+      await notifyFn(formatHealthAlert(health));
+      lastNotifiedStatus = status;
+    } catch (e) {
+      log.error("Failed to send health alert", { error: (e as Error).message });
+    }
+  }
+  if (status === "healthy" && lastNotifiedStatus !== "healthy") {
+    lastNotifiedStatus = "healthy";
+    if (!silent && notifyFn) {
+      try {
+        await notifyFn("✅ Health status recovered to HEALTHY");
+      } catch (e) {
+        log.error("Failed to send health recovery notification", { error: (e as Error).message });
+      }
+    }
+  }
+}
+
 /**
  * Perform a system health check.
  * Optionally sends notifications when status changes to warning/critical.
@@ -117,27 +142,7 @@ export async function checkHealth(options?: { silent?: boolean }): Promise<Healt
       uptime: process.uptime(),
     };
 
-    // Notify on status change (not on every check to avoid spam)
-    if (!options?.silent && status !== "healthy" && status !== lastNotifiedStatus && notifyFn) {
-      try {
-        await notifyFn(formatHealthAlert(health));
-        lastNotifiedStatus = status;
-      } catch (e) {
-        log.error("Failed to send health alert", { error: (e as Error).message });
-      }
-    }
-
-    // Reset notification state when back to healthy
-    if (status === "healthy" && lastNotifiedStatus !== "healthy") {
-      lastNotifiedStatus = "healthy";
-      if (!options?.silent && notifyFn) {
-        try {
-          await notifyFn("✅ Health status recovered to HEALTHY");
-        } catch (e) {
-          log.error("Failed to send health recovery notification", { error: (e as Error).message });
-        }
-      }
-    }
+    await sendHealthNotifications(health, options?.silent ?? false);
 
     if (status !== "healthy") {
       log.warn("Health check reported issues", health as unknown as Record<string, unknown>);

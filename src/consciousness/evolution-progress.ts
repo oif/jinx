@@ -58,11 +58,9 @@ export function setEvolutionStage(stage: EvolutionStage, message?: string): void
 
   saveProgress(progress);
 
-  const emoji = getStageEmoji(stage);
   const durationStr = stageDuration > 0 ? ` (${formatDuration(stageDuration)})` : "";
   log.info(`Evolution #${progress.cycle}: ${stage}${durationStr}`, message ? { message } : undefined);
 }
-
 /**
  * Mark evolution as completed.
  */

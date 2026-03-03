@@ -163,6 +163,21 @@ function collectResponse(
   });
 }
 
+/** Extract text from message_end event, returns [text, errorMsg] */
+function extractMessageText(event: unknown): [string, string] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const msg = (event as any).message;
+  let text = "";
+  let errorMsg = "";
+  if (msg?.role === "assistant" && msg?.content) {
+    for (const block of msg.content) {
+      if (block.type === "text") text += block.text;
+    }
+  }
+  if (msg?.errorMessage) errorMsg = msg.errorMessage;
+  return [text, errorMsg];
+}
+
 /** Wait for the NEXT agent_end after current turn finishes (followUp pattern) */
 function collectFollowUpResponse(
   session: AgentSession,
@@ -182,34 +197,34 @@ function collectFollowUpResponse(
       unsub();
     };
 
-    const unsub = session.subscribe((event) => {
-      if (waitingForCurrent && event.type === "agent_end") {
+    const handleFollowUpEvent = (event: unknown) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (waitingForCurrent && (event as any).type === "agent_end") {
         waitingForCurrent = false;
         return;
       }
-      if (!waitingForCurrent) {
-        if (event.type === "message_end") {
-          const msg = (event as any).message;
-          if (msg?.role === "assistant" && msg?.content) {
-            for (const block of msg.content) {
-              if (block.type === "text") text += block.text;
-            }
-          }
-          if (msg?.errorMessage) errorMsg = msg.errorMessage;
-        }
-        if (event.type === "agent_end") {
-          cleanup();
-          recordAgentPrompt({
-            durationMs: Date.now() - startTime,
-            hasImages: !!images?.length,
-            wasStreaming: true,
-            success: !errorMsg,
-            errorType: errorMsg ? "agent_error" : undefined,
-          });
-          resolve(errorMsg || text || "(No response)");
-        }
+      if (waitingForCurrent) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((event as any).type === "message_end") {
+        const [t, e] = extractMessageText(event);
+        text += t;
+        if (e) errorMsg = e;
       }
-    });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((event as any).type === "agent_end") {
+        cleanup();
+        recordAgentPrompt({
+          durationMs: Date.now() - startTime,
+          hasImages: !!images?.length,
+          wasStreaming: true,
+          success: !errorMsg,
+          errorType: errorMsg ? "agent_error" : undefined,
+        });
+        resolve(errorMsg || text || "(No response)");
+      }
+    };
+
+    const unsub = session.subscribe(handleFollowUpEvent);
 
     timer = setTimeout(() => {
       cleanup();
@@ -436,19 +451,3 @@ export async function abortAgent(): Promise<void> {
   SessionPool.disposeAll();
 }
 
-// ── Legacy shims ───────────────────────────────────────────────────
-
-/** @deprecated Use getConversationSession() */
-export function getSession(): AgentSession | null {
-  return conversationSession;
-}
-
-/** @deprecated Use isConversationBusy() */
-export function isAgentBusy(): boolean {
-  return isConversationBusy();
-}
-
-/** @deprecated Use promptConversation() */
-export async function prompt(message: string, images?: any[]): Promise<string> {
-  return promptConversation(message, images);
-}

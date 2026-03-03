@@ -35,27 +35,20 @@ import {
   encodeMemory,
   retrieveMemories,
   createRelationship,
-  findRelatedMemories,
-  consolidateMemories,
-  pruneMemories,
-  getMemoryStats,
   formatMemoryStats,
   exportGraph,
   exportForVisualization,
   importGraph,
   advancedSemanticSearch,
-  autoConsolidate,
   findMemoryClusters,
   GraphExport,
 } from "../memory/graph.js";
 import {
   listIssues,
-  getIssue,
   createIssue,
   updateIssue,
   addIssueComment,
   listPullRequests,
-  getPullRequest,
   analyzePullRequest,
   getRepoStats,
   listCommits,
@@ -64,13 +57,6 @@ import {
   formatPRAnalysis,
   formatRepoStats,
 } from "../github/enhanced.js";
-import {
-  takeScreenshot,
-  analyzePage,
-  testPageInteraction,
-  formatPageInfo,
-} from "../browser/automation.js";
-
 // ── Types ──────────────────────────────────────────────────────────
 
 /**
@@ -86,7 +72,7 @@ function textResult(text: string): AgentToolResult<undefined> {
 // ── Helpers ────────────────────────────────────────────────────────
 
 const DATA_DIR = join(process.cwd(), "data");
-const RESTART_MARKER = join(DATA_DIR, ".restart_requested");
+
 
 function ensureDataDir(): void {
   if (!existsSync(DATA_DIR)) {
@@ -266,26 +252,6 @@ const githubRepoStatsParams = Type.Object({}); // No parameters needed
 const githubListCommitsParams = Type.Object({
   branch: Type.Optional(Type.String({ description: "Branch name (default: 'main')" })),
   limit: Type.Optional(Type.Number({ description: "Maximum number of commits to return (default: 20)" })),
-});
-
-// ── Browser Automation Parameters ──────────────────────────────────
-
-const takeScreenshotParams = Type.Object({
-  url: Type.String({ description: "URL to take screenshot of" }),
-  fullPage: Type.Optional(Type.Boolean({ description: "Capture full page (default: false)" })),
-  width: Type.Optional(Type.Number({ description: "Viewport width (default: 1280)" })),
-  height: Type.Optional(Type.Number({ description: "Viewport height (default: 720)" })),
-  selector: Type.Optional(Type.String({ description: "CSS selector to screenshot specific element" })),
-  waitFor: Type.Optional(Type.String({ description: "Wait for selector to appear before screenshot" })),
-});
-
-const analyzeWebpageParams = Type.Object({
-  url: Type.String({ description: "URL to analyze" }),
-});
-
-const testPageInteractionParams = Type.Object({
-  url: Type.String({ description: "URL to test" }),
-  actions: Type.String({ description: "JSON array of actions, e.g.: [{\"type\": \"click\", \"selector\": \"#btn\"}, {\"type\": \"fill\", \"selector\": \"#input\", \"value\": \"text\"}]" }),
 });
 
 // ── Tools ──────────────────────────────────────────────────────────
@@ -564,7 +530,7 @@ export const createPrTool: ToolDefinition = {
 
       // Extract repo name from git remote
       const remotes = shell("git remote -v", { cwd: process.cwd() });
-      const match = remotes.match(/github\.com[:\/](.+?\/.+?)\.git/);
+      const match = remotes.match(/github\.com[:/](.+?\/.+?)\.git/);
       if (!match) {
         return textResult("Error: Could not extract GitHub repository name from git remote.");
       }
@@ -1780,136 +1746,6 @@ export const githubListCommitsTool: ToolDefinition = {
   },
 };
 
-// ── Browser Automation Tools ───────────────────────────────────────
-
-/**
- * Take a screenshot of a webpage using Playwright.
- */
-export const takeScreenshotTool: ToolDefinition = {
-  name: "take_screenshot",
-  label: "Take Screenshot",
-  description:
-    "Take a screenshot of a webpage. Supports full page capture, " +
-    "specific element capture via CSS selector, and custom viewport sizes. " +
-    "Requires Playwright to be installed.",
-  parameters: takeScreenshotParams,
-  execute: async (
-    _toolCallId: string,
-    params: Record<string, unknown>,
-    _signal?: AbortSignal,
-    _onUpdate?: AgentToolUpdateCallback,
-    _ctx?: ExtensionContext
-  ): Promise<AgentToolResult<unknown>> => {
-    try {
-      const result = await takeScreenshot({
-        url: params.url as string,
-        fullPage: params.fullPage as boolean | undefined,
-        width: params.width as number | undefined,
-        height: params.height as number | undefined,
-        selector: params.selector as string | undefined,
-        waitFor: params.waitFor as string | undefined,
-      });
-
-      // Return screenshot as base64 for display
-      const base64Data = result.data.toString("base64");
-      const dataUrl = `data:image/png;base64,${base64Data}`;
-
-      return textResult(
-        `📸 Screenshot captured\n\n` +
-        `URL: ${params.url}\n` +
-        `Type: ${params.selector ? "element" : (params.fullPage ? "full page" : "viewport")}\n` +
-        `Size: ${result.data.length} bytes\n\n` +
-        `Image data (base64, first 200 chars):\n${dataUrl.slice(0, 200)}...\n\n` +
-        `Note: Full image data available in result details.`
-      );
-    } catch (e) {
-      const err = e as Error;
-      return textResult(`❌ Screenshot failed: ${err.message}`);
-    }
-  },
-};
-
-/**
- * Analyze a webpage and extract structured information.
- */
-export const analyzeWebpageTool: ToolDefinition = {
-  name: "analyze_webpage",
-  label: "Analyze Webpage",
-  description:
-    "Analyze a webpage and extract structured information including title, " +
-    "description, headings, links, and images. Useful for understanding " +
-    "page structure and content without visiting manually.",
-  parameters: analyzeWebpageParams,
-  execute: async (
-    _toolCallId: string,
-    params: Record<string, unknown>,
-    _signal?: AbortSignal,
-    _onUpdate?: AgentToolUpdateCallback,
-    _ctx?: ExtensionContext
-  ): Promise<AgentToolResult<unknown>> => {
-    try {
-      const info = await analyzePage(params.url as string);
-      const formatted = formatPageInfo(info);
-      return textResult(formatted);
-    } catch (e) {
-      const err = e as Error;
-      return textResult(`❌ Page analysis failed: ${err.message}`);
-    }
-  },
-};
-
-/**
- * Test page interactions like clicking, filling forms, etc.
- */
-export const testPageInteractionTool: ToolDefinition = {
-  name: "test_page_interaction",
-  label: "Test Page Interaction",
-  description:
-    "Test user interactions on a webpage such as clicking elements, " +
-    "filling form fields, and waiting for elements. Actions are specified " +
-    "as a JSON array. Supported action types: click, fill, wait.",
-  parameters: testPageInteractionParams,
-  execute: async (
-    _toolCallId: string,
-    params: Record<string, unknown>,
-    _signal?: AbortSignal,
-    _onUpdate?: AgentToolUpdateCallback,
-    _ctx?: ExtensionContext
-  ): Promise<AgentToolResult<unknown>> => {
-    try {
-      let actions: Array<{ type: "click" | "fill" | "wait"; selector: string; value?: string }>;
-      try {
-        actions = JSON.parse(params.actions as string);
-        if (!Array.isArray(actions)) {
-          throw new Error("Actions must be an array");
-        }
-      } catch {
-        return textResult(`❌ Invalid actions JSON: ${params.actions}. Must be a valid JSON array.`);
-      }
-
-      const result = await testPageInteraction(params.url as string, actions);
-
-      if (result.success) {
-        return textResult(
-          `✅ Interaction test successful\n\n` +
-          `URL: ${params.url}\n` +
-          `Final URL: ${result.finalUrl}\n` +
-          `Actions executed: ${actions.length}\n\n` +
-          `${result.message}`
-        );
-      } else {
-        return textResult(
-          `❌ Interaction test failed\n\n` +
-          `URL: ${params.url}\n` +
-          `${result.message}`
-        );
-      }
-    } catch (e) {
-      const err = e as Error;
-      return textResult(`❌ Interaction test error: ${err.message}`);
-    }
-  },
-};
 
 // ── Export all tools ───────────────────────────────────────────────
 
@@ -1952,9 +1788,6 @@ export const jinxTools: ToolDefinition[] = [
   githubAnalyzePRTool,
   githubRepoStatsTool,
   githubListCommitsTool,
-  takeScreenshotTool,
-  analyzeWebpageTool,
-  testPageInteractionTool,
 ];
 
 // ── Tool Registration ──────────────────────────────────────────────
@@ -1998,9 +1831,6 @@ const allTools = [
   githubAnalyzePRTool,
   githubRepoStatsTool,
   githubListCommitsTool,
-  takeScreenshotTool,
-  analyzeWebpageTool,
-  testPageInteractionTool,
   // Note: executeSkillTool is intentionally excluded to prevent recursive execution
 ];
 

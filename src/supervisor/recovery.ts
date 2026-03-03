@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { log } from "../util/log.js";
-import { rollbackToMain, rebuild, getCurrentSha } from "./git-ops.js";
+import { rollbackToMain, rebuild } from "./git-ops.js";
 import { STATE_PATH } from "./paths.js";
 
 // Default thresholds (can be overridden via environment variables)

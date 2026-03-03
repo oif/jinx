@@ -19,7 +19,7 @@ const MEMORY_DIR = join(DATA_DIR, "memory");
 const NODES_PATH = join(MEMORY_DIR, "nodes.json");
 const EDGES_PATH = join(MEMORY_DIR, "edges.json");
 const VECTORS_PATH = join(MEMORY_DIR, "vectors.json");
-const INDICES_PATH = join(MEMORY_DIR, "indices.json");
+
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -193,7 +193,7 @@ function createEmbedding(text: string): { vector: number[]; keywords: string[] }
   
   // Create sparse vector representation
   const vector: number[] = [];
-  const keywordSet = new Set(sortedKeywords);
+
   
   // Use first 50 dimensions for keyword presence + frequency
   for (let i = 0; i < 50; i++) {
@@ -354,76 +354,71 @@ export function createRelationship(
 
 // ── Retrieve Module ────────────────────────────────────────────────
 
+function searchByText(
+  query: MemoryQuery,
+  nodes: Map<string, MemoryNode>,
+  vectors: Map<string, MemoryVector>,
+): Array<{ node: MemoryNode; relevance: number }> {
+  const { vector: queryVector } = createEmbedding(query.text!);
+  const candidates: Array<{ node: MemoryNode; relevance: number }> = [];
+  for (const [nodeId, node] of nodes) {
+    if (query.type && node.type !== query.type) continue;
+    if (query.minImportance && node.importance < query.minImportance) continue;
+    if (query.tags && query.tags.length > 0) {
+      if (!query.tags.some(tag => node.tags.includes(tag))) continue;
+    }
+    const nodeVector = vectors.get(nodeId)?.embedding;
+    if (nodeVector) {
+      const similarity = cosineSimilarity(queryVector, nodeVector);
+      if (similarity > 0.1) candidates.push({ node, relevance: similarity });
+    }
+  }
+  return candidates;
+}
+
+function searchByTagsOrType(
+  query: MemoryQuery,
+  nodes: Map<string, MemoryNode>,
+): Array<{ node: MemoryNode; relevance: number }> {
+  const candidates: Array<{ node: MemoryNode; relevance: number }> = [];
+  for (const [, node] of nodes) {
+    if (query.type && node.type !== query.type) continue;
+    if (query.tags && query.tags.length > 0) {
+      if (!query.tags.some(tag => node.tags.includes(tag))) continue;
+    }
+    if (query.minImportance && node.importance < query.minImportance) continue;
+    candidates.push({ node, relevance: 0.5 });
+  }
+  return candidates;
+}
+
 export function retrieveMemories(query: MemoryQuery): RetrievedMemory[] {
   const nodes = loadNodes();
   const vectors = loadVectors();
-  const edges = loadEdges();
-  
+
   let candidates: Array<{ node: MemoryNode; relevance: number }> = [];
-  
-  // If specific node IDs provided, use those
+
   if (query.nodeIds && query.nodeIds.length > 0) {
     for (const id of query.nodeIds) {
       const node = nodes.get(id);
-      if (node) {
-        candidates.push({ node, relevance: 1.0 });
-      }
+      if (node) candidates.push({ node, relevance: 1.0 });
     }
+  } else if (query.text) {
+    candidates = searchByText(query, nodes, vectors);
+  } else {
+    candidates = searchByTagsOrType(query, nodes);
   }
-  // Otherwise, search by text similarity
-  else if (query.text) {
-    const { vector: queryVector } = createEmbedding(query.text);
-    
-    for (const [nodeId, node] of nodes) {
-      // Filter by type if specified
-      if (query.type && node.type !== query.type) continue;
-      
-      // Filter by importance
-      if (query.minImportance && node.importance < query.minImportance) continue;
-      
-      // Filter by tags
-      if (query.tags && query.tags.length > 0) {
-        const hasTag = query.tags.some(tag => node.tags.includes(tag));
-        if (!hasTag) continue;
-      }
-      
-      // Calculate semantic similarity
-      const nodeVector = vectors.get(nodeId)?.embedding;
-      if (nodeVector) {
-        const similarity = cosineSimilarity(queryVector, nodeVector);
-        if (similarity > 0.1) { // Threshold
-          candidates.push({ node, relevance: similarity });
-        }
-      }
-    }
-  }
-  // Tag or type only search
-  else {
-    for (const [, node] of nodes) {
-      if (query.type && node.type !== query.type) continue;
-      if (query.tags && query.tags.length > 0) {
-        const hasTag = query.tags.some(tag => node.tags.includes(tag));
-        if (!hasTag) continue;
-      }
-      if (query.minImportance && node.importance < query.minImportance) continue;
-      
-      candidates.push({ node, relevance: 0.5 });
-    }
-  }
-  
-  // Sort by relevance
+
   candidates.sort((a, b) => b.relevance - a.relevance);
-  
-  // Limit results
+
   if (query.limit) {
     candidates = candidates.slice(0, query.limit);
   }
-  
-  // Record access
+
   for (const { node } of candidates) {
     recordAccess(node.id);
   }
-  
+
   return candidates.map(c => ({ node: c.node, relevance: c.relevance }));
 }
 
@@ -486,6 +481,30 @@ export function recordAccess(nodeId: string): void {
   }
 }
 
+function transferEdges(
+  edges: Map<string, MemoryEdge>,
+  fromId: string,
+  toId: string,
+): void {
+  for (const [, edge] of edges) {
+    if (edge.fromId === fromId) createRelationship(toId, edge.toId, edge.type, edge.strength);
+    if (edge.toId === fromId) createRelationship(edge.fromId, toId, edge.type, edge.strength);
+  }
+}
+
+function deleteNodeAndEdges(
+  id: string,
+  nodes: Map<string, MemoryNode>,
+  vectors: Map<string, MemoryVector>,
+  edges: Map<string, MemoryEdge>,
+): void {
+  nodes.delete(id);
+  vectors.delete(id);
+  for (const [edgeId, edge] of edges) {
+    if (edge.fromId === id || edge.toId === id) edges.delete(edgeId);
+  }
+}
+
 // ── Manage Module ──────────────────────────────────────────────────
 
 export function consolidateMemories(threshold: number = 0.85): number {
@@ -512,22 +531,11 @@ export function consolidateMemories(threshold: number = 0.85): number {
       const similarity = cosineSimilarity(vec1, vec2);
       
       if (similarity > threshold) {
-        // Merge node2 into node1
         node1.content += `\n\n[Consolidated from ${id2}]: ${node2.content}`;
         node1.importance = Math.max(node1.importance, node2.importance);
         node1.tags = [...new Set([...node1.tags, ...node2.tags])];
         node1.updatedAt = new Date().toISOString();
-        
-        // Transfer relationships
-        for (const [, edge] of edges) {
-          if (edge.fromId === id2) {
-            createRelationship(id1, edge.toId, edge.type, edge.strength);
-          }
-          if (edge.toId === id2) {
-            createRelationship(edge.fromId, id1, edge.type, edge.strength);
-          }
-        }
-        
+        transferEdges(edges, id2, id1);
         nodes.set(id1, node1);
         toDelete.push(id2);
         consolidatedCount++;
@@ -537,14 +545,7 @@ export function consolidateMemories(threshold: number = 0.85): number {
   
   // Delete consolidated nodes
   for (const id of toDelete) {
-    nodes.delete(id);
-    vectors.delete(id);
-    // Remove related edges
-    for (const [edgeId, edge] of edges) {
-      if (edge.fromId === id || edge.toId === id) {
-        edges.delete(edgeId);
-      }
-    }
+    deleteNodeAndEdges(id, nodes, vectors, edges);
   }
   
   if (consolidatedCount > 0) {
@@ -845,79 +846,78 @@ export function advancedSemanticSearch(
 /**
  * Auto-consolidation: Find and merge highly similar memories
  */
-export function autoConsolidate(options: {
-  similarityThreshold?: number;
-  dryRun?: boolean;
-} = {}): Array<{ kept: MemoryNode; merged: MemoryNode[] }> {
-  const { similarityThreshold = 0.85, dryRun = false } = options;
-
-  const nodes = loadNodes();
-  const vectors = loadVectors();
-
-  const toMerge = new Map<string, string[]>(); // targetId -> sourceIds[]
+function findSimilarPairs(
+  nodes: Map<string, MemoryNode>,
+  vectors: Map<string, MemoryVector>,
+  threshold: number,
+): Map<string, string[]> {
+  const toMerge = new Map<string, string[]>();
   const processed = new Set<string>();
-
-  // Find similar pairs
-  for (const [id1, node1] of nodes) {
+  for (const [id1] of nodes) {
     if (processed.has(id1)) continue;
-
     const vec1 = vectors.get(id1)?.embedding;
     if (!vec1) continue;
-
     const similar: string[] = [];
-
-    for (const [id2, node2] of nodes) {
+    for (const [id2] of nodes) {
       if (id1 >= id2 || processed.has(id2)) continue;
-
       const vec2 = vectors.get(id2)?.embedding;
       if (!vec2) continue;
-
-      const similarity = cosineSimilarity(vec1, vec2);
-
-      if (similarity > similarityThreshold) {
+      if (cosineSimilarity(vec1, vec2) > threshold) {
         similar.push(id2);
         processed.add(id2);
       }
     }
-
     if (similar.length > 0) {
       toMerge.set(id1, similar);
       processed.add(id1);
     }
   }
+  return toMerge;
+}
 
+function executeMerge(
+  toMerge: Map<string, string[]>,
+  nodes: Map<string, MemoryNode>,
+  vectors: Map<string, MemoryVector>,
+): Array<{ kept: MemoryNode; merged: MemoryNode[] }> {
   const results: Array<{ kept: MemoryNode; merged: MemoryNode[] }> = [];
+  for (const [keptId, mergedIds] of toMerge) {
+    const kept = nodes.get(keptId)!;
+    const merged = mergedIds.map((id) => nodes.get(id)!).filter(Boolean);
+    for (const m of merged) {
+      kept.content += `\n\n[Consolidated]: ${m.content}`;
+      kept.tags = [...new Set([...kept.tags, ...m.tags])];
+      kept.importance = Math.max(kept.importance, m.importance);
+    }
+    kept.updatedAt = new Date().toISOString();
+    nodes.set(keptId, kept);
+    for (const id of mergedIds) {
+      nodes.delete(id);
+      vectors.delete(id);
+    }
+    results.push({ kept, merged });
+  }
+  if (results.length > 0) {
+    saveNodes(nodes);
+    saveVectors(vectors);
+  }
+  return results;
+}
 
+export function autoConsolidate(options: {
+  similarityThreshold?: number;
+  dryRun?: boolean;
+} = {}): Array<{ kept: MemoryNode; merged: MemoryNode[] }> {
+  const { similarityThreshold = 0.85, dryRun = false } = options;
+  const nodes = loadNodes();
+  const vectors = loadVectors();
+  const toMerge = findSimilarPairs(nodes, vectors, similarityThreshold);
+  let results: Array<{ kept: MemoryNode; merged: MemoryNode[] }>;
+ 
   if (!dryRun) {
-    for (const [keptId, mergedIds] of toMerge) {
-      const kept = nodes.get(keptId)!;
-      const merged = mergedIds.map((id) => nodes.get(id)!).filter(Boolean);
-
-      // Merge content
-      for (const m of merged) {
-        kept.content += `\n\n[Consolidated]: ${m.content}`;
-        kept.tags = [...new Set([...kept.tags, ...m.tags])];
-        kept.importance = Math.max(kept.importance, m.importance);
-      }
-
-      kept.updatedAt = new Date().toISOString();
-      nodes.set(keptId, kept);
-
-      // Delete merged nodes
-      for (const id of mergedIds) {
-        nodes.delete(id);
-        vectors.delete(id);
-      }
-
-      results.push({ kept, merged });
-    }
-
-    if (results.length > 0) {
-      saveNodes(nodes);
-      saveVectors(vectors);
-    }
+    results = executeMerge(toMerge, nodes, vectors);
   } else {
-    // Dry run: just report what would be merged
+    results = [];
     for (const [keptId, mergedIds] of toMerge) {
       const kept = nodes.get(keptId)!;
       const merged = mergedIds.map((id) => nodes.get(id)!).filter(Boolean);
@@ -934,17 +934,7 @@ export function autoConsolidate(options: {
   return results;
 }
 
-/**
- * Find memory clusters using connected components
- */
-export function findMemoryClusters(): Array<{ topic: string; memories: MemoryNode[]; size: number }> {
-  const nodes = loadNodes();
-  const edges = loadEdges();
-
-  const clusters: Array<{ topic: string; memories: MemoryNode[]; size: number }> = [];
-  const visited = new Set<string>();
-
-  // Build adjacency list
+function buildAdjacency(edges: Map<string, MemoryEdge>): Map<string, Set<string>> {
   const adjacency = new Map<string, Set<string>>();
   for (const [, edge] of edges) {
     if (!adjacency.has(edge.fromId)) adjacency.set(edge.fromId, new Set());
@@ -952,58 +942,55 @@ export function findMemoryClusters(): Array<{ topic: string; memories: MemoryNod
     adjacency.get(edge.fromId)!.add(edge.toId);
     adjacency.get(edge.toId)!.add(edge.fromId);
   }
+  return adjacency;
+}
 
-  // Find connected components
-  for (const [nodeId, node] of nodes) {
+function clusterTopic(cluster: MemoryNode[]): string {
+  const keywordCounts = new Map<string, number>();
+  for (const n of cluster) {
+    for (const tag of n.tags) {
+      keywordCounts.set(tag, (keywordCounts.get(tag) || 0) + 1);
+    }
+  }
+  return Array.from(keywordCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k]) => k)
+    .join(", ") || "mixed";
+}
+
+/**
+ * Find memory clusters using connected components
+ */
+export function findMemoryClusters(): Array<{ topic: string; memories: MemoryNode[]; size: number }> {
+  const nodes = loadNodes();
+  const edges = loadEdges();
+  const adjacency = buildAdjacency(edges);
+  const clusters: Array<{ topic: string; memories: MemoryNode[]; size: number }> = [];
+  const visited = new Set<string>();
+
+  for (const [nodeId] of nodes) {
     if (visited.has(nodeId)) continue;
-
     const cluster: MemoryNode[] = [];
     const queue: string[] = [nodeId];
-
     while (queue.length > 0) {
       const currentId = queue.shift()!;
       if (visited.has(currentId)) continue;
       visited.add(currentId);
-
       const current = nodes.get(currentId);
-      if (current) {
-        cluster.push(current);
-      }
-
+      if (current) cluster.push(current);
       const neighbors = adjacency.get(currentId);
       if (neighbors) {
         for (const neighbor of neighbors) {
-          if (!visited.has(neighbor)) {
-            queue.push(neighbor);
-          }
+          if (!visited.has(neighbor)) queue.push(neighbor);
         }
       }
     }
-
     if (cluster.length > 1) {
-      // Generate topic from most common keywords
-      const keywordCounts = new Map<string, number>();
-      for (const n of cluster) {
-        for (const tag of n.tags) {
-          keywordCounts.set(tag, (keywordCounts.get(tag) || 0) + 1);
-        }
-      }
-
-      const topKeywords = Array.from(keywordCounts.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([k]) => k);
-
-      clusters.push({
-        topic: topKeywords.join(", ") || "mixed",
-        memories: cluster,
-        size: cluster.length,
-      });
+      clusters.push({ topic: clusterTopic(cluster), memories: cluster, size: cluster.length });
     }
   }
 
-  // Sort by size
   clusters.sort((a, b) => b.size - a.size);
-
   return clusters;
 }

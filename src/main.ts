@@ -138,7 +138,7 @@ async function main(): Promise<void> {
 
       costs: async () => {
         const { getCostSummary, formatCostReport, getRecentCalls, formatRecentCalls } = await import("./costs/tracker.js");
-        const { formatPricingInfo } = await import("./costs/pricing.js");
+
         const summary = getCostSummary(30);
         const recent = getRecentCalls(10);
         return [

@@ -9,11 +9,8 @@
  */
 
 import { execSync } from "node:child_process";
-import { log } from "../util/log.js";
-import { recordGitHubUsage } from "../costs/tracker.js";
 
-// Re-export all types and functions
-export * from "./enhanced.js";
+import { recordGitHubUsage } from "../costs/tracker.js";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -91,7 +88,7 @@ function getGitHubToken(): string | null {
 function getRepoFromRemote(): string | null {
   try {
     const remotes = execSync("git remote -v", { encoding: "utf-8" });
-    const match = remotes.match(/github\.com[:\/](.+?\/.+?)\.git/);
+    const match = remotes.match(/github\.com[:/](.+?\/.+?)\.git/);
     return match ? match[1] : null;
   } catch {
     return null;

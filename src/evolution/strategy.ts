@@ -222,8 +222,8 @@ export function recommendStrategy(
   thresholds: StrategyThresholds = DEFAULT_THRESHOLDS
 ): StrategyRecommendation {
   const reasons: string[] = [];
-  let recommended: EvolutionStrategy = "balanced";
-  let confidence = 0.5;
+  let recommended: EvolutionStrategy;
+  let confidence: number;
 
   // Critical conditions → repair-only
   if (state.healthStatus === "critical" || state.recentFailureRate > thresholds.failureRateCritical) {

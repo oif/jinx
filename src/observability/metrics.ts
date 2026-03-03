@@ -141,7 +141,7 @@ export function getPerformanceSummary(): PerformanceSummary {
 
   // Agent prompt stats
   const promptDurations = metrics.agentPrompts.map(p => p.durationMs).sort((a, b) => a - b);
-  const successfulPrompts = metrics.agentPrompts.filter(p => p.success);
+
   const avgResponseTimeMs = promptDurations.length > 0
     ? promptDurations.reduce((a, b) => a + b, 0) / promptDurations.length
     : 0;

@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/ --ext .ts",
     "lint:fix": "eslint src/ --ext .ts --fix",
-    "quality": "npm run lint && npm run typecheck && npm audit",
+    "quality": "npm run lint && npm run typecheck && pnpm audit --audit-level=high",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",

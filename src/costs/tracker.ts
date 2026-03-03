@@ -8,10 +8,10 @@
  * - Other external calls
  */
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
-import { estimateClaudeCost, getSearchCost, SEARCH_PRICING, CLAUDE_PRICING } from "./pricing.js";
+import { estimateClaudeCost, getSearchCost, CLAUDE_PRICING } from "./pricing.js";
 
 const DATA_DIR = join(process.cwd(), "data");
 const COSTS_PATH = join(DATA_DIR, "api-costs.json");
@@ -72,7 +72,7 @@ function loadDatabase(): CostsDatabase {
 function saveDatabase(db: CostsDatabase): void {
   try {
     if (!existsSync(DATA_DIR)) {
-      require("node:fs").mkdirSync(DATA_DIR, { recursive: true });
+      mkdirSync(DATA_DIR, { recursive: true });
     }
     writeFileSync(COSTS_PATH, JSON.stringify(db, null, 2));
   } catch (e) {
