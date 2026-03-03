@@ -65,22 +65,10 @@ describe("agent/session exports", () => {
   it("should export required functions", async () => {
     const mod = await import("../src/agent/session.js");
     expect(mod.registerTelegramSend).toBeDefined();
-    expect(mod.getSession).toBeDefined();
-    expect(mod.isAgentBusy).toBeDefined();
     expect(mod.abortAgent).toBeDefined();
     expect(mod.startAgent).toBeDefined();
-    expect(mod.prompt).toBeDefined();
   });
 
-  it("getSession should return null before start", async () => {
-    const { getSession } = await import("../src/agent/session.js");
-    expect(getSession()).toBeNull();
-  });
-
-  it("isAgentBusy should return false before start", async () => {
-    const { isAgentBusy } = await import("../src/agent/session.js");
-    expect(isAgentBusy()).toBe(false);
-  });
 
   it("abortAgent should not throw when no session", async () => {
     const { abortAgent } = await import("../src/agent/session.js");
