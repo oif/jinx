@@ -13,6 +13,7 @@ import type {
 import { formatPerformanceReport } from "../observability/metrics.js";
 import { log } from "../util/log.js";
 import { recordClaudeUsage } from "../costs/tracker.js";
+import { runSwarmTool } from "../swarm/tool.js";
 import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
 import { runSelfDiagnosis, formatDiagnosisReport, executeRepairAction } from "../diagnosis/engine.js";
 import { forceStrategy, getCurrentStrategy, formatStrategyStatus, enableAutoSelect, disableAutoSelect } from "../evolution/strategy.js";
@@ -1824,6 +1825,7 @@ export const jinxTools: ToolDefinition[] = [
   githubAnalyzePRTool,
   githubRepoStatsTool,
   githubListCommitsTool,
+  runSwarmTool,
 ];
 
 // ── Tool Registration ──────────────────────────────────────────────
@@ -1867,6 +1869,7 @@ const allTools = [
   githubAnalyzePRTool,
   githubRepoStatsTool,
   githubListCommitsTool,
+  runSwarmTool,
   // Note: executeSkillTool is intentionally excluded to prevent recursive execution
 ];
 
