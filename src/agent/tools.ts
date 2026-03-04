@@ -279,34 +279,70 @@ export const claudeCodeTool: ToolDefinition = {
   ): Promise<AgentToolResult<unknown>> => {
     const task = params.task as string;
     const cwd = (params.cwd as string) || process.cwd();
-    try {
-      // Unset CLAUDECODE so nested claude invocations are allowed.
-      // Claude Code blocks nested sessions by detecting this env var.
-      const env = { ...process.env };
-      delete env.CLAUDECODE;
 
-      const result = shell(
-        `claude --print --dangerously-skip-permissions "${task.replace(/"/g, '\\"')}"`,
-        { cwd, timeout: 600_000, env }
-      );
-      
-      // Estimate and record cost based on task length and result length
-      const inputTokens = Math.ceil(task.length / 4);  // ~4 chars per token
-      const outputTokens = Math.ceil((result || "").length / 4);
-      recordClaudeUsage(inputTokens, outputTokens, { task: task.slice(0, 100) });
-      
-      return textResult(result || "(Claude Code completed with no output)");
-    } catch (e) {
-      const err = e as Error & { status?: number; stderr?: string };
-      
-      // Still record the attempt with zero output
-      const inputTokens = Math.ceil(task.length / 4);
-      recordClaudeUsage(inputTokens, 500, { task: task.slice(0, 100), error: true });
-      
-      return textResult(
-        `Claude Code error (exit ${err.status ?? "?"}): ${err.stderr || err.message}`
+    // Retry delays for rate-limit errors: 30s, 60s, 120s
+    const RETRY_DELAYS_MS = [30_000, 60_000, 120_000];
+
+    /** Detect whether an error looks like a rate-limit / overload response. */
+    function isRateLimitError(err: Error & { status?: number; stderr?: string }): boolean {
+      const msg = (err.stderr || err.message || "").toLowerCase();
+      return (
+        err.status === 429 ||
+        msg.includes("rate limit") ||
+        msg.includes("overloaded") ||
+        msg.includes("too many requests") ||
+        msg.includes("529") ||
+        msg.includes("quota")
       );
     }
+
+    const env = { ...process.env };
+    // Unset CLAUDECODE so nested claude invocations are allowed.
+    // Claude Code blocks nested sessions by detecting this env var.
+    delete env.CLAUDECODE;
+
+    const cmd = `claude --print --dangerously-skip-permissions "${task.replace(/"/g, '\\"')}"`; 
+
+    let lastErr: (Error & { status?: number; stderr?: string }) | null = null;
+
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        const result = shell(cmd, { cwd, timeout: 600_000, env });
+
+        // Estimate and record cost based on task length and result length
+        const inputTokens = Math.ceil(task.length / 4);  // ~4 chars per token
+        const outputTokens = Math.ceil((result || "").length / 4);
+        recordClaudeUsage(inputTokens, outputTokens, { task: task.slice(0, 100) });
+
+        return textResult(result || "(Claude Code completed with no output)");
+      } catch (e) {
+        lastErr = e as Error & { status?: number; stderr?: string };
+
+        const willRetry = attempt < RETRY_DELAYS_MS.length && isRateLimitError(lastErr);
+        if (willRetry) {
+          const delayMs = RETRY_DELAYS_MS[attempt];
+          log.warn(`Claude Code rate-limited, retrying in ${delayMs / 1000}s`, {
+            attempt: attempt + 1,
+            maxAttempts: RETRY_DELAYS_MS.length + 1,
+            error: lastErr.stderr || lastErr.message,
+          });
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          continue;
+        }
+
+        // Non-rate-limit error or retries exhausted — record and return
+        break;
+      }
+    }
+
+    // All attempts failed
+    const err = lastErr!;
+    const inputTokens = Math.ceil(task.length / 4);
+    recordClaudeUsage(inputTokens, 500, { task: task.slice(0, 100), error: true });
+
+    return textResult(
+      `Claude Code error (exit ${err.status ?? "?"}): ${err.stderr || err.message}`
+    );
   },
 };
 
