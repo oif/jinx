@@ -248,6 +248,11 @@ export interface WorkerOptions {
   thinkingLevel?: "low" | "medium" | "high" | "xhigh";
   /** Custom timeout override in ms */
   timeoutMs?: number;
+  /**
+   * If true, skip loading knowledge base from system prompt.
+   * Default: true (workers do focused tasks, don't need full knowledge base).
+   */
+  slim?: boolean;
 }
 
 export interface WorkerSession {
@@ -298,11 +303,13 @@ export class SessionPool {
     const timeoutMs = opts.timeoutMs ?? getWorkerTimeoutMs();
     const id = `worker-${++this._counter}`;
     const extensionsDir = join(process.cwd(), "extensions");
+    // Workers use slim mode by default (skip knowledge base) — they do focused tasks
+    const slim = opts.slim ?? true;
 
     const { session, modelFallbackMessage } = await createAgentSession({
       sessionManager: SessionManager.inMemory(),
       resourceLoader: new DefaultResourceLoader({
-        systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
+        systemPromptOverride: (base) => buildJinxSystemPrompt(base || "", slim),
         // Workers get the same jinx-tools extension as the conversation session
         additionalExtensionPaths: [extensionsDir],
       }),

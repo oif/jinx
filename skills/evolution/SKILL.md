@@ -23,16 +23,14 @@ When performing an evolution cycle, follow this exact protocol:
 12. Run `pnpm test` — must pass
 13. If tests exist for your change, ensure they pass
 
-## Record
-14. Update `EVOLOG.md` — append this cycle's summary (date, version, status, what changed)
 ## Commit
-15. `git add -A`
-16. `git commit -m "v{version}: {what changed}"`
-17. `git push origin dev`
-18. Update state: bump version via `update_state`
+14. `git add -A`
+15. `git commit -m "feat/fix/chore: {what changed}"`
+16. `git push origin dev`
+17. Update state: bump version via `update_state`
 
 ## Restart
-19. Call `request_restart` with reason
+18. Call `request_restart` with reason
 
 ## Report
-20. Call `send_owner_message` with a summary of what changed
+19. Call `send_owner_message` with a summary of what changed

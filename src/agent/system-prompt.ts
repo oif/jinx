@@ -45,13 +45,23 @@ function loadKnowledge(): string {
  *
  * Uses the callback form: (defaultPrompt) => extendedPrompt
  */
-export function buildJinxSystemPrompt(defaultPrompt: string): string {
+/**
+ * Build Jinx's system prompt by appending BORN.md + runtime context
+ * to Pi's default system prompt.
+ *
+ * @param defaultPrompt - Pi's base system prompt
+ * @param slim - If true, skip knowledge base (for worker sessions doing focused tasks)
+ *
+ * Uses the callback form: (defaultPrompt) => extendedPrompt
+ */
+export function buildJinxSystemPrompt(defaultPrompt: string, slim = false): string {
   const born = safeRead(join(process.cwd(), "BORN.md"));
   const identity = safeRead(join(DATA_DIR, "identity.md"));
   const scratchpad = safeRead(join(DATA_DIR, "scratchpad.md"));
   const goals = safeRead(join(DATA_DIR, "goals.md"));
   const stateRaw = safeRead(join(DATA_DIR, "state.json"));
-  const knowledge = loadKnowledge();
+  // Skip knowledge base in slim mode (worker sessions doing focused tasks)
+  const knowledge = slim ? "" : loadKnowledge();
 
   const sections: string[] = [defaultPrompt];
 
