@@ -3,17 +3,11 @@ dist/
 *.js.map
 package-lock.json
 
-# Data — runtime state, managed by Jinx at runtime
-data/
-!data/.gitkeep
-!data/goals.md
-!data/backlog.md
-!data/identity.md
-!data/scratchpad.md
-!data/state.json
-# knowledge/ and memory/ are tracked; sessions/ is excluded
-!data/knowledge/
+# Data — Jinx's memory. Track most files, exclude only runtime/session data.
+# (BORN.md L186: 'data/ 是我的记忆。备份到 git（sessions/ 除外）')
 data/sessions/
+data/memory/
+data/api-costs.json
 
 # Environment
 .env
