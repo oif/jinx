@@ -5,7 +5,6 @@ import {
   DefaultResourceLoader,
   ModelRegistry,
   AuthStorage,
-  discoverAndLoadExtensions,
   type AgentSession,
   type CreateAgentSessionOptions,
   type ToolDefinition,
@@ -298,11 +297,14 @@ export class SessionPool {
     const { modelRegistry, selectedModel } = await buildModelSetup();
     const timeoutMs = opts.timeoutMs ?? getWorkerTimeoutMs();
     const id = `worker-${++this._counter}`;
+    const extensionsDir = join(process.cwd(), "extensions");
 
     const { session, modelFallbackMessage } = await createAgentSession({
       sessionManager: SessionManager.inMemory(),
       resourceLoader: new DefaultResourceLoader({
         systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
+        // Workers get the same jinx-tools extension as the conversation session
+        additionalExtensionPaths: [extensionsDir],
       }),
       modelRegistry,
       model: selectedModel,
@@ -375,20 +377,14 @@ let conversationSession: AgentSession | null = null;
  */
 export async function startConversationSession(): Promise<AgentSession> {
   const { modelRegistry, selectedModel } = await buildModelSetup();
-
   const extensionsDir = join(process.cwd(), "extensions");
-  const { extensions, errors } = await discoverAndLoadExtensions([extensionsDir], process.cwd());
-  if (errors.length > 0) {
-    log.warn("Some extensions failed to load", { errors: errors.map((e) => e.error) });
-  }
-  if (extensions.length > 0) {
-    log.info(`Loaded ${extensions.length} extension(s)`);
-  }
 
   const { session, modelFallbackMessage } = await createAgentSession({
     sessionManager: SessionManager.create(process.cwd(), "./data/sessions"),
     resourceLoader: new DefaultResourceLoader({
       systemPromptOverride: (base) => buildJinxSystemPrompt(base || ""),
+      // Load jinx-tools extension so the agent has all custom tools
+      additionalExtensionPaths: [extensionsDir],
     }),
     modelRegistry,
     model: selectedModel,

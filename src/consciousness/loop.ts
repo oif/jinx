@@ -217,6 +217,9 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
   startEvolutionProgress(cycle);
   setEvolutionStage("implementing", `Executing: ${task.title}`);
 
+  // Notify owner that evolution has started (system-level, not LLM-dependent)
+  await notifyFn(`🧬 Evolution #${cycle} starting\n📋 Task: ${task.id}: ${task.title}`).catch(() => {});
+
   try {
     const recentHistory = loadRecentHistory(3);
     const stats = calculateEvolutionStats();

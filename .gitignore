@@ -8,6 +8,12 @@ data/
 !data/.gitkeep
 !data/goals.md
 !data/backlog.md
+!data/identity.md
+!data/scratchpad.md
+!data/state.json
+# knowledge/ and memory/ are tracked; sessions/ is excluded
+!data/knowledge/
+data/sessions/
 
 # Environment
 .env
@@ -29,3 +35,6 @@ Thumbs.db
 # Temp
 *.tmp
 *.log
+
+# Agent working files
+.sisyphus/
