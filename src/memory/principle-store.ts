@@ -72,6 +72,30 @@ export interface PrincipleEvidence {
 }
 
 /**
+ * Voting record for principle effectiveness
+ * Based on ACE Pattern (Aegis Memory 2026) Memory Voting innovation
+ */
+export interface PrincipleVoting {
+  helpful: number;                // Count of helpful votes
+  harmful: number;                // Count of harmful votes
+  totalVotes: number;             // Total votes cast
+  effectiveness: number;          // Quality signal: (helpful - harmful) / (total + 1)
+  lastVotedAt?: string;           // When last voted on
+  voteHistory: VoteRecord[];      // Individual vote records
+}
+
+/**
+ * Single vote record
+ */
+export interface VoteRecord {
+  timestamp: string;              // When the vote was cast
+  evolutionId: string;            // Evolution context
+  vote: "helpful" | "harmful" | "neutral";  // Vote type
+  context?: string;               // Optional context/reason
+  agentId?: string;               // Optional agent identifier
+}
+
+/**
  * An abstract principle distilled from experience
  */
 export interface Principle {
@@ -85,6 +109,9 @@ export interface Principle {
   
   // Validation
   evidence: PrincipleEvidence;
+  
+  // Voting (ACE Pattern - Memory Voting)
+  voting: PrincipleVoting;
   
   // Metadata
   metadata: {
@@ -164,6 +191,11 @@ export interface PrincipleLibraryStats {
   activePrinciples: number;
   experimentalPrinciples: number;
   deprecatedPrinciples: number;
+  // Voting statistics (ACE Pattern)
+  avgEffectiveness: number;
+  totalVotes: number;
+  highlyEffective: number;    // principles with effectiveness > 0.5
+  ineffective: number;        // principles with effectiveness < -0.3
 }
 
 // ── Configuration ──────────────────────────────────────────────────
@@ -177,11 +209,31 @@ const PRUNING_CONFIG = {
 
 // ── Storage Functions ──────────────────────────────────────────────
 
+/**
+ * Default voting object for backward compatibility
+ */
+function getDefaultVoting(): PrincipleVoting {
+  return {
+    helpful: 0,
+    harmful: 0,
+    totalVotes: 0,
+    effectiveness: 0,
+    voteHistory: [],
+  };
+}
+
 function loadPrinciples(): Map<string, Principle> {
   try {
     if (existsSync(PRINCIPLES_PATH)) {
       const data = JSON.parse(readFileSync(PRINCIPLES_PATH, "utf-8"));
-      return new Map(data.map((p: Principle) => [p.id, p]));
+      // Add default voting for backward compatibility
+      const principles = data.map((p: Principle) => {
+        if (!p.voting) {
+          p.voting = getDefaultVoting();
+        }
+        return p;
+      });
+      return new Map(principles.map((p: Principle) => [p.id, p]));
     }
   } catch (e) {
     log.warn("Failed to load principles", { error: (e as Error).message });
@@ -237,6 +289,13 @@ export function storePrinciple(input: {
       failureCases: [],
       successRate: 0,
       totalApplications: 0,
+    },
+    voting: {
+      helpful: 0,
+      harmful: 0,
+      totalVotes: 0,
+      effectiveness: 0,
+      voteHistory: [],
     },
     metadata: {
       createdAt: now,
@@ -321,6 +380,7 @@ export function updatePrinciple(
     examples: string[];
     counterexamples: string[];
     relatedPrinciples: string[];
+    voting: PrincipleVoting;
   }>
 ): Principle | null {
   const principles = loadPrinciples();
@@ -341,6 +401,7 @@ export function updatePrinciple(
   if (updates.examples) principle.examples = updates.examples;
   if (updates.counterexamples) principle.counterexamples = updates.counterexamples;
   if (updates.relatedPrinciples) principle.relatedPrinciples = updates.relatedPrinciples;
+  if (updates.voting) principle.voting = updates.voting;
   
   if (updates.confidence !== undefined) {
     principle.metadata.confidence = updates.confidence;
@@ -607,6 +668,13 @@ export function getPrincipleStats(): PrincipleLibraryStats {
   let experimentalCount = 0;
   let deprecatedCount = 0;
   
+  // Voting statistics
+  let totalEffectiveness = 0;
+  let principlesWithVotes = 0;
+  let totalVotesCount = 0;
+  let highlyEffectiveCount = 0;
+  let ineffectiveCount = 0;
+  
   for (const [, p] of principles) {
     byCategory[p.category]++;
     byStatus[p.status]++;
@@ -616,6 +684,18 @@ export function getPrincipleStats(): PrincipleLibraryStats {
     if (p.status === "active") activeCount++;
     else if (p.status === "experimental") experimentalCount++;
     else if (p.status === "deprecated") deprecatedCount++;
+    
+    // Voting statistics
+    if (p.voting) {
+      if (p.voting.totalVotes > 0) {
+        totalEffectiveness += p.voting.effectiveness;
+        principlesWithVotes++;
+        totalVotesCount += p.voting.totalVotes;
+        
+        if (p.voting.effectiveness > 0.5) highlyEffectiveCount++;
+        if (p.voting.effectiveness < -0.3) ineffectiveCount++;
+      }
+    }
   }
   
   const total = principles.size;
@@ -629,6 +709,11 @@ export function getPrincipleStats(): PrincipleLibraryStats {
     activePrinciples: activeCount,
     experimentalPrinciples: experimentalCount,
     deprecatedPrinciples: deprecatedCount,
+    // Voting statistics
+    avgEffectiveness: principlesWithVotes > 0 ? totalEffectiveness / principlesWithVotes : 0,
+    totalVotes: totalVotesCount,
+    highlyEffective: highlyEffectiveCount,
+    ineffective: ineffectiveCount,
   };
 }
 
@@ -699,16 +784,25 @@ function calculateRelevance(principle: Principle, query: PrincipleQuery): number
   let score = 0;
   
   // Base score from confidence
-  score += principle.metadata.confidence * 0.3;
+  score += principle.metadata.confidence * 0.2;
   
-  // Success rate contribution
+  // Success rate contribution (reduced weight to make room for effectiveness)
   if (principle.evidence.totalApplications > 0) {
-    score += principle.evidence.successRate * 0.3;
+    score += principle.evidence.successRate * 0.2;
+  }
+  
+  // Effectiveness from voting (ACE Pattern - Memory Voting)
+  // effectiveness ranges from -1 (all harmful) to 1 (all helpful)
+  // We normalize to 0-0.2 range for scoring
+  if (principle.voting && principle.voting.totalVotes > 0) {
+    // Normalize effectiveness from [-1, 1] to [0, 1] then scale
+    const normalizedEffectiveness = (principle.voting.effectiveness + 1) / 2;
+    score += normalizedEffectiveness * 0.2;
   }
   
   // Category match bonus
   if (query.category && principle.category === query.category) {
-    score += 0.2;
+    score += 0.15;
   }
   
   // Condition match bonus
@@ -725,7 +819,7 @@ function calculateRelevance(principle: Principle, query: PrincipleQuery): number
     const queryWords = query.text.toLowerCase().split(/\s+/);
     const principleWords = principle.content.toLowerCase().split(/\s+/);
     const matchCount = queryWords.filter(w => principleWords.some(pw => pw.includes(w))).length;
-    score += (matchCount / queryWords.length) * 0.1;
+    score += (matchCount / queryWords.length) * 0.05;
   }
   
   return Math.min(1, score);
@@ -748,6 +842,17 @@ function getMatchReasons(principle: Principle, query: PrincipleQuery): string[] 
   
   if (principle.evidence.successRate >= 0.7) {
     reasons.push(`High success rate: ${(principle.evidence.successRate * 100).toFixed(0)}%`);
+  }
+  
+  // Add voting effectiveness information
+  if (principle.voting && principle.voting.totalVotes > 0) {
+    if (principle.voting.effectiveness >= 0.5) {
+      reasons.push(`Highly effective: ${(principle.voting.effectiveness * 100).toFixed(0)}% (${principle.voting.helpful}/${principle.voting.harmful} helpful/harmful)`);
+    } else if (principle.voting.effectiveness > 0) {
+      reasons.push(`Positive voting: ${(principle.voting.effectiveness * 100).toFixed(0)}% effectiveness`);
+    } else if (principle.voting.effectiveness < -0.3) {
+      reasons.push(`Low effectiveness: needs review`);
+    }
   }
   
   if (principle.status === "active") {
@@ -829,8 +934,18 @@ export function formatPrinciple(principle: Principle): string {
     `   Confidence: ${(principle.metadata.confidence * 100).toFixed(0)}%`,
   ];
   
+  // Add voting information (ACE Pattern - Memory Voting)
+  if (principle.voting) {
+    lines.push("");
+    lines.push(`🗳️ Voting (ACE Pattern):`);
+    lines.push(`   Effectiveness: ${(principle.voting.effectiveness * 100).toFixed(0)}%`);
+    lines.push(`   Helpful: ${principle.voting.helpful} | Harmful: ${principle.voting.harmful}`);
+    lines.push(`   Total Votes: ${principle.voting.totalVotes}`);
+  }
+  
   if (principle.conditions.tags && principle.conditions.tags.length > 0) {
-    lines.push(`   Tags: ${principle.conditions.tags.join(", ")}`);
+    lines.push("");
+    lines.push(`🏷️ Tags: ${principle.conditions.tags.join(", ")}`);
   }
   
   if (principle.rationale) {
@@ -857,6 +972,12 @@ export function getPrincipleLibrarySummary(): string {
     "",
     `Average Confidence: ${(stats.avgConfidence * 100).toFixed(0)}%`,
     `Average Success Rate: ${(stats.avgSuccessRate * 100).toFixed(0)}%`,
+    "",
+    "🗳️ Voting Statistics (ACE Pattern):",
+    `  Total Votes: ${stats.totalVotes}`,
+    `  Average Effectiveness: ${(stats.avgEffectiveness * 100).toFixed(0)}%`,
+    `  Highly Effective (>50%): ${stats.highlyEffective}`,
+    `  Ineffective (<-30%): ${stats.ineffective}`,
     "",
     "By Category:",
   ];

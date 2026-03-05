@@ -16,10 +16,9 @@ describe("husky hooks", () => {
     expect(content).not.toContain("pnpm");
   });
 
-  it("should use npm in pre-push (not pnpm)", () => {
+  it("should use pnpm in pre-push", () => {
     const content = readFileSync(".husky/pre-push", "utf-8");
-    expect(content).toContain("npm");
-    expect(content).not.toContain("pnpm");
+    expect(content).toContain("pnpm test");
   });
 
   it("should run build and quality checks in pre-commit", () => {
@@ -30,6 +29,6 @@ describe("husky hooks", () => {
 
   it("should run test in pre-push", () => {
     const content = readFileSync(".husky/pre-push", "utf-8");
-    expect(content).toContain("npm test");
+    expect(content).toContain("pnpm test");
   });
 });
