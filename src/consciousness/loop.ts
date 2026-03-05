@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
 import { readState } from "../util/state.js";
@@ -17,6 +17,7 @@ import { SessionPool, isConversationBusy } from "../agent/session.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
+const KNOWLEDGE_PATH = join(process.cwd(), "data", "knowledge");
 
 // ── Backlog ────────────────────────────────────────────────────────
 
@@ -131,6 +132,48 @@ function saveState(patch: PartialState): void {
     writeFileSync(STATE_PATH, JSON.stringify({ ...current, ...patch }, null, 2));
   } catch (e) {
     log.error("Failed to save state", { error: (e as Error).message });
+  }
+}
+
+/**
+ * Record evolution knowledge to data/knowledge/{taskId}-{cycle}.md
+ * This ensures each evolution's experience is preserved for future recall.
+ */
+function recordEvolutionKnowledge(
+  taskId: string,
+  cycle: number,
+  title: string,
+  result: string,
+): void {
+  try {
+    // Ensure knowledge directory exists
+    if (!existsSync(KNOWLEDGE_PATH)) {
+      mkdirSync(KNOWLEDGE_PATH, { recursive: true });
+    }
+
+    // Create a safe filename: remove # from taskId, format as {id}-{cycle}.md
+    const safeId = taskId.replace(/[^a-zA-Z0-9]/g, "");
+    const filename = `${safeId}-${cycle}.md`;
+    const filepath = join(KNOWLEDGE_PATH, filename);
+
+    // Create structured knowledge content
+    const timestamp = new Date().toISOString();
+    const content = `# Evolution ${taskId} - Cycle #${cycle}
+
+**Title:** ${title}
+**Date:** ${timestamp}
+
+---
+
+## Evolution Result
+
+${result}
+`;
+
+    writeFileSync(filepath, content);
+    log.info(`Evolution knowledge recorded`, { taskId, cycle, file: filename });
+  } catch (e) {
+    log.error("Failed to record evolution knowledge", { error: (e as Error).message });
   }
 }
 
@@ -264,6 +307,9 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
 
     const notifySummary = result.length > 500 ? result.slice(0, 500) + "..." : result;
     await notifyFn(`🧬 Evolution #${cycle} complete [${task.id}]:\n${notifySummary}`);
+
+    // Record evolution knowledge for future recall
+    recordEvolutionKnowledge(task.id, cycle, task.title, result);
   } catch (e) {
     const err = e as Error;
     const durationMs = Date.now() - startTime;
