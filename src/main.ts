@@ -227,6 +227,51 @@ async function main(): Promise<void> {
 
       ping: async () => "pong 🏓",
 
+      strategy: async (args) => {
+        const { formatStrategyStatus, forceStrategy, enableAutoSelect } = await import("./evolution/strategy.js");
+        const parts = args.trim().split(/\s+/);
+        const subcommand = parts[0]?.toLowerCase();
+
+        if (!subcommand) {
+          // No args → show current strategy status
+          return formatStrategyStatus();
+        }
+
+        if (subcommand === "auto") {
+          enableAutoSelect();
+          return "✅ Strategy auto-selection enabled. System will now pick the best strategy based on health and performance metrics.";
+        }
+
+        if (subcommand === "set") {
+          const strategyName = parts[1]?.toLowerCase();
+          const valid = ["innovate", "harden", "repair-only", "balanced"];
+          if (!strategyName || !valid.includes(strategyName)) {
+            return [
+              "❌ Invalid strategy. Valid options:",
+              "  /strategy set innovate    — 🚀 Explore new capabilities",
+              "  /strategy set harden      — 🛡️ Focus on stability",
+              "  /strategy set repair-only — 🔧 Emergency fixes only",
+              "  /strategy set balanced    — ⚖️ Default balanced mode",
+              "",
+              "Or use /strategy auto to re-enable automatic selection.",
+            ].join("\n");
+          }
+          const strategy = strategyName as "innovate" | "harden" | "repair-only" | "balanced";
+          forceStrategy(strategy, "Set via Telegram /strategy command");
+          return `✅ Strategy manually set to: ${strategy.toUpperCase()}\n\nAuto-selection is now OFF. Use /strategy auto to re-enable it.`;
+        }
+
+        return [
+          "📋 /strategy usage:",
+          "  /strategy              — Show current strategy & system analysis",
+          "  /strategy set innovate — 🚀 Force innovate strategy",
+          "  /strategy set harden   — 🛡️ Force harden strategy",
+          "  /strategy set repair-only — 🔧 Force repair-only (emergency)",
+          "  /strategy set balanced — ⚖️ Force balanced strategy",
+          "  /strategy auto         — Re-enable automatic strategy selection",
+        ].join("\n");
+      },
+
       help: async () => {
         return [
           "📋 Available Commands:",
@@ -243,6 +288,7 @@ async function main(): Promise<void> {
           "/pricing - Show API pricing information",
           "/coverage - Show test coverage report",
           "/quality - Run code quality checks",
+          "/strategy - View/change evolution strategy",
           "/swarm <task> - Multi-agent parallel analysis",
           "/search - Search the web",
           "/restart - Request process restart",
