@@ -170,6 +170,43 @@ async function main(): Promise<void> {
         return formatQualityReport(result);
       },
 
+      swarm: async (args) => {
+        const task = args.trim();
+        if (!task) {
+          return [
+            "Usage: /swarm <task description>",
+            "",
+            "Example: /swarm Analyze the pros and cons of switching from PostgreSQL to MongoDB",
+            "",
+            "Spawns multiple specialized AI agents in parallel, then synthesizes their reports into a unified conclusion.",
+          ].join("\n");
+        }
+
+        // Fire-and-forget: return acknowledgment immediately, send result when done
+        void (async () => {
+          try {
+            const { runSwarm, formatSwarmResult } = await import("./swarm/orchestrator.js");
+            log.info("Swarm command triggered", { task: task.slice(0, 80) });
+            const result = await runSwarm({ task });
+            const formatted = formatSwarmResult(result);
+            await tg.sendToOwner(formatted);
+          } catch (e) {
+            const err = e as Error;
+            log.error("Swarm command failed", { error: err.message });
+            await tg.sendToOwner(`❌ Swarm failed: ${err.message}`);
+          }
+        })();
+
+        return [
+          `🐝 Swarm analysis started!`,
+          ``,
+          `**Task**: ${task}`,
+          ``,
+          `Spawning specialized agents in parallel... this may take a few minutes.`,
+          `I'll send the full report when all agents complete.`,
+        ].join("\n");
+      },
+
       search: async (args) => {
         const { webSearch, formatSearchResults } = await import("./search/web-search.js");
         const query = args.trim();
@@ -206,6 +243,7 @@ async function main(): Promise<void> {
           "/pricing - Show API pricing information",
           "/coverage - Show test coverage report",
           "/quality - Run code quality checks",
+          "/swarm <task> - Multi-agent parallel analysis",
           "/search - Search the web",
           "/restart - Request process restart",
           "/ping - Ping Jinx",
