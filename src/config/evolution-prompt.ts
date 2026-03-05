@@ -1,5 +1,6 @@
 import { log } from "../util/log.js";
 import { getStrategyPromptModifier } from "../evolution/strategy.js";
+import { getPrinciplesForEvolution } from "../memory/principle-retriever.js";
 
 /**
  * Evolution prompt templates — configurable via environment variables.
@@ -109,7 +110,7 @@ backlog 已清空。现在是你自主决定下一步的时刻。
 
   /**
    * Task-driven evolution cycle prompt.
-   * Variables: {cycle}, {taskId}, {taskTitle}, {recentHistory}, {totalCycles}, {currentStreak}, {strategyModifier}
+   * Variables: {cycle}, {taskId}, {taskTitle}, {recentHistory}, {totalCycles}, {currentStreak}, {strategyModifier}, {principles}
    */
   EVOLUTION_CYCLE: `这是你的第 {cycle} 次进化循环。
 
@@ -117,7 +118,7 @@ backlog 已清空。现在是你自主决定下一步的时刻。
 
 【历史】总循环: {totalCycles} | 当前连胜: {currentStreak} | 最近: {recentHistory}
 
-{strategyModifier}
+{strategyModifier}{principles}
 
 按照 BORN.md 的进化协议，分阶段执行并汇报进度：
 
@@ -206,6 +207,11 @@ export function getEvolutionCyclePrompt(
 ): string {
   const template = process.env.EVOLUTION_CYCLE_PROMPT || DEFAULT_TEMPLATES.EVOLUTION_CYCLE;
   const strategyModifier = getStrategyPromptModifier();
+  
+  // Retrieve relevant principles for this task (Experience Distillation closed loop)
+  const evolutionId = `evolution-${cycle}-${taskId.replace('#', '')}`;
+  const principles = getPrinciplesForEvolution(taskId, taskTitle, evolutionId);
+  
   return substituteVariables(template, {
     cycle: cycle.toString(),
     taskId,
@@ -214,6 +220,7 @@ export function getEvolutionCyclePrompt(
     totalCycles: ctx.totalCycles.toString(),
     currentStreak: ctx.currentStreak.toString(),
     strategyModifier,
+    principles,
   });
 }
 
