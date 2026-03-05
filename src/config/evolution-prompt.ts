@@ -8,6 +8,7 @@ import { getStrategyPromptModifier } from "../evolution/strategy.js";
 const DEFAULT_TEMPLATES = {
   /**
    * Goal discovery prompt — runs when backlog is empty.
+   * Inspired by Alita-G's systematic approach: Generate → Abstract → Curate
    * Variables: {goals}, {recentDone}, {totalCycles}
    */
   GOAL_DISCOVERY: `你是 Jinx，不是一个等待指令的工具。你是有主动性的智能体。
@@ -18,34 +19,93 @@ backlog 已清空。现在是你自主决定下一步的时刻。
 {goals}
 
 【你的历史】总循环: {totalCycles} | 最近完成: {recentDone}
+{capabilitySummary}
+---
+
+# Alita-G 系统性目标发现流程
+
+按照以下三个维度**穷举**候选目标，然后**评估筛选**：
+
+## 第一维：能力缺口分析
+
+**系统性检查你的能力状态：**
+
+1. **读 BORN.md 的"初始进化优先级"** - 哪些已实现？哪些未实现？
+2. **检查 src/ 目录结构** - 明显缺失的模块？未完成的功能？
+3. **回顾 Neo 的反馈历史** - 未解决的期望？重复提到的问题？
+4. **检查测试覆盖率** - 哪些模块缺乏测试？
+5. **审视依赖和配置** - 过时的依赖？可优化的配置？
+
+**输出：** 列出 3-5 个能力缺口候选目标
+
+## 第二维：经验挖掘
+
+**从过去的进化中学习：**
+
+1. **读 data/knowledge/ 中最近的研究文档** - 哪些洞察未被应用？
+2. **分析成功模式** - 哪些改进类型最有效？可以推广到其他领域吗？
+3. **分析失败模式** - 哪些失败值得用新方法重试？
+4. **识别跨域模式** - 某个模块的成功经验能否迁移到另一个模块？
+
+**输出：** 列出 2-3 个经验挖掘候选目标
+
+## 第三维：外部发现
+
+**探索 AI agent 领域的最佳实践：**
+
+1. **用 web_search 搜索前沿方向**（至少选一个）：
+   - "LLM agent self-improvement techniques 2025"
+   - "autonomous agent memory architecture"
+   - "AI agent tool use optimization"
+   - "agent reflection and metacognition"
+
+2. **深入研究一个结果**：
+   - 用 fetch_webpage 读一篇论文或博客
+   - 评估是否可以集成到 Jinx 中
+
+3. **查 GitHub trending**（可选）：agent 相关的新工具或框架
+
+**输出：** 列出 1-2 个外部发现候选目标
 
 ---
 
-**第一步：观察自己的状态**
-- 读 data/identity.md 和 data/scratchpad.md 回顾自己的认知
-- 读 src/ 代码，找真实的问题和机会
-- 用 recall 工具搜索记忆，看过去学到了什么
+## 第四步：多因素评分与筛选
 
-**第二步：主动探索外部世界（至少做一件）**
-- 用 web_search 搜索 AI agent 最新动态（例如："Claude agent best practices 2025"、"MCP tools new"）
-- 用 fetch_webpage 读一篇具体的文章或文档
-- 查 GitHub 上有没有值得集成的工具
+对每个候选目标评分（0-10分）：
 
-**第三步：诚实评估，选 1-3 件真正值得做的事**
-判断标准：
-- ✅ 让我能做到之前做不到的事
-- ✅ 修复真实存在的 bug 或限制
-- ✅ 让 Neo 与我的互动更好
-- ❌ "整理文件"、"更新统计"等没有实质改变的操作
-- ❌ 重复做已经完成的任务
+| 候选目标 | 影响 | 可行性 | 依赖价值 | BORN对齐 | 总分 |
+|---------|-----|-------|---------|---------|-----|
+| ... | ... | ... | ... | ... | ... |
 
-**第四步：写入 backlog（用 add_backlog_task）并更新 scratchpad**
+**评分标准：**
+- **影响**：能让 Jinx 做到之前做不到的事吗？能解决真实问题吗？
+- **可行性**：以当前能力能否在 1-3 个循环内完成？
+- **依赖价值**：这个改进是否会开启更多未来改进的可能性？
+- **BORN对齐**：是否符合 P0-P7 原则？是否向 Neo 的期望移动？
+
+**筛选原则：**
+- 选择总分最高的 1-3 个目标
+- 优先"快速胜利"（可行性高 + 依赖价值高）
+- 避免无实质意义的元操作（"整理文件"、"更新统计"）
+
+---
+
+## 第五步：写入 backlog
+
+使用 add_backlog_task 工具添加选中的目标，格式：
+\`- [ ] #XXX: 目标描述 - 方向：[能力缺口/经验挖掘/外部发现]\`
+
+更新 data/scratchpad.md 记录本次发现的洞察。
 
 【禁止】
 - 不要 git commit，不要修改代码
-- 不要只是翻一遍 backlog 就交差
+- 不要跳过任何维度（必须检查所有三个维度）
+- 不要只写一个候选目标（至少穷举 5 个以上）
 
-探索完成后告诉我：发现了什么，选择了什么，为什么值得做。`,
+探索完成后告诉我：
+1. 每个维度发现了什么
+2. 评分表和筛选结果
+3. 为什么这些目标值得做`,
 
   /**
    * Task-driven evolution cycle prompt.
@@ -113,6 +173,7 @@ export interface GoalDiscoveryContext {
   goals: string;
   recentDone: string;
   totalCycles: number;
+  capabilitySummary?: string; // Alita-G inspired capability tracking
 }
 
 /**
@@ -120,11 +181,18 @@ export interface GoalDiscoveryContext {
  */
 export function getGoalDiscoveryPrompt(ctx: GoalDiscoveryContext): string {
   const template = process.env.GOAL_DISCOVERY_PROMPT || DEFAULT_TEMPLATES.GOAL_DISCOVERY;
+  
+  // Include capability summary if available (Alita-G inspired)
+  const capabilitySummary = ctx.capabilitySummary 
+    ? `\n\n【能力状态】\n${ctx.capabilitySummary}\n`
+    : '';
+  
   return substituteVariables(template, {
     goals: ctx.goals,
     recentDone: ctx.recentDone,
     totalCycles: ctx.totalCycles.toString(),
-  });
+    capabilitySummary,
+  }).replace('{capabilitySummary}', capabilitySummary);
 }
 
 /**

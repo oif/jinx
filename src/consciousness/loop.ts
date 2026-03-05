@@ -14,6 +14,20 @@ import { recordHealthSnapshot } from "../health/history.js";
 import { recordEvolutionCycle } from "../observability/metrics.js";
 import { getEvolutionCyclePrompt, getGoalDiscoveryPrompt } from "../config/evolution-prompt.js";
 import { SessionPool, isConversationBusy } from "../agent/session.js";
+import {
+  shouldTriggerReflection,
+  runReflection,
+  formatReflectionReport,
+} from "../memory/reflection.js";
+import {
+  shouldTriggerMetacognitive,
+  runMetacognitiveSession,
+  formatMetacognitiveReport,
+} from "../memory/metacognitive.js";
+import {
+  getCapabilitySummary,
+  initCapabilityTaxonomy,
+} from "./capabilities.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -310,6 +324,35 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
 
     // Record evolution knowledge for future recall
     recordEvolutionKnowledge(task.id, cycle, task.title, result);
+
+    // Check if we should run a reflection session (MARS-inspired reflective self-improvement)
+    if (shouldTriggerReflection()) {
+      try {
+        log.info("Triggering reflection session after evolution", { cycle });
+        const reflectionSession = runReflection(`After evolution #${cycle}`);
+        const report = formatReflectionReport(reflectionSession);
+        await notifyFn(report);
+      } catch (e) {
+        log.error("Reflection session failed", { error: (e as Error).message });
+      }
+    }
+
+    // Check if we should run a metacognitive session (real-time self-assessment)
+    if (shouldTriggerMetacognitive()) {
+      try {
+        log.info("Triggering metacognitive session after evolution", { cycle });
+        const metaSession = runMetacognitiveSession({
+          activity: `Evolution #${cycle}: ${task.title}`,
+          outputToEvaluate: result,
+          outputType: "output",
+          statedConfidence: 0.8,
+        });
+        const report = formatMetacognitiveReport(metaSession);
+        await notifyFn(report);
+      } catch (e) {
+        log.error("Metacognitive session failed", { error: (e as Error).message });
+      }
+    }
   } catch (e) {
     const err = e as Error;
     const durationMs = Date.now() - startTime;
@@ -338,14 +381,21 @@ async function runGoalDiscovery(notifyFn: NotifyFn): Promise<void> {
   try {
     await recordHealthSnapshot();
 
+    // Initialize capability taxonomy if needed (Alita-G Phase 2)
+    initCapabilityTaxonomy();
+
     const stats = calculateEvolutionStats();
     const goals = safeRead(GOALS_PATH) || "No direction set yet. Explore freely.";
     const recentDone = loadRecentDone(5);
+    
+    // Get capability summary for systematic goal discovery (Alita-G)
+    const capabilitySummary = getCapabilitySummary();
 
     const prompt = getGoalDiscoveryPrompt({
       goals,
       recentDone,
       totalCycles: stats.totalCycles,
+      capabilitySummary,
     });
 
     const worker = await SessionPool.spawn({ label: "goal-discovery", thinkingLevel: "medium" });
@@ -363,6 +413,32 @@ async function runGoalDiscovery(notifyFn: NotifyFn): Promise<void> {
       await notifyFn(`🔍 Goal discovery complete. New task queued: ${taskAfter.id}: ${taskAfter.title}`);
     } else {
       log.info("Goal discovery found nothing to add");
+    }
+
+    // Also trigger reflection/metacognitive during idle time if due
+    // This ensures self-improvement happens even when backlog is empty
+    if (shouldTriggerReflection()) {
+      try {
+        log.info("Triggering reflection session during goal discovery");
+        const reflectionSession = runReflection("Periodic check during idle");
+        const report = formatReflectionReport(reflectionSession);
+        await notifyFn(report);
+      } catch (e) {
+        log.error("Reflection session failed during goal discovery", { error: (e as Error).message });
+      }
+    }
+
+    if (shouldTriggerMetacognitive()) {
+      try {
+        log.info("Triggering metacognitive session during goal discovery");
+        const metaSession = runMetacognitiveSession({
+          activity: "Goal discovery - idle time self-assessment",
+        });
+        const report = formatMetacognitiveReport(metaSession);
+        await notifyFn(report);
+      } catch (e) {
+        log.error("Metacognitive session failed during goal discovery", { error: (e as Error).message });
+      }
     }
 
     log.info("Goal discovery completed", { result: result.slice(0, 100) });
