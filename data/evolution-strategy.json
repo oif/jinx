@@ -1,0 +1,25 @@
+{
+  "currentStrategy": "harden",
+  "lastStrategyChange": "2026-03-05T03:51:16.341Z",
+  "strategyHistory": [
+    {
+      "timestamp": "2026-03-05T03:51:10.053Z",
+      "from": "balanced",
+      "to": "repair-only",
+      "reason": "Auto-selected: Failure rate is 100% (>50%)"
+    },
+    {
+      "timestamp": "2026-03-05T03:51:16.341Z",
+      "from": "repair-only",
+      "to": "harden",
+      "reason": "Auto-selected: Failure rate is 50% (>20%)"
+    }
+  ],
+  "autoSelect": true,
+  "thresholds": {
+    "failureRateCritical": 0.5,
+    "failureRateWarning": 0.2,
+    "healthWarningCount": 3,
+    "consecutiveSuccesses": 3
+  }
+}

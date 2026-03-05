@@ -12,11 +12,15 @@ Neo 通过 Telegram 消息告知 Jinx 添加任务，Jinx 也可在 consciousnes
 ---
 
 ## Pending
-- [ ] #017: 实现测试覆盖率报告生成 - 集成 vitest coverage 生成覆盖率报告，在站点展示或定期发送给 Neo，识别未测试的代码区域
-- [ ] #018: 添加数据自动备份机制 - 定期将 data/ 目录（记忆、技能、状态）备份到 GitHub Gist 或外部存储，防止数据丢失
-- [ ] #019: 主动分析 evolution 效率瓶颈并改进 - 读取 evolution-history.json 和实际 git log 时间戳，计算真实 cycle 耗时，识别哪些步骤最慢（如 promptFn 等待时间、tool call 次数），基于数据决定下一步优化方向
+
+- [ ] #020: 修复 session.ts 的 errorMsg 误报成功的 bug - collectResponse 在有 errorMsg 时调用 resolve(errorMsg) 而非 reject，导致 403/权限错误被记录为"成功"进化（evolution-history 已有 3 条误报），修复应将 errorMsg 路径改为 reject(new Error(errorMsg))，同时在 loop.ts 添加防御性结果校验
+- [ ] #021: 添加 /swarm Telegram 命令 - runSwarm 和 formatSwarmResult 已在 src/swarm/orchestrator.ts 实现但未暴露给 Neo，在 main.ts 添加 swarm 命令处理器，让 Neo 可以发 /swarm <任务描述> 触发多智能体并行分析，返回综合报告
+- [ ] #022: 添加 /strategy Telegram 命令 - formatStrategyStatus/forceStrategy/enableAutoSelect 已实现但未暴露，添加 /strategy 命令让 Neo 可查看当前进化策略、系统状态分析和建议策略，并支持 /strategy set innovate 等参数切换策略
 
 ## Done
+- [x] #019: 主动分析 evolution 效率瓶颈并改进 - 读取 evolution-history.json 和实际 git log 时间戳，计算真实 cycle 耗时，识别哪些步骤最慢（如 promptFn 等待时间、tool call 次数），基于数据决定下一步优化方向 — 2026-03-05
+- [x] #018: 添加数据自动备份机制 - 定期将 data/ 目录（记忆、技能、状态）备份到 GitHub Gist 或外部存储，防止数据丢失 — 2026-03-05
+- [x] #017: 实现测试覆盖率报告生成 - 集成 vitest coverage 生成覆盖率报告，在站点展示或定期发送给 Neo，识别未测试的代码区域 — 2026-03-05
 - [x] #016: 添加 API 成本与配额监控 - 追踪 Claude Code、Web Search、GitHub API 调用次数和估算成本，设置预算预警，避免意外高额账单 — 2026-02-27
 - [x] #015: 增强 Site 公开站点内容 - 添加技能库展示页面、记忆图谱可视化、实时健康状态仪表盘，让站点成为真正的"数字身份展示" — 2026-02-27
 - [x] #014: 将 Browser Automation 暴露为 Pi 工具 - src/browser/automation.ts 已实现但未被 agent 使用，需添加 screenshot/analyze_page/test_interaction 等工具 — 2026-02-27
