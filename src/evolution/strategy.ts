@@ -312,8 +312,8 @@ export function getCurrentStrategy(): EvolutionStrategy {
     const state = analyzeSystemState();
     const recommendation = recommendStrategy(state, config.thresholds);
     
-    // Only update if significantly different
-    if (recommendation.recommended !== config.currentStrategy && recommendation.confidence > 0.7) {
+    // Only update if significantly different (threshold 0.5 to allow balanced strategy with confidence 0.6)
+    if (recommendation.recommended !== config.currentStrategy && recommendation.confidence > 0.5) {
       setStrategy(
         recommendation.recommended,
         `Auto-selected: ${recommendation.reasons.join("; ")}`,
