@@ -42,35 +42,44 @@ async function searchExa(options: SearchOptions): Promise<SearchResponse> {
     throw new Error("EXA_API_KEY environment variable not set");
   }
 
+  // Build request body - Exa API requires specific format
   const requestBody: Record<string, unknown> = {
     query: options.query,
     numResults: Math.min(options.count || 10, 25),
-    type: "auto", // auto intelligently combines neural and other search methods
+    type: "auto",
+    useApiKey: true, // Required for some Exa API configurations
   };
 
   // Request contents if enabled (includes summary and highlights)
+  // Note: contents parameter format as per Exa API spec
   if (options.includeContents !== false) {
     requestBody.contents = {
-      text: {
-        maxCharacters: 2000,
-      },
-      highlights: {
-        maxCharacters: 500,
-      },
+      text: { maxCharacters: 2000 },
+      highlights: { maxCharacters: 500 },
     };
   }
+
+  log.info("Exa API request", { 
+    url: EXA_API_URL, 
+    body: JSON.stringify({ ...requestBody, query: `[${requestBody.query?.toString().length} chars]` }) 
+  });
 
   const response = await fetch(EXA_API_URL, {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
       "Content-Type": "application/json",
+      "x-api-key": apiKey,
     },
     body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
+    log.error("Exa API error", { 
+      status: response.status, 
+      error: errorText,
+      requestBody: JSON.stringify(requestBody)
+    });
     throw new Error(`Exa API error: ${response.status} ${errorText}`);
   }
 
