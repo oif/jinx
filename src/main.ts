@@ -3,6 +3,7 @@ import { readVersion, readState } from "./util/state.js";
 import { startAgent, registerTelegramSend, promptConversation, abortAgent } from "./agent/session.js";
 import { createTelegramBot } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
+import { startDailyBriefing, stopDailyBriefing } from "./supervisor/briefing.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
 import { startConsciousness } from "./consciousness/loop.js";
 import { loadNextTask } from "./consciousness/loop.js";
@@ -317,9 +318,13 @@ async function main(): Promise<void> {
 
   consciousness.handle = startConsciousness(tg.sendToOwner);
 
+  // Start daily briefing scheduler (sends briefing at Beijing 9:00 AM)
+  startDailyBriefing(tg.sendToOwner);
+
   // Step 6: Register shutdown
   registerShutdownHandlers(async () => {
     consciousness.handle?.stop();
+    stopDailyBriefing();
     stopLifecycleMonitor();
     await abortAgent();
     await tg.stop();
