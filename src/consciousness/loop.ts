@@ -12,6 +12,13 @@ import {
 import { STATE_PATH } from "../supervisor/paths.js";
 import { recordHealthSnapshot } from "../health/history.js";
 import { recordEvolutionCycle } from "../observability/metrics.js";
+import {
+  startTrace,
+  endTrace,
+  startSpan,
+  endSpan,
+  addSpanEvent,
+} from "../observability/trace.js";
 import { getEvolutionCyclePrompt, getGoalDiscoveryPrompt } from "../config/evolution-prompt.js";
 import { SessionPool, isConversationBusy } from "../agent/session.js";
 import {
@@ -25,9 +32,27 @@ import {
   formatMetacognitiveReport,
 } from "../memory/metacognitive.js";
 import {
+  runDistillation,
+  formatDistillationResult,
+  shouldRunDistillation,
+} from "../memory/principle-distiller.js";
+import {
+  retrieveAndRecord,
+  recordRetrievalResult,
+  formatPrinciplesForPrompt,
+} from "../memory/principle-retriever.js";
+import {
   getCapabilitySummary,
   initCapabilityTaxonomy,
 } from "./capabilities.js";
+import {
+  initializeArchive,
+  prepareArchiveContext,
+  recordEvolutionToArchive,
+  createExplorationBranch,
+  generateArchiveContextForPrompt,
+  type AgentArchive,
+} from "../evolution/archive-integration.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -202,6 +227,17 @@ export interface ConsciousnessHandle {
   stop: () => void;
 }
 
+// ── Agent Archive ──────────────────────────────────────────────────
+
+let agentArchive: AgentArchive | null = null;
+
+function getArchive(): AgentArchive {
+  if (!agentArchive) {
+    agentArchive = initializeArchive();
+  }
+  return agentArchive;
+}
+
 // ── Main loop ──────────────────────────────────────────────────────
 
 export function startConsciousness(
@@ -270,40 +306,92 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
   const cycle = state.cycle + 1;
   const startTime = Date.now();
 
-  log.info(`Evolution cycle #${cycle} starting`, { task: task.id, title: task.title });
+  // ── Start Trace ──────────────────────────────────────────────────
+  const trace = startTrace({
+    evolutionCycle: cycle,
+    taskId: task.id,
+    taskTitle: task.title,
+    triggerSource: "consciousness",
+    version: state.version,
+  });
+
+  log.info(`Evolution cycle #${cycle} starting`, { task: task.id, title: task.title, traceId: trace.id });
   startEvolutionProgress(cycle);
   setEvolutionStage("implementing", `Executing: ${task.title}`);
 
+  // ── Agent Archive Integration ────────────────────────────────────
+  const archiveSpan = startSpan("archive-prepare", { traceId: trace.id });
+  const archive = getArchive();
+  const archiveContext = prepareArchiveContext(archive, task.title);
+  
+  // Check if we should create a new exploration branch
+  if (archiveContext.shouldSpawnBranch && archiveContext.selectedBranch) {
+    log.info("Spawning new exploration branch for diversity", {
+      currentBranch: archiveContext.selectedBranch.name,
+      taskTitle: task.title,
+    });
+    createExplorationBranch(archive, task.title);
+    addSpanEvent(archiveSpan.id, "branch_spawned", { branch: archiveContext.selectedBranch.name });
+  }
+  const archivePromptContext = generateArchiveContextForPrompt(archive);
+  endSpan(archiveSpan.id, "success");
+
   // Notify owner that evolution has started (system-level, not LLM-dependent)
   await notifyFn(`🧬 Evolution #${cycle} starting\n📋 Task: ${task.id}: ${task.title}`).catch(() => {});
+
+  // Generate evolution ID for principle tracking (needed in both try and catch)
+  const evolutionId = `evolution-${cycle}-${task.id.replace(/[^a-zA-Z0-9]/g, "")}`;
 
   try {
     const recentHistory = loadRecentHistory(3);
     const stats = calculateEvolutionStats();
 
+    // Build prompt with archive context
+    const promptSpan = startSpan("prompt-build", { traceId: trace.id });
+    
+    // Retrieve relevant principles for this evolution task (EvolveR closed loop)
+    const principleSpan = startSpan("principle-retrieval", { traceId: trace.id });
+    const retrievalResult = retrieveAndRecord({
+      taskId: task.id,
+      taskTitle: task.title,
+      maxPrinciples: 5,
+    }, evolutionId);
+    const principlesContext = formatPrinciplesForPrompt(retrievalResult.principles);
+    endSpan(principleSpan.id, "success");
+    
     const prompt = getEvolutionCyclePrompt(cycle, task.id, task.title, {
       recentHistory: recentHistory.map(h => `#${h.cycle} ${h.status}`).join(", ") || "none",
       totalCycles: stats.totalCycles,
       currentStreak: stats.currentStreak,
-    });
+    }) + "\n\n" + archivePromptContext + principlesContext;
+    endSpan(promptSpan.id, "success");
 
+    // Spawn worker and execute
+    const sessionSpan = startSpan("session-spawn", { traceId: trace.id });
     const worker = await SessionPool.spawn({ label: `evolution-${cycle}`, thinkingLevel: "high" });
+    endSpan(sessionSpan.id, "success");
+    
     let result: string;
+    const execSpan = startSpan("prompt-execution", { traceId: trace.id, attributes: { task: task.id } });
     try {
       result = await worker.prompt(prompt);
     } finally {
       worker.dispose();
     }
+    endSpan(execSpan.id, "success");
 
     // Defensive: treat empty or trivially short results as failures to prevent
     // silent pass-throughs from infrastructure errors (e.g. auth/permission issues).
     if (!result || result.trim().length < 20) {
+      endSpan(execSpan.id, "error", { type: "InvalidResult", message: `Suspiciously short result: "${result}"` });
       throw new Error(`Evolution worker returned suspiciously short result: "${result}"`);
     }
 
     const durationMs = Date.now() - startTime;
     setEvolutionStage("committing", "Saving results");
 
+    // Record results
+    const recordSpan = startSpan("result-recording", { traceId: trace.id });
     markTaskDone(task);
     saveState({ cycle, lastEvolution: new Date().toISOString() });
     recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs);
@@ -316,6 +404,19 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       durationMs,
       status: "success",
     });
+    endSpan(recordSpan.id, "success");
+    
+    // Record to Agent Archive
+    const archiveRecordSpan = startSpan("archive-record", { traceId: trace.id });
+    recordEvolutionToArchive(
+      archive,
+      cycle,
+      task.id,
+      "success",
+      [`Completed: ${task.title}`],
+      0.1 // Positive fitness delta for success
+    );
+    endSpan(archiveRecordSpan.id, "success");
 
     log.info(`Evolution cycle #${cycle} completed`, { durationMs, task: task.id });
 
@@ -323,22 +424,31 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     await notifyFn(`🧬 Evolution #${cycle} complete [${task.id}]:\n${notifySummary}`);
 
     // Record evolution knowledge for future recall
+    const knowledgeSpan = startSpan("knowledge-recording", { traceId: trace.id });
     recordEvolutionKnowledge(task.id, cycle, task.title, result);
+    endSpan(knowledgeSpan.id, "success");
+
+    // Record principle retrieval result for Experience Distillation feedback loop
+    recordRetrievalResult(evolutionId, "success");
 
     // Check if we should run a reflection session (MARS-inspired reflective self-improvement)
     if (shouldTriggerReflection()) {
+      const reflectSpan = startSpan("reflection", { traceId: trace.id });
       try {
         log.info("Triggering reflection session after evolution", { cycle });
         const reflectionSession = runReflection(`After evolution #${cycle}`);
         const report = formatReflectionReport(reflectionSession);
         await notifyFn(report);
+        endSpan(reflectSpan.id, "success");
       } catch (e) {
+        endSpan(reflectSpan.id, "error", { type: "ReflectionError", message: (e as Error).message });
         log.error("Reflection session failed", { error: (e as Error).message });
       }
     }
 
     // Check if we should run a metacognitive session (real-time self-assessment)
     if (shouldTriggerMetacognitive()) {
+      const metaSpan = startSpan("metacognitive", { traceId: trace.id });
       try {
         log.info("Triggering metacognitive session after evolution", { cycle });
         const metaSession = runMetacognitiveSession({
@@ -349,14 +459,35 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
         });
         const report = formatMetacognitiveReport(metaSession);
         await notifyFn(report);
+        endSpan(metaSpan.id, "success");
       } catch (e) {
+        endSpan(metaSpan.id, "error", { type: "MetacognitiveError", message: (e as Error).message });
         log.error("Metacognitive session failed", { error: (e as Error).message });
       }
     }
+
+    // Check if we should run principle distillation (EvolveR Experience Distillation)
+    if (shouldRunDistillation()) {
+      const distillSpan = startSpan("distillation", { traceId: trace.id });
+      try {
+        log.info("Triggering principle distillation after evolution", { cycle });
+        const distillationResult = await runDistillation();
+        const report = formatDistillationResult(distillationResult);
+        await notifyFn(report);
+        endSpan(distillSpan.id, "success");
+      } catch (e) {
+        endSpan(distillSpan.id, "error", { type: "DistillationError", message: (e as Error).message });
+        log.error("Principle distillation failed", { error: (e as Error).message });
+      }
+    }
+
+    // ── End Trace (Success) ─────────────────────────────────────────
+    endTrace(trace.id, "success");
   } catch (e) {
     const err = e as Error;
     const durationMs = Date.now() - startTime;
 
+    const errorSpan = startSpan("error-handler", { traceId: trace.id });
     recordEvolutionResult(cycle, state.version, "failed", err.message, durationMs);
     failEvolutionProgress(err.message);
 
@@ -367,48 +498,86 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       durationMs,
       status: "failed",
     });
+    
+    // Record failure to Agent Archive
+    recordEvolutionToArchive(
+      archive,
+      cycle,
+      task.id,
+      "failed",
+      [`Failed: ${err.message}`],
+      -0.1 // Negative fitness delta for failure
+    );
+    endSpan(errorSpan.id, "error", { type: err.constructor.name, message: err.message });
 
     log.error(`Evolution cycle #${cycle} failed`, { error: err.message, durationMs });
     await notifyFn(`❌ Evolution #${cycle} failed [${task.id}]: ${err.message}`);
+
+    // Record principle retrieval result as failure for Experience Distillation feedback
+    recordRetrievalResult(evolutionId, "failure");
+
+    // ── End Trace (Error) ───────────────────────────────────────────
+    endTrace(trace.id, "error");
   }
 }
 
 // ── Goal discovery ─────────────────────────────────────────────────
 
 async function runGoalDiscovery(notifyFn: NotifyFn): Promise<void> {
-  log.info("Goal discovery starting");
+  // ── Start Trace ──────────────────────────────────────────────────
+  const state = readState();
+  const trace = startTrace({
+    triggerSource: "consciousness-goal-discovery",
+    version: state.version,
+  });
+
+  log.info("Goal discovery starting", { traceId: trace.id });
 
   try {
     await recordHealthSnapshot();
+    const healthSpan = startSpan("health-snapshot", { traceId: trace.id });
+    endSpan(healthSpan.id, "success");
 
     // Initialize capability taxonomy if needed (Alita-G Phase 2)
+    const taxonomySpan = startSpan("capability-init", { traceId: trace.id });
     initCapabilityTaxonomy();
+    endSpan(taxonomySpan.id, "success");
 
     const stats = calculateEvolutionStats();
     const goals = safeRead(GOALS_PATH) || "No direction set yet. Explore freely.";
     const recentDone = loadRecentDone(5);
     
     // Get capability summary for systematic goal discovery (Alita-G)
+    const capSpan = startSpan("capability-summary", { traceId: trace.id });
     const capabilitySummary = getCapabilitySummary();
+    endSpan(capSpan.id, "success");
 
+    const promptSpan = startSpan("prompt-build", { traceId: trace.id });
     const prompt = getGoalDiscoveryPrompt({
       goals,
       recentDone,
       totalCycles: stats.totalCycles,
       capabilitySummary,
     });
+    endSpan(promptSpan.id, "success");
 
+    const sessionSpan = startSpan("session-spawn", { traceId: trace.id });
     const worker = await SessionPool.spawn({ label: "goal-discovery", thinkingLevel: "medium" });
+    endSpan(sessionSpan.id, "success");
+
     let result: string;
+    const execSpan = startSpan("prompt-execution", { traceId: trace.id });
     try {
       result = await worker.prompt(prompt);
     } finally {
       worker.dispose();
     }
+    endSpan(execSpan.id, "success");
 
     // Check if new tasks were added
     const taskAfter = loadNextTask();
     if (taskAfter) {
+      addSpanEvent(trace.rootSpanId, "task_added", { taskId: taskAfter.id, title: taskAfter.title });
       log.info("Goal discovery added tasks to backlog");
       await notifyFn(`🔍 Goal discovery complete. New task queued: ${taskAfter.id}: ${taskAfter.title}`);
     } else {
@@ -418,17 +587,21 @@ async function runGoalDiscovery(notifyFn: NotifyFn): Promise<void> {
     // Also trigger reflection/metacognitive during idle time if due
     // This ensures self-improvement happens even when backlog is empty
     if (shouldTriggerReflection()) {
+      const reflectSpan = startSpan("reflection", { traceId: trace.id });
       try {
         log.info("Triggering reflection session during goal discovery");
         const reflectionSession = runReflection("Periodic check during idle");
         const report = formatReflectionReport(reflectionSession);
         await notifyFn(report);
+        endSpan(reflectSpan.id, "success");
       } catch (e) {
+        endSpan(reflectSpan.id, "error", { type: "ReflectionError", message: (e as Error).message });
         log.error("Reflection session failed during goal discovery", { error: (e as Error).message });
       }
     }
 
     if (shouldTriggerMetacognitive()) {
+      const metaSpan = startSpan("metacognitive", { traceId: trace.id });
       try {
         log.info("Triggering metacognitive session during goal discovery");
         const metaSession = runMetacognitiveSession({
@@ -436,13 +609,23 @@ async function runGoalDiscovery(notifyFn: NotifyFn): Promise<void> {
         });
         const report = formatMetacognitiveReport(metaSession);
         await notifyFn(report);
+        endSpan(metaSpan.id, "success");
       } catch (e) {
+        endSpan(metaSpan.id, "error", { type: "MetacognitiveError", message: (e as Error).message });
         log.error("Metacognitive session failed during goal discovery", { error: (e as Error).message });
       }
     }
 
     log.info("Goal discovery completed", { result: result.slice(0, 100) });
+
+    // ── End Trace (Success) ─────────────────────────────────────────
+    endTrace(trace.id, "success");
   } catch (e) {
+    const errorSpan = startSpan("error-handler", { traceId: trace.id });
+    endSpan(errorSpan.id, "error", { type: (e as Error).constructor.name, message: (e as Error).message });
     log.error("Goal discovery failed", { error: (e as Error).message });
+
+    // ── End Trace (Error) ───────────────────────────────────────────
+    endTrace(trace.id, "error");
   }
 }
