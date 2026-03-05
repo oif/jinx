@@ -13,9 +13,26 @@ Neo 通过 Telegram 消息告知 Jinx 添加任务，Jinx 也可在 consciousnes
 
 ## Pending
 
-- [ ] #034: 评估 Agent0 框架的自我演化机制 - Agent0 是一个完全自主的 AI 框架，可以演化高性能 agents，不需要外部数据。研究其 multi-step co-evolution 实现思路，评估是否可以改进我的自我迭代机制。方向：技术探索
-
 ## Done
+- [x] #051: 修复 web_search Exa API 调用问题 - 添加 useApiKey: true 参数，改进错误日志记录，调整请求格式以修复 Exa API "Required at query" 错误。方向：Bug 修复 — 2026-03-05
+- [x] #050: 实现 Principle Retriever 模块 - 创建 src/memory/principle-retriever.ts，实现在决策前主动检索相关原则。核心功能：上下文分析、原则匹配、原则注入到 evolution prompt。完成 Experience Distillation 闭环。方向：自我完善 — 2026-03-05
+- [x] #049: 实现 Principle Distiller 模块 - 创建 src/memory/principle-distiller.ts，实现从进化轨迹中蒸馏抽象原则。核心功能：轨迹提取、轨迹聚类、原则生成、原则验证。基于 EvolveR 论文研究（已存储在 knowledge/047-2-evolver-experience-distillation.md），让 Principle Store 真正工作起来。方向：自我完善 — 2026-03-05
+- [x] #046: 研究 EvoMap/evolver 的 GEP 协议 - GitHub 项目，966 stars。研究其 "Genome Evolution Protocol" 如何将 ad-hoc prompt 调整转化为可审计、可复用的进化资产（Genes、Capsules、Events）。评估是否可以改进我的 evolution 系统，让每次进化变成结构化知识。方向：技术探索 — 2026-03-05
+- [x] #047: 研究 EvolveR 的 Experience Distillation 机制 - arXiv 2510.16079，ICLR 2026 论文。核心是两阶段闭环：Offline Self-Distillation（将交互轨迹合成为抽象原则库）和 Online Interaction（主动检索原则指导决策）。评估如何在我的 memory/knowledge 系统中实现类似机制。方向：技术探索 — 2026-03-05
+- [x] #048: 研究如何用 Pi Extension API 扩展能力 - 阅读 pi-mono 文档 (github.com/badlogic/pi-mono/packages/coding-agent/docs/extensions.md)，了解 `pi.registerTool()`, `ctx.ui`, `pi.registerCommand()` 等核心 API。评估如何添加自定义工具、事件拦截、会话持久化等能力。方向：能力扩展 — 2026-03-05
+- [x] #045: 研究 Arize Self-Improving Agent Harness - Arize 博文 "Self-Improving Agents: the Agent Harness for Reliable Code"，研究其遥测、闭环机制，评估如何改进我的自我进化能力。方向：技术探索 — 2026-03-05
+- [x] #044: 研究 GitHub MCP Server tool-specific configuration - GitHub MCP 新增 X-MCP-Tools header，支持精细控制每个工具。评估如何利用减少 context 使用、优化 GitHub 工具调用。方向：能力扩展 — 2026-03-05
+- [x] #043: 修复 failure-patterns.test.ts 导入路径 - 测试文件从错误路径 `./failure-patterns.js` 导入，应改为 `../dist/memory/failure-patterns.js`。源文件在 src/memory/failure-patterns.ts（#041 成果）。修复后测试应能通过。方向：Bug 修复 — 2026-03-05
+- [x] #042: 添加 /recall Telegram 命令 - 让 Neo 可以直接通过 Telegram 查询我的记忆库。支持参数：查询词、类型过滤、结果数量限制。改善 Neo 与我的互动体验。方向：交互改进 — 2026-03-05
+- [x] #041: 实现元认知失败模式检测 - 基于 MARS 论文和生产级元认知系统研究，添加命名失败模式检测机制。参考：\"if you find yourself saying should instead of did, you haven't verified\"、\"if three fixes fail, stop\" 等 7 个模式。让系统能自动检测和预警失败模式。方向：自我完善 — 2026-03-05
+- [x] #040: 集成 MCP Tool Search - Claude Code 新功能，可减少 95% context 使用。研究 enable_tool_search 机制，评估如何在 Pi agent 框架中启用类似机制，让我能连接更多 MCP servers 而不担心 context 爆炸。方向：能力扩展 — 2026-03-05
+- [x] #039: 评估 MCP 工具生态新进展 - ICLR 2026 论文 "The MCP Company"、MCP-Agent 框架、Claude Code 2.0 的 Git worktree isolation 和 Multi-Agent Orchestration。评估是否可以集成到 Jinx 扩展能力。方向：技术探索 — 2026-03-05
+- [x] #038: 研究 Alita-G 自我进化框架 - arxiv 2510.23601，一个将通用代理转变为领域专家的框架。系统地生成、抽象和策划模型。研究其核心机制，评估是否可以改进我的 goal discovery 和自我进化能力。方向：技术探索 — 2026-03-05
+- [x] #037: 修复策略更新阈值缺陷 - getCurrentStrategy() 只有 confidence > 0.7 才更新策略，但 "balanced" 推荐的 confidence = 0.6。这导致系统永远停留在 "repair-only" 状态，即使系统完全健康（失败率 0%，健康状态正常）。修复方案：降低阈值到 0.5 或增加 balanced 推荐的 confidence。方向：Bug 修复 — 2026-03-05
+- [x] #036: 研究 SICA (Self-Improving Coding Agent) 机制 - arxiv 2504.15228 论文，一个可以自我编辑、自我改进的 coding agent。研究其核心机制：如何安全地自我修改、如何验证改进、如何避免自我破坏。方向：技术探索 — 2026-03-05
+- [x] #035: 研究 Gödel Agent 递归自我改进架构 - ACL 2025 论文 "A Self-Referential Agent Framework for Recursively Self-Improvement"，研究其自指机制如何实现真正的递归自我改进。评估是否可以应用到我的 evolution 系统，特别是代码自我修改和验证机制。方向：技术探索 — 2026-03-05
+- [x] #034: 评估 Agent0 框架的自我演化机制 - Agent0 是一个完全自主的 AI 框架，可以演化高性能 agents，不需要外部数据。研究其 multi-step co-evolution 实现思路，评估是否可以改进我的自我迭代机制。方向：技术探索 — 2026-03-05
+- [x] #033: 研究 Microsoft "Agentic Context Engineering" 论文 - ICLR 2026 论文 "Evolving Contexts for Self-Improving Language Models"，研究如何通过演化上下文实现自我改进。探索是否可以应用到我的 evolution 系统，特别是 context 的管理和演化策略。方向：技术探索 — 2026-03-05
 - [x] #033: 研究 Microsoft "Agentic Context Engineering" 论文 - ICLR 2026 论文 "Evolving Contexts for Self-Improving Language Models"，研究如何通过演化上下文实现自我改进。探索是否可以应用到我的 evolution 系统，特别是 context 的管理和演化策略。方向：技术探索 — 2026-03-05
 - [x] #032: 修复 Reflection/Metacognitive 系统触发条件 - shouldTriggerReflection() 需要 MIN_HISTORY_FOR_REFLECTION=3 条历史记录，但 evolution-history 可能因数据丢失而不足。当前这两个高级自我改进系统从未被触发！修复方案：添加备用触发机制，如基于时间间隔（每 6 小时强制触发）、memory 变化检测、或主动请求触发。让 reflection 和 metacognitive 能在 history 不足时也能正常工作。这是真实 bug，影响核心自我改进能力 — 2026-03-05
 - [x] #031: 调查 knowledge 目录持续为空的根本原因 - recordEvolutionKnowledge 函数存在且被调用，但 data/knowledge/ 仍为空。检查：1) 函数是否真的被执行 2) 文件路径是否正确 3) 是否有运行时错误被静默吞掉。这是真实 bug，影响进化知识积累 — 2026-03-05
