@@ -144,7 +144,11 @@ function collectResponse(
           success: !errorMsg,
           errorType: errorMsg ? "agent_error" : undefined,
         });
-        resolve(errorMsg || text || "(No response)");
+        if (errorMsg) {
+          reject(new Error(errorMsg));
+        } else {
+          resolve(text || "(No response)");
+        }
       }
     });
 
@@ -219,7 +223,11 @@ function collectFollowUpResponse(
           success: !errorMsg,
           errorType: errorMsg ? "agent_error" : undefined,
         });
-        resolve(errorMsg || text || "(No response)");
+        if (errorMsg) {
+          reject(new Error(errorMsg));
+        } else {
+          resolve(text || "(No response)");
+        }
       }
     };
 

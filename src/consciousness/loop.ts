@@ -238,6 +238,12 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       worker.dispose();
     }
 
+    // Defensive: treat empty or trivially short results as failures to prevent
+    // silent pass-throughs from infrastructure errors (e.g. auth/permission issues).
+    if (!result || result.trim().length < 20) {
+      throw new Error(`Evolution worker returned suspiciously short result: "${result}"`);
+    }
+
     const durationMs = Date.now() - startTime;
     setEvolutionStage("committing", "Saving results");
 
