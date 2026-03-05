@@ -460,6 +460,7 @@ async function registerBotCommands(bot: Bot): Promise<void> {
       { command: "strategy", description: "View or change evolution strategy" },
       { command: "swarm", description: "Multi-agent parallel analysis" },
       { command: "search", description: "Search the web" },
+      { command: "recall", description: "Query memory graph" },
       { command: "restart", description: "Restart Jinx" },
       { command: "menu", description: "Show quick actions" },
       { command: "ping", description: "Ping Jinx" },

@@ -228,6 +228,48 @@ async function main(): Promise<void> {
 
       ping: async () => "pong 🏓",
 
+      reflect: async () => {
+        const {
+          runReflection,
+          formatReflectionReport,
+          getPendingSuggestions,
+        } = await import("./memory/reflection.js");
+
+        const session = runReflection("Manual trigger via /reflect command");
+        const report = formatReflectionReport(session);
+
+        const pending = getPendingSuggestions();
+        const summary = [
+          report,
+          "",
+          `📌 ${pending.length} pending improvement suggestions available.`,
+        ].join("\n");
+
+        return summary;
+      },
+
+      insights: async () => {
+        const {
+          getReflectionSummary,
+          getRecentReflections,
+          formatReflectionReport,
+        } = await import("./memory/reflection.js");
+
+        const recent = getRecentReflections(3);
+        if (recent.length === 0) {
+          return "No reflection sessions yet. Use /reflect to trigger one.";
+        }
+
+        const lines = [getReflectionSummary()];
+        lines.push("");
+        lines.push("📚 Recent Reflections:");
+        for (const session of recent) {
+          lines.push(`  ${new Date(session.timestamp).toLocaleDateString()}: ${session.insights.length} insights, ${session.suggestions.length} suggestions`);
+        }
+
+        return lines.join("\n");
+      },
+
       strategy: async (args) => {
         const { formatStrategyStatus, forceStrategy, enableAutoSelect } = await import("./evolution/strategy.js");
         const parts = args.trim().split(/\s+/);
@@ -273,6 +315,161 @@ async function main(): Promise<void> {
         ].join("\n");
       },
 
+      recall: async (args) => {
+        const {
+          retrieveMemories,
+          getMemoryStats,
+          formatMemoryStats,
+          advancedSemanticSearch,
+        } = await import("./memory/graph.js");
+
+        // Parse args
+        const input = args.trim();
+        
+        // Show stats if "stats" or empty
+        if (input === "stats" || input === "") {
+          return formatMemoryStats();
+        }
+
+        // Parse parameters
+        let query = "";
+        let type: string | undefined;
+        let limit = 10;
+        let useAdvanced = false;
+
+        const parts = input.split(/\s+/);
+        for (const part of parts) {
+          if (part.startsWith("type:")) {
+            type = part.slice(5).toLowerCase();
+          } else if (part.startsWith("limit:")) {
+            const n = parseInt(part.slice(6), 10);
+            if (!isNaN(n) && n > 0 && n <= 50) {
+              limit = n;
+            }
+          } else if (part === "advanced") {
+            useAdvanced = true;
+          } else {
+            query += (query ? " " : "") + part;
+          }
+        }
+
+        if (!query) {
+          return [
+            "🧠 Memory Recall",
+            "",
+            "Usage:",
+            "  /recall <query>          - Search memories",
+            "  /recall <query> type:xxx  - Filter by type",
+            "  /recall <query> limit:n   - Limit results (default: 10)",
+            "  /recall <query> advanced  - Use advanced semantic search",
+            "  /recall stats             - Show memory statistics",
+            "",
+            "Types: concept, fact, experience, entity, skill, goal",
+            "",
+            "Examples:",
+            "  /recall evolution",
+            "  /recall bug fix type:fact",
+            "  /recall performance type:experience limit:5",
+            "  /recall advanced optimization",
+          ].join("\n");
+        }
+
+        // Valid types
+        const validTypes = ["concept", "fact", "experience", "entity", "skill", "goal"];
+        if (type && !validTypes.includes(type)) {
+          return `❌ Invalid type "${type}". Valid types: ${validTypes.join(", ")}`;
+        }
+
+        try {
+          let results;
+          
+          if (useAdvanced) {
+            // Advanced semantic search
+            const searchResults = advancedSemanticSearch(query, {
+              limit,
+              minRelevance: 0.05,
+              boostRecent: true,
+              boostAccessed: true,
+            });
+            
+            results = searchResults.map(r => ({
+              node: r.node,
+              relevance: r.relevance,
+              matchedKeywords: r.matchedKeywords,
+            }));
+          } else {
+            // Standard search
+            const memories = retrieveMemories({
+              text: query,
+              type: type as any,
+              limit,
+            });
+            
+            results = memories.map(m => ({
+              node: m.node,
+              relevance: m.relevance,
+            }));
+          }
+
+          if (results.length === 0) {
+            return [
+              "🧠 Memory Recall",
+              "",
+              `No memories found for "${query}"${type ? ` (type: ${type})` : ""}`,
+              "",
+              "Try:",
+              "  - Different keywords",
+              "  - Remove type filter",
+              "  - Use /recall stats to see available memories",
+            ].join("\n");
+          }
+
+          // Format results
+          const lines: string[] = [
+            "🧠 Memory Recall",
+            "",
+            `Found ${results.length} result(s) for "${query}"${type ? ` (type: ${type})` : ""}:`,
+            "",
+          ];
+
+          for (let i = 0; i < results.length; i++) {
+            const r = results[i] as any;
+            const node = r.node;
+            const relevance = ((r.relevance * 100) | 0);
+            const age = formatAge(node.createdAt);
+            
+            lines.push(`${i + 1}. [${node.type}] (${relevance}%) ${node.summary.slice(0, 60)}${node.summary.length > 60 ? "..." : ""}`);
+            lines.push(`   ID: ${node.id} | Level: ${node.level} | Age: ${age}`);
+            
+            if (node.tags.length > 0) {
+              lines.push(`   Tags: ${node.tags.slice(0, 5).join(", ")}`);
+            }
+            
+            if (r.matchedKeywords && r.matchedKeywords.length > 0) {
+              lines.push(`   Matched: ${r.matchedKeywords.slice(0, 5).join(", ")}`);
+            }
+            
+            // Show content preview for high relevance
+            if (r.relevance > 0.7 && node.content.length > 0) {
+              const preview = node.content.slice(0, 150);
+              lines.push(`   Preview: ${preview}${node.content.length > 150 ? "..." : ""}`);
+            }
+            
+            lines.push("");
+          }
+
+          // Add stats summary
+          const stats = getMemoryStats();
+          lines.push("---");
+          lines.push(`Total: ${stats.totalNodes} nodes | ${stats.totalEdges} edges | Pending review: ${stats.pendingReview}`);
+
+          return lines.join("\n");
+        } catch (e) {
+          const err = e as Error;
+          return `❌ Recall error: ${err.message}`;
+        }
+      },
+
       help: async () => {
         return [
           "📋 Available Commands:",
@@ -284,6 +481,9 @@ async function main(): Promise<void> {
           "/evolution - Show evolution history report",
           "/recent - Show recent 5 evolutions summary",
           "/history - Show health history with statistics",
+          "/reflect - Run reflection session (MARS self-improvement)",
+          "/insights - View reflection summary and insights",
+          "/recall - Query memory graph (search memories)",
           "/perf - Show performance metrics report",
           "/costs - Show API usage costs and recent calls",
           "/pricing - Show API pricing information",
@@ -349,6 +549,22 @@ function formatUptime(seconds: number): string {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
   return `${h}h ${m}m ${s}s`;
+}
+
+function formatAge(isoDate: string): string {
+  const now = Date.now();
+  const then = new Date(isoDate).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  if (diffDays < 30) return `${diffDays}d`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo`;
+  return `${Math.floor(diffDays / 365)}y`;
 }
 
 // ── Entry ──────────────────────────────────────────────────────────

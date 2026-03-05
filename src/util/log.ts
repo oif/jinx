@@ -18,6 +18,13 @@ const pinoLogger = pino({
  * Structured logger using Pino, maintaining the (msg, data) signature.
  */
 export const log = {
+  debug(msg: string, data?: Record<string, unknown>): void {
+    if (data) {
+      pinoLogger.debug(data, msg);
+    } else {
+      pinoLogger.debug(msg);
+    }
+  },
   info(msg: string, data?: Record<string, unknown>): void {
     if (data) {
       pinoLogger.info(data, msg);
