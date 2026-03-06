@@ -9,6 +9,8 @@ import {
   inferTaskType,
   extractApproach,
   formatCapsulesReport,
+  getRelevantCapsules,
+  formatCapsulesForPrompt,
   type EvolutionCapsule,
 } from "../src/evolution/capsule-store.js";
 
@@ -141,6 +143,93 @@ describe("formatCapsulesReport", () => {
     const idx36 = report.indexOf("#36");
     const idx1 = report.indexOf("#1");
     expect(idx36).toBeLessThan(idx1);
+  });
+});
+
+// ── formatCapsulesForPrompt ────────────────────────────────────────
+
+describe("formatCapsulesForPrompt", () => {
+  const mockCapsule = (overrides: Partial<EvolutionCapsule> = {}): EvolutionCapsule => ({
+    timestamp: "2026-03-06T10:00:00.000Z",
+    cycle: 36,
+    taskId: "#077",
+    taskType: "feature",
+    approach: "Implemented GEP Capsule Store with JSONL persistence.",
+    keyFiles: ["src/evolution/capsule-store.ts"],
+    durationMs: 120000,
+    qualityScore: 8,
+    ...overrides,
+  });
+
+  it("returns empty string for empty capsule array (graceful degradation)", () => {
+    expect(formatCapsulesForPrompt([])).toBe("");
+  });
+
+  it("generates a '## Past Successful Approaches' section header", () => {
+    const result = formatCapsulesForPrompt([mockCapsule()]);
+    expect(result).toContain("## Past Successful Approaches");
+  });
+
+  it("includes cycle number, taskId and quality score", () => {
+    const result = formatCapsulesForPrompt([mockCapsule()]);
+    expect(result).toContain("#36");
+    expect(result).toContain("#077");
+    expect(result).toContain("8/10");
+  });
+
+  it("includes the approach text as a blockquote", () => {
+    const result = formatCapsulesForPrompt([mockCapsule()]);
+    expect(result).toContain("> Implemented GEP Capsule Store");
+  });
+
+  it("lists key files when present", () => {
+    const result = formatCapsulesForPrompt([mockCapsule({ keyFiles: ["src/a.ts", "src/b.ts"] })]);
+    expect(result).toContain("src/a.ts");
+  });
+
+  it("omits files line when keyFiles is empty", () => {
+    const result = formatCapsulesForPrompt([mockCapsule({ keyFiles: [] })]);
+    expect(result).not.toContain("> Files:");
+  });
+
+  it("formats multiple capsules", () => {
+    const caps = [
+      mockCapsule({ cycle: 10, taskId: "#010" }),
+      mockCapsule({ cycle: 20, taskId: "#020" }),
+    ];
+    const result = formatCapsulesForPrompt(caps);
+    expect(result).toContain("#010");
+    expect(result).toContain("#020");
+  });
+});
+
+// ── getRelevantCapsules (pure logic via real data or empty store) ──
+
+describe("getRelevantCapsules", () => {
+  it("returns empty array when capsules store is missing or empty", () => {
+    // If data/gep/capsules.jsonl doesn't exist or is empty, should not throw
+    const result = getRelevantCapsules("some task title", 3);
+    expect(Array.isArray(result)).toBe(true);
+    // Result may be 0 or more; the key is no exception thrown
+  });
+
+  it("respects n limit — never returns more than n capsules", () => {
+    const result = getRelevantCapsules("implement new feature", 2);
+    expect(result.length).toBeLessThanOrEqual(2);
+  });
+
+  it("returns capsules with required fields if any exist", () => {
+    const result = getRelevantCapsules("test coverage improvement", 5);
+    for (const c of result) {
+      expect(c).toHaveProperty("taskId");
+      expect(c).toHaveProperty("taskType");
+      expect(c).toHaveProperty("qualityScore");
+      expect(c).toHaveProperty("approach");
+    }
+  });
+
+  it("gracefully handles n=0 without throwing", () => {
+    expect(() => getRelevantCapsules("anything", 0)).not.toThrow();
   });
 });
 

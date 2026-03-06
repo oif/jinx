@@ -60,7 +60,11 @@ import {
   recordCircuitSuccess,
   formatCircuitBreakerAlert,
 } from "./circuit-breaker.js";
-import { recordSuccessfulEvolution } from "../evolution/capsule-store.js";
+import {
+  recordSuccessfulEvolution,
+  getRelevantCapsules,
+  formatCapsulesForPrompt,
+} from "../evolution/capsule-store.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -393,12 +397,22 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     }, evolutionId);
     const principlesContext = formatPrinciplesForPrompt(retrievalResult.principles);
     endSpan(principleSpan.id, "success");
-    
+
+    // Retrieve relevant GEP capsules (past successful approaches) — closes the GEP feedback loop
+    const capsuleSpan = startSpan("capsule-context", { traceId: trace.id });
+    const relevantCapsules = getRelevantCapsules(task.title, 3);
+    const capsulesContext = formatCapsulesForPrompt(relevantCapsules);
+    addSpanEvent(capsuleSpan.id, "capsules_retrieved", {
+      count: relevantCapsules.length,
+      taskTitle: task.title,
+    });
+    endSpan(capsuleSpan.id, "success");
+
     const prompt = getEvolutionCyclePrompt(cycle, task.id, task.title, {
       recentHistory: recentHistory.map(h => `#${h.cycle} ${h.status}`).join(", ") || "none",
       totalCycles: stats.totalCycles,
       currentStreak: stats.currentStreak,
-    }) + "\n\n" + archivePromptContext + principlesContext;
+    }) + "\n\n" + archivePromptContext + principlesContext + capsulesContext;
     endSpan(promptSpan.id, "success");
 
     // Spawn worker and execute

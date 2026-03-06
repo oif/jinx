@@ -276,6 +276,96 @@ export function formatCapsulesReport(capsules: EvolutionCapsule[], total: number
 }
 
 /**
+ * Retrieve capsules most relevant to the current task.
+ *
+ * Scoring strategy:
+ *   - Capsules whose taskType matches the inferred type of taskTitle get a +2 bonus
+ *   - Capsules are then sorted by (bonus + qualityScore) descending
+ *   - Top n capsules are returned
+ */
+export function getRelevantCapsules(taskTitle: string, n: number = 3): EvolutionCapsule[] {
+  try {
+    if (!existsSync(CAPSULES_PATH)) return [];
+
+    const content = readFileSync(CAPSULES_PATH, "utf-8").trim();
+    if (!content) return [];
+
+    const lines = content
+      .split("\n")
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    const capsules: EvolutionCapsule[] = [];
+    for (const line of lines) {
+      try {
+        capsules.push(JSON.parse(line) as EvolutionCapsule);
+      } catch {
+        // Skip malformed lines
+      }
+    }
+
+    if (capsules.length === 0) return [];
+
+    // Infer the task type of the current task title
+    const targetType = inferTaskType(taskTitle, "");
+
+    // Score and sort: same taskType gets +2 bonus, then sort by qualityScore desc
+    const scored = capsules.map(c => ({
+      capsule: c,
+      score: c.qualityScore + (c.taskType === targetType ? 2 : 0),
+    }));
+
+    scored.sort((a, b) => b.score - a.score);
+
+    // Log retrieval event
+    appendEvent({
+      timestamp: new Date().toISOString(),
+      type: "capsule_read",
+      meta: {
+        taskTitle: taskTitle.slice(0, 100),
+        targetType,
+        totalCapsules: capsules.length,
+        retrieved: Math.min(n, scored.length),
+      },
+    });
+
+    return scored.slice(0, Math.max(1, n)).map(s => s.capsule);
+  } catch (e) {
+    log.error("Failed to retrieve relevant GEP capsules", { error: (e as Error).message });
+    return [];
+  }
+}
+
+/**
+ * Format capsules into a "## Past Successful Approaches" prompt section.
+ * Returns empty string when capsules array is empty (graceful degradation).
+ */
+export function formatCapsulesForPrompt(capsules: EvolutionCapsule[]): string {
+  if (capsules.length === 0) return "";
+
+  const lines: string[] = [
+    "",
+    "## Past Successful Approaches",
+    "",
+    "The following successful evolution capsules are relevant to this task. " +
+    "Use them as inspiration for your approach:",
+    "",
+  ];
+
+  for (const c of capsules) {
+    const durationSec = (c.durationMs / 1000).toFixed(0);
+    lines.push(`**#${c.cycle} ${c.taskId}** [${c.taskType}] — Quality: ${c.qualityScore}/10 | Duration: ${durationSec}s`);
+    lines.push(`> ${c.approach}`);
+    if (c.keyFiles.length > 0) {
+      lines.push(`> Files: ${c.keyFiles.slice(0, 5).join(", ")}`);
+    }
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+/**
  * Build a capsule from evolution cycle data and append it.
  * This is the main integration point called from loop.ts.
  */
