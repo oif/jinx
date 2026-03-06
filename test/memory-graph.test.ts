@@ -22,6 +22,7 @@ describe("memory graph system", () => {
   let originalNodes: string | null = null;
   let originalEdges: string | null = null;
   let originalVectors: string | null = null;
+  let originalPrinciples: string | null = null;
 
   beforeEach(() => {
     // Store original data
@@ -29,6 +30,7 @@ describe("memory graph system", () => {
     const nodesPath = join(memoryDir, "nodes.json");
     const edgesPath = join(memoryDir, "edges.json");
     const vectorsPath = join(memoryDir, "vectors.json");
+    const principlesPath = join(memoryDir, "principles.json");
 
     if (existsSync(nodesPath)) {
       originalNodes = JSON.stringify(JSON.parse(require("node:fs").readFileSync(nodesPath, "utf-8")));
@@ -38,6 +40,9 @@ describe("memory graph system", () => {
     }
     if (existsSync(vectorsPath)) {
       originalVectors = JSON.stringify(JSON.parse(require("node:fs").readFileSync(vectorsPath, "utf-8")));
+    }
+    if (existsSync(principlesPath)) {
+      originalPrinciples = require("node:fs").readFileSync(principlesPath, "utf-8");
     }
 
     // Clear memory for clean tests
@@ -53,6 +58,7 @@ describe("memory graph system", () => {
     const nodesPath = join(memoryDir, "nodes.json");
     const edgesPath = join(memoryDir, "edges.json");
     const vectorsPath = join(memoryDir, "vectors.json");
+    const principlesPath = join(memoryDir, "principles.json");
 
     if (originalNodes !== null) {
       require("node:fs").writeFileSync(nodesPath, originalNodes);
@@ -72,9 +78,17 @@ describe("memory graph system", () => {
       require("node:fs").unlinkSync(vectorsPath);
     }
 
+    // Restore principles.json — critical for principle-quality-realfile tests
+    if (originalPrinciples !== null) {
+      require("node:fs").writeFileSync(principlesPath, originalPrinciples);
+    } else if (existsSync(principlesPath)) {
+      require("node:fs").unlinkSync(principlesPath);
+    }
+
     originalNodes = null;
     originalEdges = null;
     originalVectors = null;
+    originalPrinciples = null;
   });
 
   describe("encodeMemory", () => {
@@ -365,6 +379,12 @@ describe("memory graph system", () => {
         confidence: 0.5,
         tags: [],
         metadata: {},
+        // Required fields for enhanced memory lifecycle
+        level: "working",
+        memoryStrength: 0.1,
+        consolidationScore: 0.1,
+        reviewCount: 0,
+        primaryModality: "text",
       };
 
       // Save directly to storage
@@ -377,10 +397,10 @@ describe("memory graph system", () => {
       require("node:fs").writeFileSync(nodesPath, JSON.stringify(existingNodes, null, 2));
 
       const statsBefore = getMemoryStats();
-      const pruned = pruneMemories(30, 0.3);
+      const result = pruneMemories({ maxAgeDays: 30, minImportance: 0.3 });
 
       // The old memory should be pruned
-      expect(pruned).toBeGreaterThan(0);
+      expect(result.pruned).toBeGreaterThan(0);
     });
   });
 
