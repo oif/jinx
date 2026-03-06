@@ -9,6 +9,7 @@ import { startConsciousness } from "./consciousness/loop.js";
 import { loadNextTask } from "./consciousness/loop.js";
 import { checkHealth, registerHealthNotifier } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
+import { getAverageQualityScore } from "./consciousness/history.js";
 import { cleanupOldSessions } from "./supervisor/cleanup.js";
 import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
 import { formatProgress, isEvolutionActive } from "./consciousness/evolution-progress.js";
@@ -662,6 +663,13 @@ function buildDiagnosticsReport(): string {
   const traceEmoji = traces.lastTraceStatus === "success" ? "✅" : traces.lastTraceStatus === "error" ? "❌" : "⚪";
   const princEmoji = princ.principleCount === 0 ? "⚪" : "✅";
 
+  // Quality score: average of last 5 evolution cycles
+  const avgQuality = getAverageQualityScore(5);
+  const qualityStr = avgQuality !== null
+    ? `${avgQuality}/10`
+    : "N/A (no scored cycles yet)";
+  const qualityEmoji = avgQuality === null ? "⚪" : avgQuality >= 7 ? "🌟" : avgQuality >= 5 ? "✅" : "⚠️";
+
   const lines: string[] = [
     "🔬 Deep Diagnostics Report",
     "",
@@ -669,6 +677,7 @@ function buildDiagnosticsReport(): string {
     `${oscEmoji(strat.oscillations24h)} Strategy Oscillations (24h): ${strat.oscillations24h} (current: ${strat.currentStrategy})`,
     `${princEmoji} Principles: ${princ.principleCount} (avg effectiveness: ${Math.round(princ.avgEffectiveness * 100)}%)`,
     `${traceEmoji} Traces: ${traces.totalTraces} total | Last: ${traces.lastTraceStatus} | Recent success: ${Math.round(traces.recentSuccessRate * 100)}%`,
+    `${qualityEmoji} Avg Evolution Quality (last 5): ${qualityStr}`,
   ];
   if (d.lastTraceTask) lines.push(`   Last task: ${d.lastTraceTask}${d.lastTraceTask.length >= 40 ? "..." : ""}`);
   lines.push("", `${healthEmoji(score)} Health Score: ${score}/100 (${healthLabel(score)})`, "", `Generated: ${new Date().toLocaleString()}`);

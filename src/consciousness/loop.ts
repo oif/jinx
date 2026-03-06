@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { log } from "../util/log.js";
 import { readState } from "../util/state.js";
 import { recordEvolutionResult, loadRecentHistory, calculateEvolutionStats } from "./history.js";
+import { scoreEvolutionQuality } from "../quality/evolution-scorer.js";
 import {
   startEvolutionProgress,
   setEvolutionStage,
@@ -427,7 +428,8 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     const recordSpan = startSpan("result-recording", { traceId: trace.id });
     markTaskDone(task);
     saveState({ cycle, lastEvolution: new Date().toISOString() });
-    recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs);
+    const qualityBreakdown = scoreEvolutionQuality(result, durationMs);
+    recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs, qualityBreakdown.total);
     completeEvolutionProgress(durationMs);
 
     // Reset circuit breaker on success

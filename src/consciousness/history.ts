@@ -13,6 +13,8 @@ export interface EvolutionRecord {
   status: "success" | "failed" | "skipped";
   summary: string;
   durationMs?: number;
+  /** Quality score 1-10 (task completion + test quality + code conciseness + side effects) */
+  qualityScore?: number;
 }
 
 export interface EvolutionStats {
@@ -66,7 +68,8 @@ export function recordEvolutionResult(
   version: string,
   status: EvolutionRecord["status"],
   summary: string,
-  durationMs?: number
+  durationMs?: number,
+  qualityScore?: number
 ): void {
   const history = loadEvolutionHistory();
 
@@ -79,10 +82,36 @@ export function recordEvolutionResult(
     durationMs,
   };
 
+  if (qualityScore !== undefined) {
+    record.qualityScore = qualityScore;
+  }
+
   history.push(record);
 
   saveEvolutionHistory(history);
-  log.info(`Evolution #${cycle} recorded`, { status, version });
+  log.info(`Evolution #${cycle} recorded`, { status, version, qualityScore });
+}
+
+/**
+ * Calculate average quality score of the last N cycles that have a qualityScore.
+ * Returns null if no scored records exist within the requested range.
+ */
+export function getAverageQualityScore(limit: number = 5): number | null {
+  try {
+    const history = loadEvolutionHistory();
+    const scored = history
+      .slice(-limit * 3) // look back further to find enough scored records
+      .filter((r) => typeof r.qualityScore === "number")
+      .slice(-limit);
+
+    if (scored.length === 0) return null;
+
+    const sum = scored.reduce((acc, r) => acc + (r.qualityScore ?? 0), 0);
+    return Math.round((sum / scored.length) * 10) / 10;
+  } catch (e) {
+    log.warn("Failed to compute average quality score", { error: (e as Error).message });
+    return null;
+  }
 }
 
 export function calculateEvolutionStats(): EvolutionStats {
