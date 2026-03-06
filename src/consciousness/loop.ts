@@ -53,6 +53,12 @@ import {
   generateArchiveContextForPrompt,
   type AgentArchive,
 } from "../evolution/archive-integration.js";
+import {
+  getCircuitBreakerPauseMs,
+  recordCircuitFailure,
+  recordCircuitSuccess,
+  formatCircuitBreakerAlert,
+} from "./circuit-breaker.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -257,6 +263,17 @@ export function startConsciousness(
       const task = loadNextTask();
 
       if (task) {
+        // ── Circuit Breaker check ──────────────────────────────────
+        const pauseMs = getCircuitBreakerPauseMs();
+        if (pauseMs > 0) {
+          const resumeInMinutes = Math.ceil(pauseMs / 1000 / 60);
+          log.warn("Circuit breaker is OPEN — skipping evolution cycle", {
+            resumeInMinutes,
+            taskId: task.id,
+          });
+          return;
+        }
+
         await runEvolutionCycle(task, notifyFn);
       } else {
         // Backlog empty: run goal discovery if cooldown has elapsed
@@ -297,6 +314,22 @@ export function startConsciousness(
       log.info("Consciousness loop stopped");
     },
   };
+}
+
+// ── Circuit Breaker helpers ────────────────────────────────────────
+
+/** Send Telegram alert when circuit breaker is tripped (extracted to keep runEvolutionCycle complexity in check). */
+async function notifyCircuitTripIfNeeded(
+  circuitResult: { tripped: boolean; consecutiveFailures: number; pausedUntil: string | null },
+  notifyFn: NotifyFn,
+): Promise<void> {
+  if (circuitResult.tripped && circuitResult.pausedUntil) {
+    const alert = formatCircuitBreakerAlert(
+      circuitResult.pausedUntil,
+      circuitResult.consecutiveFailures,
+    );
+    await notifyFn(alert).catch(() => {});
+  }
 }
 
 // ── Evolution cycle ────────────────────────────────────────────────
@@ -397,6 +430,9 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs);
     completeEvolutionProgress(durationMs);
 
+    // Reset circuit breaker on success
+    recordCircuitSuccess();
+
     // Record performance metrics for successful evolution
     recordEvolutionCycle({
       cycle,
@@ -490,6 +526,10 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     const errorSpan = startSpan("error-handler", { traceId: trace.id });
     recordEvolutionResult(cycle, state.version, "failed", err.message, durationMs);
     failEvolutionProgress(err.message);
+
+    // Track consecutive failures in circuit breaker
+    const circuitResult = recordCircuitFailure();
+    await notifyCircuitTripIfNeeded(circuitResult, notifyFn);
 
     // Record performance metrics for failed evolution
     recordEvolutionCycle({
