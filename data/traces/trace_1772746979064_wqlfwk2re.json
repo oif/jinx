@@ -1,0 +1,98 @@
+[
+  {
+    "id": "span_1772746979064_6dlxrnknd",
+    "traceId": "trace_1772746979064_wqlfwk2re",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772746979064,
+    "status": "success",
+    "attributes": {
+      "evolutionCycle": 16,
+      "taskId": "#069",
+      "taskTitle": "实现 Pre-push 测试门禁 - BORN.md 初始优先级 #1。实现 git pre-push hook，推送前自动运行测试，失败则阻止推送。防止坏代码进入远程仓库，是实现可靠进化循环的前提。验证条件：pre-push hook 存在且可执行、测试失败时推送被阻止、测试通过时正常推送。方向：能力缺口 — 优先级：最高",
+      "triggerSource": "consciousness",
+      "version": "0.1.118"
+    },
+    "events": [],
+    "endTime": 1772748179977,
+    "durationMs": 1200913
+  },
+  {
+    "id": "span_1772746979065_pu5miwfci",
+    "traceId": "trace_1772746979064_wqlfwk2re",
+    "name": "archive-prepare",
+    "kind": "internal",
+    "startTime": 1772746979065,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746979065,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772746979514_7kmc3pxfl",
+    "traceId": "trace_1772746979064_wqlfwk2re",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772746979514,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746979516,
+    "durationMs": 2
+  },
+  {
+    "id": "span_1772746979514_72dvjwqpx",
+    "traceId": "trace_1772746979064_wqlfwk2re",
+    "name": "principle-retrieval",
+    "kind": "internal",
+    "startTime": 1772746979514,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746979514,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772746979516_ag8lmb9q7",
+    "traceId": "trace_1772746979064_wqlfwk2re",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772746979516,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746979555,
+    "durationMs": 39
+  },
+  {
+    "id": "span_1772746979555_l4grs3w35",
+    "traceId": "trace_1772746979064_wqlfwk2re",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772746979555,
+    "status": "success",
+    "attributes": {
+      "task": "#069"
+    },
+    "events": [],
+    "endTime": 1772748179977,
+    "durationMs": 1200422
+  },
+  {
+    "id": "span_1772748179558_h4cdul7rk",
+    "traceId": "trace_1772746979064_wqlfwk2re",
+    "name": "error-handler",
+    "kind": "internal",
+    "startTime": 1772748179558,
+    "status": "error",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772748179560,
+    "durationMs": 2,
+    "error": {
+      "type": "Error",
+      "message": "evolution-16 timed out after 1200000ms"
+    }
+  }
+]

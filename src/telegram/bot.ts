@@ -41,6 +41,8 @@ export enum TopicType {
   HEALTH = "health",
   CONSCIOUSNESS = "consciousness",
   DAILY_BRIEFING = "daily_briefing",
+  STREAM = "stream",
+  RESULTS = "results",
 }
 
 interface TopicConfig {
@@ -54,6 +56,8 @@ const TOPIC_CONFIGS: Record<TopicType, TopicConfig> = {
   [TopicType.HEALTH]: { name: "🏥 Health", icon: "🏥" },
   [TopicType.CONSCIOUSNESS]: { name: "💡 Consciousness", icon: "💡" },
   [TopicType.DAILY_BRIEFING]: { name: "📋 Daily Briefing", icon: "📋" },
+  [TopicType.STREAM]: { name: "🌊 Stream", icon: "🌊" },
+  [TopicType.RESULTS]: { name: "🏆 Results", icon: "🏆" },
 };
 
 interface TopicStorage {

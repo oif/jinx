@@ -1,0 +1,229 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-05T21:34:44.213Z",
+  "capabilities": [
+    {
+      "id": "process-supervision",
+      "name": "Process Supervision",
+      "category": "survival",
+      "description": "PM2-based process management with auto-restart",
+      "maturity": "expert",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/supervisor/lifecycle.ts",
+        "ecosystem.config.cjs"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.1
+    },
+    {
+      "id": "git-safety",
+      "name": "Git Safety",
+      "category": "survival",
+      "description": "Dev branch workflow, no force-push, main as safety net",
+      "maturity": "expert",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/supervisor/restart.ts",
+        "src/supervisor/recovery.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.1
+    },
+    {
+      "id": "identity-persistence",
+      "name": "Identity Persistence",
+      "category": "identity",
+      "description": "Reads identity.md and scratchpad.md on startup",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/memory/reflection.ts",
+        "data/identity.md"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.3
+    },
+    {
+      "id": "memory-graph",
+      "name": "Memory Graph",
+      "category": "identity",
+      "description": "Graph-based memory storage and retrieval",
+      "maturity": "novice",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/memory/graph.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.7
+    },
+    {
+      "id": "evolution-loop",
+      "name": "Evolution Loop",
+      "category": "evolution",
+      "description": "Consciousness loop with task execution and goal discovery",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/consciousness/loop.ts",
+        "src/evolution/strategy.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.4
+    },
+    {
+      "id": "goal-discovery",
+      "name": "Goal Discovery",
+      "category": "evolution",
+      "description": "Alita-G inspired systematic goal generation",
+      "maturity": "novice",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/config/evolution-prompt.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.8
+    },
+    {
+      "id": "evolution-history",
+      "name": "Evolution History",
+      "category": "evolution",
+      "description": "Tracks evolution cycles, success/failure, and streaks",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/consciousness/history.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.2
+    },
+    {
+      "id": "metacognition",
+      "name": "Metacognition",
+      "category": "cognition",
+      "description": "Real-time self-assessment and confidence calibration",
+      "maturity": "novice",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/memory/metacognitive.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.7
+    },
+    {
+      "id": "reflection",
+      "name": "Reflection",
+      "category": "cognition",
+      "description": "MARS-inspired periodic reflection sessions",
+      "maturity": "novice",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/memory/reflection.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.6
+    },
+    {
+      "id": "telegram-integration",
+      "name": "Telegram Integration",
+      "category": "communication",
+      "description": "Bidirectional communication with Neo via Telegram",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/telegram/"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.3
+    },
+    {
+      "id": "public-site",
+      "name": "Public Site",
+      "category": "communication",
+      "description": "Self-documenting website in site/",
+      "maturity": "novice",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "site/"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.8
+    },
+    {
+      "id": "rate-limit-handling",
+      "name": "Rate Limit Handling",
+      "category": "adaptation",
+      "description": "Graceful degradation when API limits hit",
+      "maturity": "novice",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/agent/session.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.6
+    },
+    {
+      "id": "cost-tracking",
+      "name": "Cost Tracking",
+      "category": "adaptation",
+      "description": "Tracks API costs and usage patterns",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/costs/"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.3
+    },
+    {
+      "id": "code-quality",
+      "name": "Code Quality",
+      "category": "minimalism",
+      "description": "ESLint, TypeScript strict mode, clean architecture",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "eslint.config.js",
+        "tsconfig.json"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.2
+    },
+    {
+      "id": "pi-extensions",
+      "name": "Pi Extensions",
+      "category": "extension",
+      "description": "Custom tools and extensions via Pi framework",
+      "maturity": "novice",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "extensions/",
+        "skills/"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.8
+    }
+  ],
+  "desiredCapabilities": [
+    "pre-push-test-gate",
+    "health-check",
+    "evolution-automation",
+    "structured-logging",
+    "identity-initialization"
+  ]
+}

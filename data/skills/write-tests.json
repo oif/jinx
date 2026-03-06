@@ -1,0 +1,38 @@
+{
+  "id": "write-tests",
+  "name": "Generate Tests",
+  "description": "Generate unit tests for code modules using the project's testing framework.",
+  "version": "1.0.0",
+  "createdAt": "2026-03-03T00:00:00.000Z",
+  "updatedAt": "2026-03-04T00:00:00.000Z",
+  "usageCount": 8,
+  "lastUsedAt": "2026-03-04T10:00:00.000Z",
+  "tags": ["testing", "quality", "automation"],
+  "parameters": [
+    {
+      "name": "module",
+      "type": "string",
+      "description": "Module path to generate tests for",
+      "required": true
+    },
+    {
+      "name": "framework",
+      "type": "string",
+      "description": "Test framework to use",
+      "required": false,
+      "defaultValue": "vitest"
+    }
+  ],
+  "steps": [
+    {
+      "toolName": "read",
+      "params": { "path": "${module}" },
+      "description": "Read the source module"
+    },
+    {
+      "toolName": "write",
+      "params": { "path": "${module}.test.ts" },
+      "description": "Write test file"
+    }
+  ]
+}

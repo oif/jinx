@@ -1,0 +1,154 @@
+[
+  {
+    "id": "span_1772762883301_a0crhupk0",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772762883301,
+    "status": "success",
+    "attributes": {
+      "evolutionCycle": 31,
+      "taskId": "#074",
+      "taskTitle": "添加 Telegram /diagnostics 深度诊断命令 - Neo 目前无法快速了解系统深层健康。实现 /diagnostics 命令，返回：连续失败计数、strategy 振荡次数(24h)、principle 数量+平均 effectiveness、trace 状态、综合健康评分(0-100)。验证：命令返回格式化报告；telegram-commands-exist.test.ts 更新通过；数据文件缺失时不崩溃。方向：对Neo更有用 — 优先级：中",
+      "triggerSource": "consciousness",
+      "version": "0.1.118"
+    },
+    "events": [],
+    "endTime": 1772763245781,
+    "durationMs": 362480
+  },
+  {
+    "id": "span_1772762883301_0hf7zcbjz",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "archive-prepare",
+    "kind": "internal",
+    "startTime": 1772762883301,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772762883302,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772762883725_6kot309wn",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772762883725,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772762883727,
+    "durationMs": 2
+  },
+  {
+    "id": "span_1772762883725_1ekmf9gvs",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "principle-retrieval",
+    "kind": "internal",
+    "startTime": 1772762883725,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772762883726,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772762883727_6s47z4k7v",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772762883727,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772762883769,
+    "durationMs": 42
+  },
+  {
+    "id": "span_1772762883769_wnl8h81o6",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772762883769,
+    "status": "success",
+    "attributes": {
+      "task": "#074"
+    },
+    "events": [],
+    "endTime": 1772763244021,
+    "durationMs": 360252
+  },
+  {
+    "id": "span_1772763244021_vxqy3x4br",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "result-recording",
+    "kind": "internal",
+    "startTime": 1772763244021,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763244022,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772763244022_rk4jgtt31",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "archive-record",
+    "kind": "internal",
+    "startTime": 1772763244022,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763244023,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772763244454_6mnbnfb8t",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "knowledge-recording",
+    "kind": "internal",
+    "startTime": 1772763244454,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763244455,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772763244455_bhyb8g9em",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "reflection",
+    "kind": "internal",
+    "startTime": 1772763244455,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763244919,
+    "durationMs": 464
+  },
+  {
+    "id": "span_1772763244919_iq4rh4gj7",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "metacognitive",
+    "kind": "internal",
+    "startTime": 1772763244919,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763245343,
+    "durationMs": 424
+  },
+  {
+    "id": "span_1772763245343_dm39kwj5w",
+    "traceId": "trace_1772762883301_u3swv2cf0",
+    "name": "distillation",
+    "kind": "internal",
+    "startTime": 1772763245343,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763245781,
+    "durationMs": 438
+  }
+]

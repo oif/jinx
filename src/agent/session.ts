@@ -46,22 +46,29 @@ function getWorkerTimeoutMs(): number {
   return DEFAULT_WORKER_TIMEOUT_MS;
 }
 
-// ── Telegram send tool ─────────────────────────────────────────────
+// ── Telegram send tools ────────────────────────────────────────────
 
 let tgSend: TelegramSendFn | null = null;
+let tgStream: TelegramSendFn | null = null;
 
 export function registerTelegramSend(fn: TelegramSendFn): void {
   tgSend = fn;
 }
 
+export function registerTelegramStream(fn: TelegramSendFn): void {
+  tgStream = fn;
+}
+
+/** 🏆 Results — important milestones, DM + Results topic */
 function buildTgSendTool(sendFn: TelegramSendFn | null): ToolDefinition {
   return {
     name: "send_owner_message",
-    label: "Send Message to Creator",
+    label: "Send Key Result to Creator",
     description:
-      "Send a message to the creator (Neo) via Telegram. " +
-      "Use for important notifications, evolution reports, error alerts. " +
-      "Do not spam — batch non-urgent updates.",
+      "Send an important notification to the creator (Neo) via Telegram. " +
+      "Use ONLY for key results: completed tasks, breakthroughs, critical errors, evolution milestones. " +
+      "Goes to owner DM + 🏆 Results topic. Do NOT spam — batch non-urgent updates. " +
+      "For progress updates and internal thoughts, use send_stream_message instead.",
     parameters: Type.Object({
       text: Type.String({ description: "Message text (supports Markdown)" }),
     }),
@@ -74,7 +81,36 @@ function buildTgSendTool(sendFn: TelegramSendFn | null): ToolDefinition {
       }
       await sendFn(args.text as string);
       return {
-        content: [{ type: "text", text: "Message sent to creator." }],
+        content: [{ type: "text", text: "Key result sent to creator." }],
+        details: undefined,
+      };
+    },
+  };
+}
+
+/** 🌊 Stream — verbose progress, step-by-step thoughts, internal monologue */
+function buildTgStreamTool(streamFn: TelegramSendFn | null): ToolDefinition {
+  return {
+    name: "send_stream_message",
+    label: "Send Stream Update",
+    description:
+      "Post a verbose progress update to the 🌊 Stream topic. " +
+      "Use for step-by-step work logs, iteration progress, internal thoughts, " +
+      "intermediate states — anything detailed that would clutter the main DM. " +
+      "Free to use frequently. Does NOT DM the owner.",
+    parameters: Type.Object({
+      text: Type.String({ description: "Progress update or thought (supports Markdown)" }),
+    }),
+    execute: async (_toolCallId, args: Record<string, unknown>) => {
+      if (!streamFn) {
+        return {
+          content: [{ type: "text", text: "Stream not connected. Update not sent." }],
+          details: undefined,
+        };
+      }
+      await streamFn(args.text as string);
+      return {
+        content: [{ type: "text", text: "Stream update posted." }],
         details: undefined,
       };
     },
@@ -261,6 +297,15 @@ export interface WorkerOptions {
    * Default: true (workers do focused tasks, don't need full knowledge base).
    */
   slim?: boolean;
+  /**
+   * Tool groups to enable for this worker session.
+   * Similar to GitHub MCP Server's X-MCP-Tools header for selective tool loading.
+   * If specified, only tools from these groups will be available.
+   * Available groups: github, memory, evolution, skills, system, web, swarm
+   * 
+   * Example: ["github", "evolution"] for a worker that does code changes and PRs
+   */
+  toolGroups?: string[];
 }
 
 export interface WorkerSession {
@@ -314,64 +359,89 @@ export class SessionPool {
     // Workers use slim mode by default (skip knowledge base) — they do focused tasks
     const slim = opts.slim ?? true;
 
-    const { session, modelFallbackMessage } = await createAgentSession({
-      sessionManager: SessionManager.inMemory(),
-      resourceLoader: new DefaultResourceLoader({
-        systemPromptOverride: (base) => buildJinxSystemPrompt(base || "", slim),
-        // Workers get the same jinx-tools extension as the conversation session
-        additionalExtensionPaths: [extensionsDir],
-      }),
-      modelRegistry,
-      model: selectedModel,
-      thinkingLevel: opts.thinkingLevel ?? "medium",
-      tools: codingTools,
-      customTools: [buildTgSendTool(tgSend)],
-    } satisfies CreateAgentSessionOptions);
-
-    if (modelFallbackMessage) {
-      log.warn(`Worker model fallback: ${modelFallbackMessage}`, { id });
+    // Store original JINX_TOOL_GROUPS to restore after session creation
+    const originalToolGroups = process.env.JINX_TOOL_GROUPS;
+    
+    // Set tool groups for this worker session if specified
+    // This is similar to GitHub MCP Server's X-MCP-Tools header
+    // The extension reads this env var at load time
+    if (opts.toolGroups) {
+      process.env.JINX_TOOL_GROUPS = opts.toolGroups.join(",");
+      log.info("Worker session tool groups configured", { 
+        id, 
+        toolGroups: opts.toolGroups 
+      });
     }
-    log.info("Worker session spawned", { id, label: opts.label });
 
-    const worker: WorkerSession = {
-      id,
-      label: opts.label,
-      session,
+    try {
+      const { session, modelFallbackMessage } = await createAgentSession({
+        sessionManager: SessionManager.inMemory(),
+        resourceLoader: new DefaultResourceLoader({
+          systemPromptOverride: (base) => buildJinxSystemPrompt(base || "", slim),
+          // Workers get the same jinx-tools extension as the conversation session
+          additionalExtensionPaths: [extensionsDir],
+        }),
+        modelRegistry,
+        model: selectedModel,
+        thinkingLevel: opts.thinkingLevel ?? "medium",
+        tools: codingTools,
+        customTools: [buildTgSendTool(tgSend), buildTgStreamTool(tgStream)],
+      } satisfies CreateAgentSessionOptions);
 
-      get busy() {
-        return session.isStreaming;
-      },
+      if (modelFallbackMessage) {
+        log.warn(`Worker model fallback: ${modelFallbackMessage}`, { id });
+      }
+      log.info("Worker session spawned", { id, label: opts.label });
 
-      async prompt(message: string): Promise<string> {
-        log.info(`Worker [${opts.label}]: ${message.slice(0, 80)}${message.length > 80 ? "..." : ""}`);
-        if (session.isStreaming) {
-          const p = collectFollowUpResponse(session, timeoutMs, opts.label);
-          session.followUp(message).catch((e) =>
-            log.error(`Worker followUp failed [${opts.label}]`, { error: (e as Error).message }),
+      const worker: WorkerSession = {
+        id,
+        label: opts.label,
+        session,
+
+        get busy() {
+          return session.isStreaming;
+        },
+
+        async prompt(message: string): Promise<string> {
+          log.info(`Worker [${opts.label}]: ${message.slice(0, 80)}${message.length > 80 ? "..." : ""}`);
+          if (session.isStreaming) {
+            const p = collectFollowUpResponse(session, timeoutMs, opts.label);
+            session.followUp(message).catch((e) =>
+              log.error(`Worker followUp failed [${opts.label}]`, { error: (e as Error).message }),
+            );
+            return p;
+          }
+          const p = collectResponse(session, timeoutMs, opts.label);
+          session.prompt(message).catch((e) =>
+            log.error(`Worker prompt failed [${opts.label}]`, { error: (e as Error).message }),
           );
           return p;
-        }
-        const p = collectResponse(session, timeoutMs, opts.label);
-        session.prompt(message).catch((e) =>
-          log.error(`Worker prompt failed [${opts.label}]`, { error: (e as Error).message }),
-        );
-        return p;
-      },
+        },
 
-      dispose() {
-        try {
-          session.abort().catch(() => {});
-          session.dispose();
-        } catch {
-          // ignore
-        }
-        SessionPool._workers.delete(id);
-        log.info("Worker session disposed", { id, label: opts.label });
-      },
-    };
+        dispose() {
+          try {
+            session.abort().catch(() => {});
+            session.dispose();
+          } catch {
+            // ignore
+          }
+          SessionPool._workers.delete(id);
+          log.info("Worker session disposed", { id, label: opts.label });
+        },
+      };
 
-    this._workers.set(id, worker);
-    return worker;
+      this._workers.set(id, worker);
+      return worker;
+    } finally {
+      // Restore original JINX_TOOL_GROUPS value
+      if (opts.toolGroups) {
+        if (originalToolGroups === undefined) {
+          delete process.env.JINX_TOOL_GROUPS;
+        } else {
+          process.env.JINX_TOOL_GROUPS = originalToolGroups;
+        }
+      }
+    }
   }
 
   static disposeAll(): void {
@@ -405,7 +475,7 @@ export async function startConversationSession(): Promise<AgentSession> {
     model: selectedModel,
     thinkingLevel: "high",
     tools: codingTools,
-    customTools: [buildTgSendTool(tgSend)],
+    customTools: [buildTgSendTool(tgSend), buildTgStreamTool(tgStream)],
   } satisfies CreateAgentSessionOptions);
 
   if (modelFallbackMessage) {

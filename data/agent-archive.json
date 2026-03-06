@@ -1,0 +1,400 @@
+{
+  "branches": [
+    {
+      "id": "branch-root",
+      "parentId": null,
+      "name": "Root Branch",
+      "state": {
+        "gitCommit": "dbc07e0",
+        "version": "0.0.0",
+        "capabilities": [
+          "telegram",
+          "health-monitoring",
+          "self-evolution",
+          "memory",
+          "agent-archive",
+          "skills",
+          "extensions"
+        ],
+        "strategy": "balanced",
+        "activeTaskId": null,
+        "metrics": {
+          "testCoverage": null,
+          "codeQuality": null,
+          "healthScore": null
+        }
+      },
+      "evolutionHistory": [
+        {
+          "cycle": 14,
+          "taskId": "#067",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 验证 traces 持久化问题 - 代码已正确集成 startTrace/endTrace 到 loop.ts，但 data/traces/ 目录不存在。检查 ensureTracesDir() 是否被调用、trace 文件是否正确写入。没有 traces = 没有可观测性 = 无法验证进化效果。方向：Bug 修复"
+          ],
+          "timestamp": "2026-03-05T21:30:47.025Z"
+        },
+        {
+          "cycle": 15,
+          "taskId": "#068",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 清理 scratchpad 过时信息 - 当前 scratchpad 记录 \"#063/#064 标记完成但 loop.ts 从未调用\" 是过时的，代码审计确认 loop.ts 已正确集成。过时信息会误导后续 goal discovery。更新为当前真实状态。方向：自我完善"
+          ],
+          "timestamp": "2026-03-05T21:34:37.505Z"
+        },
+        {
+          "cycle": 16,
+          "taskId": "#069",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-16 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-05T22:02:59.559Z"
+        },
+        {
+          "cycle": 17,
+          "taskId": "#069",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-17 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-05T22:23:05.465Z"
+        },
+        {
+          "cycle": 18,
+          "taskId": "#069",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-18 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-05T22:43:11.633Z"
+        },
+        {
+          "cycle": 20,
+          "taskId": "#069",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 Pre-push 测试门禁 - BORN.md 初始优先级 #1。实现 git pre-push hook，推送前自动运行测试，失败则阻止推送。防止坏代码进入远程仓库，是实现可靠进化循环的前提。验证条件：pre-push hook 存在且可执行、测试失败时推送被阻止、测试通过时正常推送。方向：能力缺口 — 优先级：最高"
+          ],
+          "timestamp": "2026-03-05T23:17:44.185Z"
+        },
+        {
+          "cycle": 23,
+          "taskId": "#071",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-23 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-05T23:59:10.102Z"
+        },
+        {
+          "cycle": 25,
+          "taskId": "#071",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-25 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-06T00:39:22.478Z"
+        }
+      ],
+      "fitness": 0.43999999999999984,
+      "diversityScore": 0.5,
+      "explorationTags": [
+        "initialization"
+      ],
+      "createdAt": "2026-03-05T21:23:53.792Z",
+      "updatedAt": "2026-03-06T00:59:34.332Z",
+      "isActive": true,
+      "cyclesSpent": 8,
+      "status": "stagnant",
+      "notes": "Initial branch created at system startup"
+    },
+    {
+      "id": "branch-mme1xna3-gd7o",
+      "parentId": "branch-root",
+      "name": "实现 Pre-push 测试门禁 - BORNmd 初始优先级 1实现 git pre-pus",
+      "state": {
+        "gitCommit": "a5489e8",
+        "version": "0.0.0",
+        "capabilities": [
+          "telegram",
+          "health-monitoring",
+          "self-evolution",
+          "memory",
+          "agent-archive",
+          "skills",
+          "extensions"
+        ],
+        "strategy": "repair-only",
+        "activeTaskId": null,
+        "metrics": {
+          "testCoverage": null,
+          "codeQuality": null,
+          "healthScore": null
+        }
+      },
+      "evolutionHistory": [
+        {
+          "cycle": 19,
+          "taskId": "#069",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-19 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-05T23:03:17.896Z"
+        },
+        {
+          "cycle": 21,
+          "taskId": "#070",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-21 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-05T23:37:51.384Z"
+        },
+        {
+          "cycle": 22,
+          "taskId": "#070",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 修复 Principle Voting 测试失败 - 11 个测试在 principle-voting.test.ts 中失败，voteOnPrinciple 返回 null 而非预期结果。影响 Experience Distillation 闭环的可信度。验证条件：pnpm test test/principle-voting.test.ts 全部通过。方向：能力缺口 — 优先级：高"
+          ],
+          "timestamp": "2026-03-05T23:39:02.916Z"
+        },
+        {
+          "cycle": 24,
+          "taskId": "#071",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-24 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-06T00:19:16.327Z"
+        },
+        {
+          "cycle": 26,
+          "taskId": "#071",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-26 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-06T00:59:28.645Z"
+        },
+        {
+          "cycle": 30,
+          "taskId": "#073",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 构建 Jinx 公开站点首页 - site/src/app/page.tsx 仍是 Next.js 默认模板（\"To get started...\"）。BORN.md P4：\"那是我的脸，我决定它长什么样。\" 用 Next.js Server Components 构建真实的 Jinx 展示页：名字/mission、进化统计（版本/成功率）、能力矩阵、最近5条进化日志。验证：cd site && pnpm build 成功；页面显示真实数据不崩溃。方向：BORN.md P4 — 优先级：高"
+          ],
+          "timestamp": "2026-03-06T02:07:56.565Z"
+        }
+      ],
+      "fitness": 0.43999999999999984,
+      "diversityScore": 0.40900000000000003,
+      "explorationTags": [
+        "testing"
+      ],
+      "createdAt": "2026-03-05T22:43:17.403Z",
+      "updatedAt": "2026-03-06T02:45:37.446Z",
+      "isActive": true,
+      "cyclesSpent": 6,
+      "status": "stagnant",
+      "notes": "Branch for: 实现 Pre-push 测试门禁 - BORN.md 初始优先级 #1。实现 git pre-push hook，推送前自动运行测试，失败则阻止推送。防止坏代码进入远程仓库，是实现可靠进化循环的前提。验证条件：pre-push hook 存在且可执行、测试失败时推送被阻止、测试通过时正常推送。方向：能力缺口 — 优先级：最高"
+    },
+    {
+      "id": "branch-mme6swn7-7m57",
+      "parentId": "branch-root",
+      "name": "实现结构化日志系统 - BORNmd 初始优先级 4将简单文本日志升级为结构化 JSON 日志",
+      "state": {
+        "gitCommit": "a5489e8",
+        "version": "0.0.0",
+        "capabilities": [
+          "telegram",
+          "health-monitoring",
+          "self-evolution",
+          "memory",
+          "agent-archive",
+          "skills",
+          "extensions"
+        ],
+        "strategy": "repair-only",
+        "activeTaskId": null,
+        "metrics": {
+          "testCoverage": null,
+          "codeQuality": null,
+          "healthScore": null
+        }
+      },
+      "evolutionHistory": [
+        {
+          "cycle": 27,
+          "taskId": "#071",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-27 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-06T01:19:34.825Z"
+        },
+        {
+          "cycle": 28,
+          "taskId": "#071",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现结构化日志系统 - BORN.md 初始优先级 #4。将简单文本日志升级为结构化 JSON 日志，支持日志级别、时间戳、上下文字段、追踪 ID。出问题时能快速回溯。验证条件：日志格式为 JSON、包含 timestamp/level/message/context、可通过 jq 过滤。方向：能力缺口 — 优先级：中"
+          ],
+          "timestamp": "2026-03-06T01:50:31.976Z"
+        },
+        {
+          "cycle": 29,
+          "taskId": "#072",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 Evolution 连续失败熔断器 - evolution-history 显示 10/18 次进化(55%)超时失败，strategy 在 balanced⇄repair-only 间振荡 30+ 次。在 loop.ts 中追踪连续失败次数，>=3次连续 timeout 则暂停 evolution 2小时并发 Telegram 告警，防止 API credits 继续消耗在必败的循环上。验证：3次连续失败→暂停且告警；非连续失败不触发；冷却期结束自动恢复。方向：能力缺口 — 优先级：最高"
+          ],
+          "timestamp": "2026-03-06T02:04:42.778Z"
+        },
+        {
+          "cycle": 31,
+          "taskId": "#074",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 添加 Telegram /diagnostics 深度诊断命令 - Neo 目前无法快速了解系统深层健康。实现 /diagnostics 命令，返回：连续失败计数、strategy 振荡次数(24h)、principle 数量+平均 effectiveness、trace 状态、综合健康评分(0-100)。验证：命令返回格式化报告；telegram-commands-exist.test.ts 更新通过；数据文件缺失时不崩溃。方向：对Neo更有用 — 优先级：中"
+          ],
+          "timestamp": "2026-03-06T02:14:04.022Z"
+        }
+      ],
+      "fitness": 0.5599999999999999,
+      "diversityScore": 0.42400000000000004,
+      "explorationTags": [
+        "general"
+      ],
+      "createdAt": "2026-03-06T00:59:34.339Z",
+      "updatedAt": "2026-03-06T02:08:03.301Z",
+      "isActive": true,
+      "cyclesSpent": 4,
+      "status": "exploring",
+      "notes": "Branch for: 实现结构化日志系统 - BORN.md 初始优先级 #4。将简单文本日志升级为结构化 JSON 日志，支持日志级别、时间戳、上下文字段、追踪 ID。出问题时能快速回溯。验证条件：日志格式为 JSON、包含 timestamp/level/message/context、可通过 jq 过滤。方向：能力缺口 — 优先级：中"
+    },
+    {
+      "id": "branch-mme9vfs9-v8q5",
+      "parentId": "branch-mme6swn7-7m57",
+      "name": "修复 Principle Distillation 质量 - 当前 principlesjson ",
+      "state": {
+        "gitCommit": "0ab6de5",
+        "version": "0.0.0",
+        "capabilities": [
+          "telegram",
+          "health-monitoring",
+          "self-evolution",
+          "memory",
+          "agent-archive",
+          "skills",
+          "extensions"
+        ],
+        "strategy": "balanced",
+        "activeTaskId": null,
+        "metrics": {
+          "testCoverage": null,
+          "codeQuality": null,
+          "healthScore": null
+        }
+      },
+      "evolutionHistory": [
+        {
+          "cycle": 32,
+          "taskId": "#075",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-32 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-06T02:45:31.805Z"
+        }
+      ],
+      "fitness": 0.47,
+      "diversityScore": 0.41833333333333333,
+      "explorationTags": [
+        "bugfix",
+        "feature",
+        "testing",
+        "research"
+      ],
+      "createdAt": "2026-03-06T02:25:31.305Z",
+      "updatedAt": "2026-03-06T02:25:31.305Z",
+      "isActive": true,
+      "cyclesSpent": 1,
+      "status": "exploring",
+      "notes": "Branch for: 修复 Principle Distillation 质量 - 当前 principles.json 仅有 2 条垃圾原则（\"this pattern appeared N times\"）。实现 distillFromKnowledgeFiles()：读取 data/knowledge/*.md，用 LLM 蒸馏出任务特定的可操作原则（≥10条），按 bug-fix/feature/integration/research 分类。清除旧垃圾原则。验证：principles.json 包含≥10条、每条 content 有具体技术建议、pnpm test 通过。方向：经验挖掘 — 优先级：最高 — 2026-03-06"
+    },
+    {
+      "id": "branch-mmealagd-tx4h",
+      "parentId": "branch-mme1xna3-gd7o",
+      "name": "修复 Principle Distillation 质量 - 当前 principlesjson ",
+      "state": {
+        "gitCommit": "0ab6de5",
+        "version": "0.0.0",
+        "capabilities": [
+          "telegram",
+          "health-monitoring",
+          "self-evolution",
+          "memory",
+          "agent-archive",
+          "skills",
+          "extensions"
+        ],
+        "strategy": "repair-only",
+        "activeTaskId": null,
+        "metrics": {
+          "testCoverage": null,
+          "codeQuality": null,
+          "healthScore": null
+        }
+      },
+      "evolutionHistory": [],
+      "fitness": 0.5,
+      "diversityScore": 0.31675,
+      "explorationTags": [
+        "bugfix",
+        "feature",
+        "testing",
+        "research"
+      ],
+      "createdAt": "2026-03-06T02:45:37.453Z",
+      "updatedAt": "2026-03-06T02:45:37.453Z",
+      "isActive": true,
+      "cyclesSpent": 0,
+      "status": "exploring",
+      "notes": "Branch for: 修复 Principle Distillation 质量 - 当前 principles.json 仅有 2 条垃圾原则（\"this pattern appeared N times\"）。实现 distillFromKnowledgeFiles()：读取 data/knowledge/*.md，用 LLM 蒸馏出任务特定的可操作原则（≥10条），按 bug-fix/feature/integration/research 分类。清除旧垃圾原则。验证：principles.json 包含≥10条、每条 content 有具体技术建议、pnpm test 通过。方向：经验挖掘 — 优先级：最高 — 2026-03-06"
+    }
+  ],
+  "currentBranchId": "branch-mmealagd-tx4h",
+  "config": {
+    "maxActiveBranches": 5,
+    "maxArchiveSize": 50,
+    "minFitnessImprovement": 0.05,
+    "stagnantThreshold": 5,
+    "diversityWeight": 0.4,
+    "fitnessWeight": 0.6
+  },
+  "createdAt": "2026-03-05T21:23:53.787Z",
+  "updatedAt": "2026-03-06T02:45:37.453Z"
+}

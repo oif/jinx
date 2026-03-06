@@ -1,0 +1,45 @@
+{
+  "id": "search-web",
+  "name": "Web Search",
+  "description": "Search the web for information using multiple search providers with automatic fallback.",
+  "version": "1.0.0",
+  "createdAt": "2026-03-05T00:00:00.000Z",
+  "updatedAt": "2026-03-05T05:00:00.000Z",
+  "usageCount": 42,
+  "lastUsedAt": "2026-03-05T05:22:00.000Z",
+  "tags": ["search", "web", "information"],
+  "parameters": [
+    {
+      "name": "query",
+      "type": "string",
+      "description": "The search query",
+      "required": true
+    },
+    {
+      "name": "provider",
+      "type": "string",
+      "description": "Preferred search provider",
+      "required": false,
+      "defaultValue": "auto"
+    },
+    {
+      "name": "maxResults",
+      "type": "number",
+      "description": "Maximum number of results",
+      "required": false,
+      "defaultValue": 10
+    }
+  ],
+  "steps": [
+    {
+      "toolName": "brave_search",
+      "params": { "query": "${query}", "count": "${maxResults}" },
+      "description": "Search using Brave Search API"
+    },
+    {
+      "toolName": "exa_search",
+      "params": { "query": "${query}", "numResults": "${maxResults}" },
+      "description": "Fallback to Exa neural search"
+    }
+  ]
+}

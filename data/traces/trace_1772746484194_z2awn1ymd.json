@@ -1,0 +1,122 @@
+[
+  {
+    "id": "span_1772746484194_9e8at31pl",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772746484194,
+    "status": "success",
+    "attributes": {
+      "triggerSource": "consciousness-goal-discovery",
+      "version": "0.1.118"
+    },
+    "events": [
+      {
+        "name": "task_added",
+        "timestamp": 1772746972803,
+        "attributes": {
+          "taskId": "#069",
+          "title": "实现 Pre-push 测试门禁 - BORN.md 初始优先级 #1。实现 git pre-push hook，推送前自动运行测试，失败则阻止推送。防止坏代码进入远程仓库，是实现可靠进化循环的前提。验证条件：pre-push hook 存在且可执行、测试失败时推送被阻止、测试通过时正常推送。方向：能力缺口 — 优先级：最高"
+        }
+      }
+    ],
+    "endTime": 1772746974063,
+    "durationMs": 489869
+  },
+  {
+    "id": "span_1772746484213_2axsd8wq9",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "health-snapshot",
+    "kind": "internal",
+    "startTime": 1772746484213,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746484213,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772746484213_hrw96t3iy",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "capability-init",
+    "kind": "internal",
+    "startTime": 1772746484213,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746484213,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772746484213_6f39g05dl",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "capability-summary",
+    "kind": "internal",
+    "startTime": 1772746484213,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746484214,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772746484214_ej0ncnc5t",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772746484214,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746484214,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772746484214_yvtht1ac6",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772746484214,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746484255,
+    "durationMs": 41
+  },
+  {
+    "id": "span_1772746484255_zzfj1limm",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772746484255,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746972803,
+    "durationMs": 488548
+  },
+  {
+    "id": "span_1772746973223_uj6i1mojq",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "reflection",
+    "kind": "internal",
+    "startTime": 1772746973223,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746973642,
+    "durationMs": 419
+  },
+  {
+    "id": "span_1772746973644_rbl7mqaiv",
+    "traceId": "trace_1772746484194_z2awn1ymd",
+    "name": "metacognitive",
+    "kind": "internal",
+    "startTime": 1772746973644,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772746974063,
+    "durationMs": 419
+  }
+]

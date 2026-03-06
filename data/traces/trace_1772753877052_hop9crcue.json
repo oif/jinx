@@ -1,0 +1,154 @@
+[
+  {
+    "id": "span_1772753877052_7wl9d69nn",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772753877052,
+    "status": "success",
+    "attributes": {
+      "evolutionCycle": 22,
+      "taskId": "#070",
+      "taskTitle": "修复 Principle Voting 测试失败 - 11 个测试在 principle-voting.test.ts 中失败，voteOnPrinciple 返回 null 而非预期结果。影响 Experience Distillation 闭环的可信度。验证条件：pnpm test test/principle-voting.test.ts 全部通过。方向：能力缺口 — 优先级：高",
+      "triggerSource": "consciousness",
+      "version": "0.1.118"
+    },
+    "events": [],
+    "endTime": 1772753944613,
+    "durationMs": 67561
+  },
+  {
+    "id": "span_1772753877053_ry9z080vs",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "archive-prepare",
+    "kind": "internal",
+    "startTime": 1772753877053,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753877053,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772753877469_4y35nmy23",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772753877469,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753877470,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772753877469_prjdsvk5t",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "principle-retrieval",
+    "kind": "internal",
+    "startTime": 1772753877469,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753877469,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772753877470_kxkibbz44",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772753877470,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753877506,
+    "durationMs": 36
+  },
+  {
+    "id": "span_1772753877506_ztjnqltgy",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772753877506,
+    "status": "success",
+    "attributes": {
+      "task": "#070"
+    },
+    "events": [],
+    "endTime": 1772753942915,
+    "durationMs": 65409
+  },
+  {
+    "id": "span_1772753942915_dn9rbr8is",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "result-recording",
+    "kind": "internal",
+    "startTime": 1772753942915,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753942916,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772753942916_8513hf2vc",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "archive-record",
+    "kind": "internal",
+    "startTime": 1772753942916,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753942916,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772753943328_fhkijfg0p",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "knowledge-recording",
+    "kind": "internal",
+    "startTime": 1772753943328,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753943329,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772753943331_393s438ep",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "reflection",
+    "kind": "internal",
+    "startTime": 1772753943331,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753943756,
+    "durationMs": 425
+  },
+  {
+    "id": "span_1772753943757_md5bofe11",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "metacognitive",
+    "kind": "internal",
+    "startTime": 1772753943757,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753944193,
+    "durationMs": 436
+  },
+  {
+    "id": "span_1772753944193_131yqgdoj",
+    "traceId": "trace_1772753877052_hop9crcue",
+    "name": "distillation",
+    "kind": "internal",
+    "startTime": 1772753944194,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753944613,
+    "durationMs": 419
+  }
+]

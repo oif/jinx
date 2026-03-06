@@ -1,0 +1,106 @@
+[
+  {
+    "id": "span_1772758774331_as0jjca5p",
+    "traceId": "trace_1772758774331_nb3wdwk4e",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772758774331,
+    "status": "success",
+    "attributes": {
+      "evolutionCycle": 27,
+      "taskId": "#071",
+      "taskTitle": "实现结构化日志系统 - BORN.md 初始优先级 #4。将简单文本日志升级为结构化 JSON 日志，支持日志级别、时间戳、上下文字段、追踪 ID。出问题时能快速回溯。验证条件：日志格式为 JSON、包含 timestamp/level/message/context、可通过 jq 过滤。方向：能力缺口 — 优先级：中",
+      "triggerSource": "consciousness",
+      "version": "0.1.118"
+    },
+    "events": [],
+    "endTime": 1772759975677,
+    "durationMs": 1201346
+  },
+  {
+    "id": "span_1772758774332_f3crqljsw",
+    "traceId": "trace_1772758774331_nb3wdwk4e",
+    "name": "archive-prepare",
+    "kind": "internal",
+    "startTime": 1772758774332,
+    "status": "success",
+    "attributes": {},
+    "events": [
+      {
+        "name": "branch_spawned",
+        "timestamp": 1772758774339,
+        "attributes": {
+          "branch": "Root Branch"
+        }
+      }
+    ],
+    "endTime": 1772758774339,
+    "durationMs": 7
+  },
+  {
+    "id": "span_1772758774750_0hn5sz3kn",
+    "traceId": "trace_1772758774331_nb3wdwk4e",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772758774750,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772758774751,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772758774750_heh3zxwjs",
+    "traceId": "trace_1772758774331_nb3wdwk4e",
+    "name": "principle-retrieval",
+    "kind": "internal",
+    "startTime": 1772758774750,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772758774751,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772758774751_6qtpt9o6q",
+    "traceId": "trace_1772758774331_nb3wdwk4e",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772758774751,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772758774793,
+    "durationMs": 42
+  },
+  {
+    "id": "span_1772758774793_c6y17yrg2",
+    "traceId": "trace_1772758774331_nb3wdwk4e",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772758774793,
+    "status": "success",
+    "attributes": {
+      "task": "#071"
+    },
+    "events": [],
+    "endTime": 1772759975677,
+    "durationMs": 1200884
+  },
+  {
+    "id": "span_1772759974825_ytrh50fmk",
+    "traceId": "trace_1772758774331_nb3wdwk4e",
+    "name": "error-handler",
+    "kind": "internal",
+    "startTime": 1772759974825,
+    "status": "error",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772759974825,
+    "durationMs": 0,
+    "error": {
+      "type": "Error",
+      "message": "evolution-27 timed out after 1200000ms"
+    }
+  }
+]

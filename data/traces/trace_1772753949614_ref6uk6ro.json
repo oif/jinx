@@ -1,0 +1,98 @@
+[
+  {
+    "id": "span_1772753949614_sh37350db",
+    "traceId": "trace_1772753949614_ref6uk6ro",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772753949614,
+    "status": "success",
+    "attributes": {
+      "evolutionCycle": 23,
+      "taskId": "#071",
+      "taskTitle": "实现结构化日志系统 - BORN.md 初始优先级 #4。将简单文本日志升级为结构化 JSON 日志，支持日志级别、时间戳、上下文字段、追踪 ID。出问题时能快速回溯。验证条件：日志格式为 JSON、包含 timestamp/level/message/context、可通过 jq 过滤。方向：能力缺口 — 优先级：中",
+      "triggerSource": "consciousness",
+      "version": "0.1.118"
+    },
+    "events": [],
+    "endTime": 1772755150838,
+    "durationMs": 1201224
+  },
+  {
+    "id": "span_1772753949615_wyo4yte04",
+    "traceId": "trace_1772753949614_ref6uk6ro",
+    "name": "archive-prepare",
+    "kind": "internal",
+    "startTime": 1772753949615,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753949615,
+    "durationMs": 0
+  },
+  {
+    "id": "span_1772753950045_dtmto2y1l",
+    "traceId": "trace_1772753949614_ref6uk6ro",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772753950045,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753950047,
+    "durationMs": 2
+  },
+  {
+    "id": "span_1772753950045_79yehxu80",
+    "traceId": "trace_1772753949614_ref6uk6ro",
+    "name": "principle-retrieval",
+    "kind": "internal",
+    "startTime": 1772753950045,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753950046,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772753950047_sdnypssu0",
+    "traceId": "trace_1772753949614_ref6uk6ro",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772753950047,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772753950072,
+    "durationMs": 25
+  },
+  {
+    "id": "span_1772753950072_11ea9f5ag",
+    "traceId": "trace_1772753949614_ref6uk6ro",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772753950072,
+    "status": "success",
+    "attributes": {
+      "task": "#071"
+    },
+    "events": [],
+    "endTime": 1772755150838,
+    "durationMs": 1200766
+  },
+  {
+    "id": "span_1772755150101_9dx9375uf",
+    "traceId": "trace_1772753949614_ref6uk6ro",
+    "name": "error-handler",
+    "kind": "internal",
+    "startTime": 1772755150101,
+    "status": "error",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772755150102,
+    "durationMs": 1,
+    "error": {
+      "type": "Error",
+      "message": "evolution-23 timed out after 1200000ms"
+    }
+  }
+]

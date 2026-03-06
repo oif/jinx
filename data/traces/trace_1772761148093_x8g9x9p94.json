@@ -1,0 +1,154 @@
+[
+  {
+    "id": "span_1772761148093_z9aim6t2j",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772761148093,
+    "status": "success",
+    "attributes": {
+      "evolutionCycle": 28,
+      "taskId": "#071",
+      "taskTitle": "实现结构化日志系统 - BORN.md 初始优先级 #4。将简单文本日志升级为结构化 JSON 日志，支持日志级别、时间戳、上下文字段、追踪 ID。出问题时能快速回溯。验证条件：日志格式为 JSON、包含 timestamp/level/message/context、可通过 jq 过滤。方向：能力缺口 — 优先级：中",
+      "triggerSource": "consciousness",
+      "version": "0.1.118"
+    },
+    "events": [],
+    "endTime": 1772761833703,
+    "durationMs": 685610
+  },
+  {
+    "id": "span_1772761148094_zw6vexl6q",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "archive-prepare",
+    "kind": "internal",
+    "startTime": 1772761148094,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761148095,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772761148525_dmo403e75",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772761148525,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761148529,
+    "durationMs": 4
+  },
+  {
+    "id": "span_1772761148525_xfz6fzi9t",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "principle-retrieval",
+    "kind": "internal",
+    "startTime": 1772761148525,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761148527,
+    "durationMs": 2
+  },
+  {
+    "id": "span_1772761148529_o768g0285",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772761148529,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761148568,
+    "durationMs": 39
+  },
+  {
+    "id": "span_1772761148568_jbetgjolz",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772761148568,
+    "status": "success",
+    "attributes": {
+      "task": "#071"
+    },
+    "events": [],
+    "endTime": 1772761831973,
+    "durationMs": 683405
+  },
+  {
+    "id": "span_1772761831973_7o7qwdbwh",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "result-recording",
+    "kind": "internal",
+    "startTime": 1772761831973,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761831976,
+    "durationMs": 3
+  },
+  {
+    "id": "span_1772761831976_rxb7tnziu",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "archive-record",
+    "kind": "internal",
+    "startTime": 1772761831976,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761831977,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772761832404_ddei0lvri",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "knowledge-recording",
+    "kind": "internal",
+    "startTime": 1772761832404,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761832405,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772761832405_piv2rgout",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "reflection",
+    "kind": "internal",
+    "startTime": 1772761832405,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761832841,
+    "durationMs": 436
+  },
+  {
+    "id": "span_1772761832842_0hm74dead",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "metacognitive",
+    "kind": "internal",
+    "startTime": 1772761832842,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761833270,
+    "durationMs": 428
+  },
+  {
+    "id": "span_1772761833271_79270dsnw",
+    "traceId": "trace_1772761148093_x8g9x9p94",
+    "name": "distillation",
+    "kind": "internal",
+    "startTime": 1772761833271,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772761833703,
+    "durationMs": 432
+  }
+]

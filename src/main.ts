@@ -1,6 +1,6 @@
 import { log } from "./util/log.js";
 import { readVersion, readState } from "./util/state.js";
-import { startAgent, registerTelegramSend, promptConversation, abortAgent } from "./agent/session.js";
+import { startAgent, registerTelegramSend, registerTelegramStream, promptConversation, abortAgent } from "./agent/session.js";
 import { createTelegramBot, TopicType } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { startDailyBriefing, stopDailyBriefing } from "./supervisor/briefing.js";
@@ -507,9 +507,13 @@ async function main(): Promise<void> {
   );
 
   // Step 3: Register Telegram send for agent tools
-  // - sendToOwner: private agent responses (might contain sensitive info)
-  // - sendToTopic: public activity notifications organized by topic
-  registerTelegramSend(tg.sendToOwner);
+  // - send_owner_message → owner DM (private) + 🏆 Results topic (key milestones)
+  // - send_stream_message → 🌊 Stream topic (verbose progress, internal thoughts)
+  registerTelegramSend(async (msg) => {
+    await tg.sendToOwner(msg);                              // always DM owner
+    await tg.sendToTopic(TopicType.RESULTS, msg);           // mirror to Results topic
+  });
+  registerTelegramStream((msg) => tg.sendToTopic(TopicType.STREAM, msg));
   registerNotify(tg.sendToOwner);
 
   // Step 4: Start agent session

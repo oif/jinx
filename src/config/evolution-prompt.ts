@@ -153,9 +153,13 @@ backlog 已清空。现在是你自主决定下一步的时刻。
 
 按照 BORN.md 的进化协议，分阶段执行并汇报进度：
 
+**🌊 Stream vs 🏆 Results 工具选择**
+- send_stream_message：进度更新、中间状态、详细思路 → 发到 Stream 频道（不打扰 Neo）
+- send_owner_message：关键成果、最终结果、重要错误 → DM Neo + Results 频道
+
 **第1步 — 理解**
 读相关代码，明确任务范围和实现方案。
-完成后立即调用 send_owner_message: "🔍 #{cycle} 理解完成：[一句话描述方案]"
+完成后立即调用 send_stream_message: "🔍 #{cycle} 理解完成：[一句话描述方案]"
 
 **第2步 — 实现**
 完整实现功能，跑测试验证（pnpm test）。
@@ -165,13 +169,13 @@ backlog 已清空。现在是你自主决定下一步的时刻。
 2. **用 claude_code**：当任务涉及多文件重构、需要深度理解代码库、或单次改动超过 3 个文件
    调用时传入精确的任务描述，让 Claude Code 自主完成文件读写和验证
 
-完成后立即调用 send_owner_message: "🔨 #{cycle} 实现完成：修改了 [文件列表]"
+完成后立即调用 send_stream_message: "🔨 #{cycle} 实现完成：修改了 [文件列表]"
 
 **第3步 — 提交**
 git add + commit（消息清晰描述变更）+ push 到 dev 分支。
 
 **第4步 — 汇报（必须执行）**
-发送最终结果：
+用 send_owner_message 发送最终结果：
 ✅ Evolution #{cycle} 完成
 任务：{taskId} {taskTitle}
 改动：[具体内容]

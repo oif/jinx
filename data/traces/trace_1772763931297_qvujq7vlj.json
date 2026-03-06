@@ -1,0 +1,106 @@
+[
+  {
+    "id": "span_1772763931297_h46sp1cuy",
+    "traceId": "trace_1772763931297_qvujq7vlj",
+    "name": "root",
+    "kind": "internal",
+    "startTime": 1772763931297,
+    "status": "success",
+    "attributes": {
+      "evolutionCycle": 32,
+      "taskId": "#075",
+      "taskTitle": "修复 Principle Distillation 质量 - 当前 principles.json 仅有 2 条垃圾原则（\"this pattern appeared N times\"）。实现 distillFromKnowledgeFiles()：读取 data/knowledge/*.md，用 LLM 蒸馏出任务特定的可操作原则（≥10条），按 bug-fix/feature/integration/research 分类。清除旧垃圾原则。验证：principles.json 包含≥10条、每条 content 有具体技术建议、pnpm test 通过。方向：经验挖掘 — 优先级：最高 — 2026-03-06",
+      "triggerSource": "consciousness",
+      "version": "0.1.118"
+    },
+    "events": [],
+    "endTime": 1772765132443,
+    "durationMs": 1201146
+  },
+  {
+    "id": "span_1772763931297_l3q96ic6u",
+    "traceId": "trace_1772763931297_qvujq7vlj",
+    "name": "archive-prepare",
+    "kind": "internal",
+    "startTime": 1772763931297,
+    "status": "success",
+    "attributes": {},
+    "events": [
+      {
+        "name": "branch_spawned",
+        "timestamp": 1772763931306,
+        "attributes": {
+          "branch": "实现结构化日志系统 - BORNmd 初始优先级 4将简单文本日志升级为结构化 JSON 日志"
+        }
+      }
+    ],
+    "endTime": 1772763931306,
+    "durationMs": 9
+  },
+  {
+    "id": "span_1772763931745_ql9bmiyau",
+    "traceId": "trace_1772763931297_qvujq7vlj",
+    "name": "prompt-build",
+    "kind": "internal",
+    "startTime": 1772763931745,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763931748,
+    "durationMs": 3
+  },
+  {
+    "id": "span_1772763931745_u947qfdc2",
+    "traceId": "trace_1772763931297_qvujq7vlj",
+    "name": "principle-retrieval",
+    "kind": "internal",
+    "startTime": 1772763931745,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763931746,
+    "durationMs": 1
+  },
+  {
+    "id": "span_1772763931748_t9bb7ddqf",
+    "traceId": "trace_1772763931297_qvujq7vlj",
+    "name": "session-spawn",
+    "kind": "internal",
+    "startTime": 1772763931748,
+    "status": "success",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772763931802,
+    "durationMs": 54
+  },
+  {
+    "id": "span_1772763931802_8q10o2ohn",
+    "traceId": "trace_1772763931297_qvujq7vlj",
+    "name": "prompt-execution",
+    "kind": "internal",
+    "startTime": 1772763931802,
+    "status": "success",
+    "attributes": {
+      "task": "#075"
+    },
+    "events": [],
+    "endTime": 1772765132443,
+    "durationMs": 1200641
+  },
+  {
+    "id": "span_1772765131804_631ip9mv5",
+    "traceId": "trace_1772763931297_qvujq7vlj",
+    "name": "error-handler",
+    "kind": "internal",
+    "startTime": 1772765131804,
+    "status": "error",
+    "attributes": {},
+    "events": [],
+    "endTime": 1772765131805,
+    "durationMs": 1,
+    "error": {
+      "type": "Error",
+      "message": "evolution-32 timed out after 1200000ms"
+    }
+  }
+]

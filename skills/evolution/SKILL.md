@@ -33,4 +33,5 @@ When performing an evolution cycle, follow this exact protocol:
 18. Call `request_restart` with reason
 
 ## Report
-19. Call `send_owner_message` with a summary of what changed
+19. Call `send_stream_message` after each major step (Assessment done, Implementation done, Tests passed)
+20. Call `send_owner_message` with a final summary of what changed (this is the only thing that DMs Neo)
