@@ -100,7 +100,7 @@ describe("Principle Voting", () => {
     it("should record a helpful vote and update effectiveness", () => {
       // Store a principle first
       const principle = storePrinciple({
-        content: "Test principle for voting",
+        content: "Test principle for voting behavior validation",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-001"],
       });
@@ -196,7 +196,7 @@ describe("Principle Voting", () => {
 
     it("should return voting stats for a principle with votes", () => {
       const principle = storePrinciple({
-        content: "Test principle for stats",
+        content: "Test principle for statistics tracking",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-005"],
       });
@@ -219,13 +219,13 @@ describe("Principle Voting", () => {
     it("should return principles sorted by effectiveness", () => {
       // Create principles with different voting patterns
       const p1 = storePrinciple({
-        content: "Low effectiveness principle",
+        content: "Low effectiveness principle for testing",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-006"],
       });
 
       const p2 = storePrinciple({
-        content: "High effectiveness principle",
+        content: "High effectiveness principle for testing",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-007"],
       });
@@ -248,7 +248,7 @@ describe("Principle Voting", () => {
 
     it("should filter by minimum votes", () => {
       const p1 = storePrinciple({
-        content: "Principle with few votes",
+        content: "Principle with very few votes recorded",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-008"],
       });
@@ -265,7 +265,7 @@ describe("Principle Voting", () => {
   describe("getVotingReviewRecommendations", () => {
     it("should recommend keeping highly effective principles", () => {
       const principle = storePrinciple({
-        content: "Very effective principle",
+        content: "Very effective and helpful coding principle",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-009"],
       });
@@ -284,7 +284,7 @@ describe("Principle Voting", () => {
 
     it("should recommend deprecating ineffective principles", () => {
       const principle = storePrinciple({
-        content: "Ineffective principle",
+        content: "Ineffective principle that causes failures",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-010"],
       });
@@ -306,13 +306,13 @@ describe("Principle Voting", () => {
     it("should return analysis of voting patterns", () => {
       // Create some principles with votes
       const p1 = storePrinciple({
-        content: "Effective principle",
+        content: "Effective coding principle for validation",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-011"],
       });
 
       const p2 = storePrinciple({
-        content: "Ineffective principle",
+        content: "Ineffective principle that causes failures",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-012"],
       });
@@ -332,7 +332,7 @@ describe("Principle Voting", () => {
   describe("voteOnPrincipleQuick", () => {
     it("should provide convenient voting interface", () => {
       const principle = storePrinciple({
-        content: "Quick vote test",
+        content: "Quick vote test principle for convenience",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-013"],
       });
@@ -352,7 +352,7 @@ describe("Principle Voting", () => {
   describe("formatVotingStats", () => {
     it("should format voting stats for display", () => {
       const principle = storePrinciple({
-        content: "Format test principle",
+        content: "Format test principle for display output",
         category: "coding" as PrincipleCategory,
         derivedFrom: ["test-014"],
       });
@@ -392,7 +392,7 @@ describe("Principle Voting", () => {
 describe("Principle Store Voting Integration", () => {
   it("should include voting field in stored principles", () => {
     const principle = storePrinciple({
-      content: "Integration test principle",
+      content: "Integration test principle for store validation",
       category: "coding" as PrincipleCategory,
       derivedFrom: ["test-integration"],
     });

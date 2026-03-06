@@ -888,5 +888,54 @@
       "traj_1772767465485_4l5rxs",
       "traj_1772767465485_zvhjhn"
     ]
+  },
+  {
+    "id": "principle_1772767990326_iwwex5",
+    "content": "When performing testing tasks, testing was part of the workflow",
+    "summary": "testing: Testing was part of the workflow",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing",
+        "api"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-06T03:33:10.326Z",
+      "updatedAt": "2026-03-06T03:33:10.326Z",
+      "derivedFrom": [
+        "traj_1772767990253_1bjjo6",
+        "traj_1772767990253_nz7g1d"
+      ],
+      "confidence": 0.7,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 2 successful trajectories",
+    "examples": [
+      "traj_1772767990253_1bjjo6",
+      "traj_1772767990253_nz7g1d"
+    ]
   }
 ]

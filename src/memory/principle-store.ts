@@ -275,6 +275,24 @@ export function storePrinciple(input: {
   rationale?: string;
   examples?: string[];
 }): Principle {
+  // ── Content Quality Gate ────────────────────────────────────────
+  // Reject boilerplate / low-quality principle content before storing
+  const GARBAGE_PATTERN = /this pattern (?:has )?appeared \d+ times/i;
+  if (GARBAGE_PATTERN.test(input.content)) {
+    log.warn("storePrinciple: rejected — content matches garbage boilerplate pattern", {
+      contentSnippet: input.content.slice(0, 80),
+    });
+    throw new Error(`storePrinciple: content quality check failed (boilerplate pattern detected): "${input.content.slice(0, 60)}"`);
+  }
+  if (input.content.trim().length < 30) {
+    log.warn("storePrinciple: rejected — content too short", {
+      length: input.content.trim().length,
+      content: input.content,
+    });
+    throw new Error(`storePrinciple: content quality check failed (too short, ${input.content.trim().length} chars < 30): "${input.content}"`);
+  }
+  // ── End Quality Gate ────────────────────────────────────────────
+
   const now = new Date().toISOString();
   const id = generatePrincipleId();
   
@@ -644,6 +662,15 @@ export function prunePrinciples(options: {
   });
   
   return { deprecated, deleted };
+}
+
+/**
+ * Clear all principles from the library (for fresh distillation)
+ */
+export function clearAllPrinciples(): void {
+  const empty = new Map<string, Principle>();
+  savePrinciples(empty);
+  log.info("All principles cleared");
 }
 
 /**
