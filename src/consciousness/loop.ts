@@ -60,6 +60,7 @@ import {
   recordCircuitSuccess,
   formatCircuitBreakerAlert,
 } from "./circuit-breaker.js";
+import { recordSuccessfulEvolution } from "../evolution/capsule-store.js";
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -431,6 +432,16 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     const qualityBreakdown = scoreEvolutionQuality(result, durationMs);
     recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs, qualityBreakdown.total);
     completeEvolutionProgress(durationMs);
+
+    // Record successful evolution as a GEP capsule
+    recordSuccessfulEvolution({
+      cycle,
+      taskId: task.id,
+      taskTitle: task.title,
+      result,
+      durationMs,
+      qualityScore: qualityBreakdown.total,
+    });
 
     // Reset circuit breaker on success
     recordCircuitSuccess();

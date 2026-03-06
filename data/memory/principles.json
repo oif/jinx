@@ -50,7 +50,7 @@
   },
   {
     "id": "principle_1772766899661_ksi44o",
-    "content": "When a trigger threshold for a self-improvement subsystem (e.g., reflection or metacognitive) is set higher than the confidence score produced by the recommender, the subsystem will never activate. Audit all threshold constants against the actual output ranges of their gatekeeping functions; if 'balanced' strategy confidence is 0.6, the activation threshold must be ≤ 0.6. Fix by lowering the threshold (e.g., from 0.7 to 0.5) and validate with a test that logs the strategy transition.",
+    "content": "When a trigger threshold for a self-improvement subsystem (e.g., reflection or metacognitive) is set higher than the confidence score produced by the recommender, the subsystem will never activate. Audit all threshold constants against the actual output ranges of their gatekeeping functions; if 'balanced' strategy confidence is 0.6, the activation threshold must be \u2264 0.6. Fix by lowering the threshold (e.g., from 0.7 to 0.5) and validate with a test that logs the strategy transition.",
     "summary": "Align activation thresholds with actual confidence scores to prevent subsystems from never triggering",
     "category": "error_handling",
     "conditions": {
@@ -790,5 +790,103 @@
     "status": "experimental",
     "rationale": "Evolution #041 implemented the failure-patterns module based on MARS research findings. The 7 patterns encode hard-won operational knowledge (e.g., 'if three fixes fail, stop') that would otherwise be re-learned from scratch each cycle.",
     "examples": []
+  },
+  {
+    "id": "principle_1772766983124_8yava3",
+    "content": "When performing testing tasks, testing was part of the workflow",
+    "summary": "testing: Testing was part of the workflow",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing",
+        "api"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-06T03:16:23.124Z",
+      "updatedAt": "2026-03-06T03:16:23.124Z",
+      "derivedFrom": [
+        "traj_1772766983074_p06qyo",
+        "traj_1772766983074_pip9cf"
+      ],
+      "confidence": 0.7,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 2 successful trajectories",
+    "examples": [
+      "traj_1772766983074_p06qyo",
+      "traj_1772766983074_pip9cf"
+    ]
+  },
+  {
+    "id": "principle_1772767465546_g5mydx",
+    "content": "When performing testing tasks, testing was part of the workflow",
+    "summary": "testing: Testing was part of the workflow",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing",
+        "api"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-06T03:24:25.546Z",
+      "updatedAt": "2026-03-06T03:24:25.546Z",
+      "derivedFrom": [
+        "traj_1772767465485_4l5rxs",
+        "traj_1772767465485_zvhjhn"
+      ],
+      "confidence": 0.7,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 2 successful trajectories",
+    "examples": [
+      "traj_1772767465485_4l5rxs",
+      "traj_1772767465485_zvhjhn"
+    ]
   }
 ]

@@ -63,4 +63,9 @@ describe("Telegram commands", () => {
     expect(mainContent).toContain('diagnostics:');
     expect(mainContent).toContain('/diagnostics');
   });
+
+  it("should have /capsules command", () => {
+    expect(mainContent).toContain('capsules:');
+    expect(mainContent).toContain('/capsules');
+  });
 });

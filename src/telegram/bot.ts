@@ -730,6 +730,7 @@ async function registerBotCommands(bot: Bot): Promise<void> {
       { command: "menu", description: "Show quick actions" },
       { command: "ping", description: "Ping Jinx" },
       { command: "diagnostics", description: "Deep system health diagnostics" },
+      { command: "capsules", description: "Show recent successful evolution capsules [N]" },
     ]);
   } catch (e) {
     log.warn("Failed to register bot commands", { error: (e as Error).message });

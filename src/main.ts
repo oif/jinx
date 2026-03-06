@@ -233,6 +233,24 @@ async function main(): Promise<void> {
 
       ping: async () => "pong 🏓",
 
+      capsules: async (args) => {
+        const { getRecentCapsules, getCapsuleCount, formatCapsulesReport } = await import("./evolution/capsule-store.js");
+        const n = parseInt(args.trim(), 10);
+        const limit = (!isNaN(n) && n > 0 && n <= 50) ? n : 10;
+        const capsules = getRecentCapsules(limit);
+        const total = getCapsuleCount();
+
+        // Log a read event
+        const { appendEvent } = await import("./evolution/capsule-store.js");
+        appendEvent({
+          timestamp: new Date().toISOString(),
+          type: "capsule_read",
+          meta: { requestedN: limit, returned: capsules.length },
+        });
+
+        return formatCapsulesReport(capsules, total);
+      },
+
       reflect: async () => {
         const {
           runReflection,
@@ -499,6 +517,7 @@ async function main(): Promise<void> {
           "/restart - Request process restart",
           "/ping - Ping Jinx",
           "/diagnostics - Deep system health diagnostics",
+          "/capsules [N] - Show recent N successful evolution capsules (GEP)",
           "/help - Show this help message",
           "",
           "💬 Send a message to add tasks, ask questions, or give instructions.",
