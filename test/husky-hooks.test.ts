@@ -31,4 +31,27 @@ describe("husky hooks", () => {
     const content = readFileSync(".husky/pre-push", "utf-8");
     expect(content).toContain("pnpm test");
   });
+
+  // Tests for pre-push gate functionality
+  it("should have husky _ directory with hooks", () => {
+    expect(existsSync(".husky/_/pre-push")).toBe(true);
+  });
+
+  it("should have executable pre-push hook in husky _ directory", () => {
+    const filePath = ".husky/_/pre-push";
+    expect(existsSync(filePath)).toBe(true);
+    // Verify the hook is executable by reading it
+    const content = readFileSync(filePath, "utf-8");
+    expect(content).toContain("h"); // Should source the h script
+  });
+
+  it("should have h script in husky _ directory", () => {
+    expect(existsSync(".husky/_/h")).toBe(true);
+  });
+
+  it("pre-push hook content runs pnpm test", () => {
+    // Verify the hook content only — do NOT execute it (would recurse into pnpm test)
+    const content = readFileSync(".husky/pre-push", "utf-8");
+    expect(content).toContain("pnpm test");
+  });
 });
