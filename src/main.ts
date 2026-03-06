@@ -1,7 +1,7 @@
 import { log } from "./util/log.js";
 import { readVersion, readState } from "./util/state.js";
 import { startAgent, registerTelegramSend, promptConversation, abortAgent } from "./agent/session.js";
-import { createTelegramBot } from "./telegram/bot.js";
+import { createTelegramBot, TopicType } from "./telegram/bot.js";
 import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, registerNotify } from "./supervisor/lifecycle.js";
 import { startDailyBriefing, stopDailyBriefing } from "./supervisor/briefing.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
@@ -226,6 +226,10 @@ async function main(): Promise<void> {
         return "🔄 Restart requested. Supervisor will restart me shortly.";
       },
 
+      diagnostics: async () => {
+        return buildDiagnosticsReport();
+      },
+
       ping: async () => "pong 🏓",
 
       reflect: async () => {
@@ -252,7 +256,6 @@ async function main(): Promise<void> {
         const {
           getReflectionSummary,
           getRecentReflections,
-          formatReflectionReport,
         } = await import("./memory/reflection.js");
 
         const recent = getRecentReflections(3);
@@ -494,6 +497,7 @@ async function main(): Promise<void> {
           "/search - Search the web",
           "/restart - Request process restart",
           "/ping - Ping Jinx",
+          "/diagnostics - Deep system health diagnostics",
           "/help - Show this help message",
           "",
           "💬 Send a message to add tasks, ask questions, or give instructions.",
@@ -503,6 +507,8 @@ async function main(): Promise<void> {
   );
 
   // Step 3: Register Telegram send for agent tools
+  // - sendToOwner: private agent responses (might contain sensitive info)
+  // - sendToTopic: public activity notifications organized by topic
   registerTelegramSend(tg.sendToOwner);
   registerNotify(tg.sendToOwner);
 
@@ -511,15 +517,16 @@ async function main(): Promise<void> {
 
   // Step 5: Start subsystems
   startLifecycleMonitor();
-  tg.start();
+  await tg.start();
 
-  // Register health notifier for proactive alerts
-  registerHealthNotifier(tg.sendToOwner);
+  // Register health notifier - sends to HEALTH topic
+  registerHealthNotifier((msg) => tg.sendToTopic(TopicType.HEALTH, msg));
 
-  consciousness.handle = startConsciousness(tg.sendToOwner);
+  // Consciousness loop - sends to EVOLUTION topic (includes evolution & goal discovery)
+  consciousness.handle = startConsciousness((msg) => tg.sendToTopic(TopicType.EVOLUTION, msg));
 
-  // Start daily briefing scheduler (sends briefing at Beijing 9:00 AM)
-  startDailyBriefing(tg.sendToOwner);
+  // Daily briefing - sends to DAILY_BRIEFING topic
+  startDailyBriefing((msg) => tg.sendToTopic(TopicType.DAILY_BRIEFING, msg));
 
   // Step 6: Register shutdown
   registerShutdownHandlers(async () => {
@@ -532,14 +539,137 @@ async function main(): Promise<void> {
 
   log.info("Jinx is alive", { version: readVersion() });
 
-  // Notify owner on startup
+  // Notify on startup - sends to ANNOUNCEMENTS topic
   try {
-    await tg.sendToOwner(
+    await tg.sendToTopic(
+      TopicType.ANNOUNCEMENTS,
       `🐾 Jinx started.\nVersion: ${readVersion()}\nBranch: ${getCurrentBranch()} (${getCurrentSha().slice(0, 8)})`
     );
   } catch {
     // TG might not be ready yet — not fatal
   }
+}
+
+// ── Diagnostics ────────────────────────────────────────────────────
+
+interface DiagnosticsData {
+  consecutiveFailures: number;
+  circuitOpen: boolean;
+  pausedUntil: string | null;
+  oscillations24h: number;
+  currentStrategy: string;
+  principleCount: number;
+  avgEffectiveness: number;
+  totalTraces: number;
+  lastTraceStatus: string;
+  lastTraceTask: string;
+  recentSuccessRate: number;
+}
+
+function loadCircuitBreakerDiag(): Pick<DiagnosticsData, "consecutiveFailures" | "circuitOpen" | "pausedUntil"> {
+  try {
+    const cbPath = join(process.cwd(), "data", "circuit-breaker.json");
+    if (existsSync(cbPath)) {
+      const cbData = JSON.parse(readFileSync(cbPath, "utf-8"));
+      const pausedUntil = cbData.pausedUntil ?? null;
+      const circuitOpen = !!pausedUntil && new Date(pausedUntil).getTime() > Date.now();
+      return { consecutiveFailures: cbData.consecutiveFailures ?? 0, circuitOpen, pausedUntil };
+    }
+  } catch { /* safe */ }
+  return { consecutiveFailures: 0, circuitOpen: false, pausedUntil: null };
+}
+
+function loadStrategyDiag(): Pick<DiagnosticsData, "oscillations24h" | "currentStrategy"> {
+  try {
+    const stratPath = join(process.cwd(), "data", "evolution-strategy.json");
+    if (existsSync(stratPath)) {
+      const strat = JSON.parse(readFileSync(stratPath, "utf-8"));
+      const history: Array<{ timestamp: string }> = strat.strategyHistory ?? [];
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      return {
+        currentStrategy: strat.currentStrategy ?? "unknown",
+        oscillations24h: history.filter(h => new Date(h.timestamp).getTime() > cutoff).length,
+      };
+    }
+  } catch { /* safe */ }
+  return { oscillations24h: 0, currentStrategy: "unknown" };
+}
+
+function loadPrinciplesDiag(): Pick<DiagnosticsData, "principleCount" | "avgEffectiveness"> {
+  try {
+    const pPath = join(process.cwd(), "data", "memory", "principles.json");
+    if (existsSync(pPath)) {
+      const principles: Array<{ voting?: { effectiveness?: number } }> = JSON.parse(readFileSync(pPath, "utf-8"));
+      if (Array.isArray(principles) && principles.length > 0) {
+        const total = principles.reduce((sum, p) => sum + (p.voting?.effectiveness ?? 0), 0);
+        return { principleCount: principles.length, avgEffectiveness: total / principles.length };
+      }
+    }
+  } catch { /* safe */ }
+  return { principleCount: 0, avgEffectiveness: 0 };
+}
+
+function loadTracesDiag(): Pick<DiagnosticsData, "totalTraces" | "lastTraceStatus" | "lastTraceTask" | "recentSuccessRate"> {
+  try {
+    const idxPath = join(process.cwd(), "data", "traces", "index.json");
+    if (existsSync(idxPath)) {
+      const idx = JSON.parse(readFileSync(idxPath, "utf-8"));
+      const traces: Array<{ status: string; metadata?: { taskTitle?: string } }> = idx.traces ?? [];
+      const total = traces.length;
+      if (total > 0) {
+        const last = traces[total - 1];
+        const recent = traces.slice(-10);
+        const successes = recent.filter(t => t.status === "success").length;
+        return {
+          totalTraces: total,
+          lastTraceStatus: last.status,
+          lastTraceTask: (last.metadata?.taskTitle ?? "").slice(0, 40),
+          recentSuccessRate: successes / recent.length,
+        };
+      }
+    }
+  } catch { /* safe */ }
+  return { totalTraces: 0, lastTraceStatus: "none", lastTraceTask: "", recentSuccessRate: 0 };
+}
+
+function computeHealthScore(d: DiagnosticsData): number {
+  let score = 100;
+  score -= Math.min(45, d.consecutiveFailures * 15);
+  score -= Math.min(25, d.oscillations24h * 5);
+  if (d.principleCount > 0) score += Math.round((d.avgEffectiveness - 0.5) * 20);
+  if (d.totalTraces > 0) score += Math.round((d.recentSuccessRate - 0.5) * 20);
+  return Math.max(0, Math.min(100, score));
+}
+
+function failEmoji(n: number): string { return n === 0 ? "✅" : n >= 3 ? "🚨" : "⚠️"; }
+function oscEmoji(n: number): string { return n === 0 ? "✅" : n >= 5 ? "🔴" : "🟡"; }
+function healthEmoji(s: number): string { return s >= 80 ? "💚" : s >= 60 ? "💛" : s >= 40 ? "🟠" : "❤️"; }
+function healthLabel(s: number): string { return s >= 80 ? "EXCELLENT" : s >= 60 ? "GOOD" : s >= 40 ? "DEGRADED" : "CRITICAL"; }
+
+function buildDiagnosticsReport(): string {
+  const cb = loadCircuitBreakerDiag();
+  const strat = loadStrategyDiag();
+  const princ = loadPrinciplesDiag();
+  const traces = loadTracesDiag();
+  const d: DiagnosticsData = { ...cb, ...strat, ...princ, ...traces };
+  const score = computeHealthScore(d);
+
+  const pauseStr = cb.circuitOpen ? ` (circuit OPEN until ${new Date(cb.pausedUntil!).toLocaleTimeString()})` : "";
+  const traceEmoji = traces.lastTraceStatus === "success" ? "✅" : traces.lastTraceStatus === "error" ? "❌" : "⚪";
+  const princEmoji = princ.principleCount === 0 ? "⚪" : "✅";
+
+  const lines: string[] = [
+    "🔬 Deep Diagnostics Report",
+    "",
+    `${failEmoji(cb.consecutiveFailures)} Consecutive Failures: ${cb.consecutiveFailures}${pauseStr}`,
+    `${oscEmoji(strat.oscillations24h)} Strategy Oscillations (24h): ${strat.oscillations24h} (current: ${strat.currentStrategy})`,
+    `${princEmoji} Principles: ${princ.principleCount} (avg effectiveness: ${Math.round(princ.avgEffectiveness * 100)}%)`,
+    `${traceEmoji} Traces: ${traces.totalTraces} total | Last: ${traces.lastTraceStatus} | Recent success: ${Math.round(traces.recentSuccessRate * 100)}%`,
+  ];
+  if (d.lastTraceTask) lines.push(`   Last task: ${d.lastTraceTask}${d.lastTraceTask.length >= 40 ? "..." : ""}`);
+  lines.push("", `${healthEmoji(score)} Health Score: ${score}/100 (${healthLabel(score)})`, "", `Generated: ${new Date().toLocaleString()}`);
+
+  return lines.join("\n");
 }
 
 // ── Helpers ────────────────────────────────────────────────────────

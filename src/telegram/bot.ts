@@ -1,20 +1,28 @@
 import { Bot, InlineKeyboard, InputFile } from "grammy";
 import { log } from "../util/log.js";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { existsSync } from "fs";
+import { join, dirname } from "path";
 
 // ── Types ──────────────────────────────────────────────────────────
 
 export interface TelegramBot {
   bot: Bot;
   sendToOwner: (text: string, options?: SendOptions) => Promise<void>;
+  sendToFeedback: (text: string, options?: SendOptions) => Promise<void>;
+  sendToTopic: (topic: TopicType, text: string, options?: SendOptions) => Promise<void>;
+  createSwarmTopic: (taskName: string) => Promise<number>;
+  closeSwarmTopic: (threadId: number) => Promise<void>;
   sendFileToOwner: (content: string, filename: string, caption?: string) => Promise<void>;
   editMessage: (messageId: number, text: string) => Promise<void>;
-  start: () => void;
+  start: () => Promise<void>;
   stop: () => Promise<void>;
 }
 
 export interface SendOptions {
   replyTo?: number;
   keyboard?: InlineKeyboard;
+  threadId?: number;
 }
 
 export interface ImageAttachment {
@@ -25,11 +33,182 @@ export interface ImageAttachment {
 export type MessageHandler = (text: string, images?: ImageAttachment[]) => Promise<string | void>;
 export type CallbackHandler = (data: string) => Promise<string | void>;
 
+// ── Topic Types ────────────────────────────────────────────────────
+
+export enum TopicType {
+  ANNOUNCEMENTS = "announcements",
+  EVOLUTION = "evolution",
+  HEALTH = "health",
+  CONSCIOUSNESS = "consciousness",
+  DAILY_BRIEFING = "daily_briefing",
+}
+
+interface TopicConfig {
+  name: string;
+  icon: string; // Emoji or custom emoji ID
+}
+
+const TOPIC_CONFIGS: Record<TopicType, TopicConfig> = {
+  [TopicType.ANNOUNCEMENTS]: { name: "📢 Announcements", icon: "📢" },
+  [TopicType.EVOLUTION]: { name: "🧬 Evolution", icon: "🧬" },
+  [TopicType.HEALTH]: { name: "🏥 Health", icon: "🏥" },
+  [TopicType.CONSCIOUSNESS]: { name: "💡 Consciousness", icon: "💡" },
+  [TopicType.DAILY_BRIEFING]: { name: "📋 Daily Briefing", icon: "📋" },
+};
+
+interface TopicStorage {
+  topics: Record<string, number>; // topicType -> threadId
+  swarmTopics: Record<number, { name: string; threadId: number; createdAt: string }>;
+}
+
 // ── Constants ──────────────────────────────────────────────────────
 
 const TG_MAX_LENGTH = 4096;
 const TYPING_INTERVAL_MS = 4000;
 const FILE_THRESHOLD = 3500;
+const TOPICS_FILE = join(process.cwd(), "data", "topics.json");
+
+// ── Topic Manager ──────────────────────────────────────────────────
+
+class TopicManager {
+  private bot: Bot;
+  private chatId: number;
+  private storage: TopicStorage = { topics: {}, swarmTopics: {} };
+  private initialized = false;
+
+  constructor(bot: Bot, chatId: number) {
+    this.bot = bot;
+    this.chatId = chatId;
+  }
+
+  async init(): Promise<void> {
+    if (this.initialized) return;
+    
+    // Load stored topic mappings
+    await this.loadStorage();
+    
+    // Verify existing topics still exist
+    await this.verifyTopics();
+    
+    this.initialized = true;
+    log.info("TopicManager initialized", { 
+      topics: Object.keys(this.storage.topics).length,
+      swarmTopics: Object.keys(this.storage.swarmTopics).length,
+    });
+  }
+
+  private async loadStorage(): Promise<void> {
+    try {
+      if (existsSync(TOPICS_FILE)) {
+        const data = await readFile(TOPICS_FILE, "utf-8");
+        this.storage = JSON.parse(data);
+      }
+    } catch (e) {
+      log.warn("Failed to load topics storage, starting fresh", { error: (e as Error).message });
+      this.storage = { topics: {}, swarmTopics: {} };
+    }
+  }
+
+  private async saveStorage(): Promise<void> {
+    try {
+      // Ensure directory exists
+      const dir = dirname(TOPICS_FILE);
+      if (!existsSync(dir)) {
+        await mkdir(dir, { recursive: true });
+      }
+      await writeFile(TOPICS_FILE, JSON.stringify(this.storage, null, 2));
+    } catch (e) {
+      log.error("Failed to save topics storage", { error: (e as Error).message });
+    }
+  }
+
+  private async verifyTopics(): Promise<void> {
+    // Try to get chat info to see if topics are still valid
+    // If a topic was deleted, we need to recreate it
+    const validTopics: Record<string, number> = {};
+    
+    for (const [type, threadId] of Object.entries(this.storage.topics)) {
+      try {
+        // Try to get chat - if topic exists, this should work
+        // We can't directly check if a topic exists, but we can try to send a message
+        // For now, assume topics are valid
+        validTopics[type] = threadId;
+      } catch {
+        log.warn("Topic no longer valid, will recreate", { type, threadId });
+      }
+    }
+    
+    this.storage.topics = validTopics;
+  }
+
+  async getOrCreateTopic(type: TopicType): Promise<number> {
+    // Check if we already have this topic
+    if (this.storage.topics[type]) {
+      return this.storage.topics[type];
+    }
+
+    const config = TOPIC_CONFIGS[type];
+    
+    try {
+      // Create new topic
+      const result = await this.bot.api.createForumTopic(this.chatId, config.name, {
+        icon_custom_emoji_id: undefined, // We'd need custom emoji ID for custom icons
+      });
+
+      this.storage.topics[type] = result.message_thread_id;
+      await this.saveStorage();
+      
+      log.info("Created forum topic", { type, name: config.name, threadId: result.message_thread_id });
+      return result.message_thread_id;
+    } catch (e) {
+      log.error("Failed to create forum topic", { type, error: (e as Error).message });
+      // Fall back to main chat (no topic)
+      return 0;
+    }
+  }
+
+  async createSwarmTopic(taskName: string): Promise<number> {
+    // Create a timestamped topic for swarm task
+    const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+    const name = `🐝 ${taskName.slice(0, 60)}${taskName.length > 60 ? "..." : ""} (${timestamp})`;
+    
+    try {
+      const result = await this.bot.api.createForumTopic(this.chatId, name);
+      
+      const id = Date.now(); // Simple ID for tracking
+      this.storage.swarmTopics[id] = {
+        name,
+        threadId: result.message_thread_id,
+        createdAt: new Date().toISOString(),
+      };
+      await this.saveStorage();
+      
+      log.info("Created swarm topic", { name, threadId: result.message_thread_id });
+      return result.message_thread_id;
+    } catch (e) {
+      log.error("Failed to create swarm topic", { error: (e as Error).message });
+      return 0;
+    }
+  }
+
+  async closeSwarmTopic(threadId: number): Promise<void> {
+    if (!threadId) return;
+    
+    try {
+      await this.bot.api.closeForumTopic(this.chatId, threadId);
+      log.info("Closed swarm topic", { threadId });
+    } catch (e) {
+      log.warn("Failed to close swarm topic", { threadId, error: (e as Error).message });
+    }
+  }
+
+  async ensureTopics(): Promise<void> {
+    // Create all standard topics upfront
+    for (const type of Object.values(TopicType)) {
+      await this.getOrCreateTopic(type as TopicType);
+    }
+  }
+}
 
 // ── Message splitting ──────────────────────────────────────────────
 
@@ -166,7 +345,19 @@ export function createTelegramBot(
     throw new Error("OWNER_ID environment variable is required (numeric Telegram user ID)");
   }
 
+  // Feedback chat ID can be a group, channel, or supergroup
+  // If not set, feedback goes to owner
+  const feedbackChatId = process.env.FEEDBACK_CHAT_ID 
+    ? Number(process.env.FEEDBACK_CHAT_ID) 
+    : ownerId;
+
+  // Enable topics if explicitly requested or if feedback chat is a forum
+  const enableTopics = process.env.ENABLE_TOPICS === "true";
+
   const bot = new Bot(token);
+  
+  // Topic manager (initialized on start if topics enabled)
+  let topicManager: TopicManager | null = null;
 
   // ── Middleware: owner only ──
   bot.use(async (ctx, next) => {
@@ -408,6 +599,50 @@ export function createTelegramBot(
     await sendLong(bot, ownerId, text, options?.replyTo, options?.keyboard);
   }
 
+  async function sendToFeedback(text: string, options?: SendOptions): Promise<void> {
+    // If topics are enabled and we have a topic manager, use the announcements topic
+    if (topicManager && !options?.threadId) {
+      try {
+        const threadId = await topicManager.getOrCreateTopic(TopicType.ANNOUNCEMENTS);
+        await sendLong(bot, feedbackChatId, text, options?.replyTo, options?.keyboard, threadId);
+        return;
+      } catch (e) {
+        log.warn("Failed to send to topic, falling back to main chat", { error: (e as Error).message });
+      }
+    }
+    await sendLong(bot, feedbackChatId, text, options?.replyTo, options?.keyboard, options?.threadId);
+  }
+
+  async function sendToTopic(topic: TopicType, text: string, options?: SendOptions): Promise<void> {
+    if (!topicManager) {
+      // Topics not enabled, send to main feedback chat
+      await sendToFeedback(text, options);
+      return;
+    }
+
+    try {
+      const threadId = await topicManager.getOrCreateTopic(topic);
+      await sendLong(bot, feedbackChatId, text, options?.replyTo, options?.keyboard, threadId);
+    } catch (e) {
+      log.error("Failed to send to topic", { topic, error: (e as Error).message });
+      // Fall back to main chat
+      await sendLong(bot, feedbackChatId, text, options?.replyTo, options?.keyboard);
+    }
+  }
+
+  async function createSwarmTopic(taskName: string): Promise<number> {
+    if (!topicManager) {
+      log.warn("Topics not enabled, swarm topic creation skipped");
+      return 0;
+    }
+    return await topicManager.createSwarmTopic(taskName);
+  }
+
+  async function closeSwarmTopic(threadId: number): Promise<void> {
+    if (!topicManager) return;
+    await topicManager.closeSwarmTopic(threadId);
+  }
+
   async function sendFileToOwner(content: string, filename: string, caption?: string): Promise<void> {
     const buf = Buffer.from(content, "utf-8");
     await bot.api.sendDocument(ownerId, new InputFile(buf, filename), {
@@ -428,11 +663,26 @@ export function createTelegramBot(
     }
   }
 
-  function start(): void {
+  async function start(): Promise<void> {
     registerBotCommands(bot);
+    
+    // Initialize topic manager if topics are enabled
+    if (enableTopics && feedbackChatId !== ownerId) {
+      topicManager = new TopicManager(bot, feedbackChatId);
+      await topicManager.init();
+      await topicManager.ensureTopics();
+      log.info("Topics enabled and initialized");
+    }
+    
     bot.start({
       onStart: (botInfo) => {
         log.info(`Telegram bot @${botInfo.username} started`);
+        if (feedbackChatId !== ownerId) {
+          log.info(`Feedback will be sent to chat ID: ${feedbackChatId}`);
+          if (enableTopics) {
+            log.info("Topics mode enabled - messages will be organized by topic");
+          }
+        }
       },
     });
   }
@@ -442,7 +692,18 @@ export function createTelegramBot(
     log.info("Telegram bot stopped");
   }
 
-  return { bot, sendToOwner, sendFileToOwner, editMessage, start, stop };
+  return { 
+    bot, 
+    sendToOwner, 
+    sendToFeedback,
+    sendToTopic,
+    createSwarmTopic,
+    closeSwarmTopic,
+    sendFileToOwner, 
+    editMessage, 
+    start, 
+    stop 
+  };
 }
 
 // ── Internal helpers ───────────────────────────────────────────────
@@ -464,6 +725,7 @@ async function registerBotCommands(bot: Bot): Promise<void> {
       { command: "restart", description: "Restart Jinx" },
       { command: "menu", description: "Show quick actions" },
       { command: "ping", description: "Ping Jinx" },
+      { command: "diagnostics", description: "Deep system health diagnostics" },
     ]);
   } catch (e) {
     log.warn("Failed to register bot commands", { error: (e as Error).message });
@@ -498,7 +760,14 @@ async function sendReply(bot: Bot, chatId: number, text: string, replyToId?: num
   await sendLong(bot, chatId, text, replyToId);
 }
 
-async function sendLong(bot: Bot, chatId: number, text: string, replyToId?: number, keyboard?: InlineKeyboard): Promise<void> {
+async function sendLong(
+  bot: Bot, 
+  chatId: number, 
+  text: string, 
+  replyToId?: number, 
+  keyboard?: InlineKeyboard,
+  threadId?: number
+): Promise<void> {
   const chunks = splitMessage(text);
   for (let i = 0; i < chunks.length; i++) {
     const isFirst = i === 0;
@@ -508,6 +777,12 @@ async function sendLong(bot: Bot, chatId: number, text: string, replyToId?: numb
     const extra: Record<string, unknown> = {
       parse_mode: "HTML" as const,
     };
+    
+    // Add thread_id for forum topics
+    if (threadId) {
+      extra.message_thread_id = threadId;
+    }
+    
     if (isFirst && replyToId) {
       extra.reply_parameters = { message_id: replyToId };
     }

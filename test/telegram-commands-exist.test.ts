@@ -58,4 +58,9 @@ describe("Telegram commands", () => {
   it("should NOT have stop_evolve command (removed)", () => {
     expect(mainContent).not.toContain('stop_evolve:');
   });
+
+  it("should have /diagnostics command", () => {
+    expect(mainContent).toContain('diagnostics:');
+    expect(mainContent).toContain('/diagnostics');
+  });
 });
