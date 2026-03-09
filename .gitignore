@@ -29,6 +29,9 @@ Thumbs.db
 
 # Temp
 *.tmp
+
+# Logs — Structured JSON logs with rotation
+logs/
 *.log
 
 # Agent working files

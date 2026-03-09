@@ -538,7 +538,6 @@ export function getCurrentSpan(): { spanId: string; spanName: string; parentSpan
 export function startSpan(spanName: string, data?: LogContext): string {
   const parentSpan = spanStorage.getStore();
   const spanId = generateSpanId();
-  const startTime = Date.now();
   
   const spanData: LogContext = {
     spanId,

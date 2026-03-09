@@ -16,11 +16,7 @@
 
 import { checkHealth, type HealthStatus } from "../health/check.js";
 import { log } from "../util/log.js";
-import { readState } from "../util/state.js";
-import {
-  getCircuitBreakerPauseMs,
-  isCircuitBreakerOpen,
-} from "./circuit-breaker.js";
+import { isCircuitBreakerOpen } from "./circuit-breaker.js";
 
 // ── Configuration ────────────────────────────────────────────────────────
 

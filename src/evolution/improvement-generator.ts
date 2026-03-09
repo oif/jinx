@@ -12,14 +12,10 @@
  */
 
 import { 
-  EvaluationReport, 
   ImprovementOpportunity, 
   ProblemPattern,
-  loadLatestEvaluation,
-  getTopOpportunities 
+  loadLatestEvaluation
 } from "./evaluator.js";
-import { loadEvolutionHistory, EvolutionRecord, getAverageQualityScore } from "../consciousness/history.js";
-import { calculateEvolutionStats } from "../consciousness/history.js";
 import { log } from "../util/log.js";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -359,7 +355,7 @@ export function addTasksToBacklog(tasks: ImprovementTask[]): number {
       if (inPending && !inserted && !trimmed.startsWith("##")) {
         for (const task of tasks) {
           const backlogId = `#${nextId.toString().padStart(3, "0")}`;
-          const priorityEmoji = {
+          const _priorityEmoji = {
             critical: "🔴",
             high: "🟠",
             medium: "🟡",

@@ -33,7 +33,6 @@ import {
   runReflection,
   formatReflectionReport,
   getInsightsForPrompt,
-  processHighPrioritySuggestions,
 } from "../memory/reflection.js";
 import {
   shouldTriggerMetacognitive,
@@ -90,19 +89,11 @@ import {
 import {
   runEvaluation,
   shouldRunEvaluation,
-  formatEvaluationReport,
-  type EvaluationReport,
 } from "../evolution/evaluator.js";
 import {
   generateImprovementTasks,
   addTasksToBacklog,
-  formatGeneratedTasks,
 } from "../evolution/improvement-generator.js";
-import {
-  runFeedbackLoop,
-  formatFeedbackSummary,
-  generateFeedbackSummary,
-} from "../evolution/feedback-loop.js";
 
 // ── Timeout Warning Configuration ───────────────────────────────────
 

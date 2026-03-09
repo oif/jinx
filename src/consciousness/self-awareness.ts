@@ -132,10 +132,11 @@ export function getSelfAwarenessReport(): SelfAwarenessReport {
   let branch = "unknown";
   let sha = "unknown";
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getCurrentBranch, getCurrentSha } = require("../supervisor/git-ops.js");
     branch = getCurrentBranch();
     sha = getCurrentSha().slice(0, 8);
-  } catch (e) {
+  } catch {
     // Git ops not available
   }
 
@@ -212,7 +213,7 @@ function analyzeModule(name: string, modulePath: string): ModuleInfo {
         try {
           const content = readFileSync(fullPath, "utf-8");
           lines += content.split("\n").length;
-        } catch (e) {
+        } catch {
           // Ignore read errors
         }
       }

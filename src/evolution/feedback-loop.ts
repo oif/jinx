@@ -14,19 +14,13 @@
 import { 
   ImprovementTask, 
   loadGeneratedTasks, 
-  completeTask as markTaskComplete,
-  getTaskStats 
+  completeTask as markTaskComplete
 } from "./improvement-generator.js";
 import { 
-  EvaluationReport, 
-  loadLatestEvaluation, 
-  runEvaluation,
-  ImprovementOpportunity,
+  loadLatestEvaluation,
   ProblemPattern
 } from "./evaluator.js";
 import { 
-  loadEvolutionHistory, 
-  EvolutionRecord, 
   calculateEvolutionStats,
   getAverageQualityScore 
 } from "../consciousness/history.js";

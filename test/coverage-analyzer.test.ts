@@ -10,12 +10,16 @@ import {
   formatCoverageSummary,
 } from "../src/coverage/analyzer.js";
 
-// Mock fs
-vi.mock("node:fs", () => ({
-  readFileSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  existsSync: vi.fn().mockReturnValue(false),
-}));
+// Mock fs - use partial mock to preserve other fs functions used by log.ts
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs")>();
+  return {
+    ...actual,
+    readFileSync: vi.fn(),
+    writeFileSync: vi.fn(),
+    existsSync: vi.fn().mockReturnValue(false),
+  };
+});
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 

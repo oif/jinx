@@ -318,7 +318,7 @@ export const claudeCodeTool: ToolDefinition = {
               backoffMs: Math.round(backoffMs / 1000),
             });
           },
-          onFallback: async (strategy: string) => {
+          onFallback: async (_strategy: string) => {
             // When rate-limited, suggest using built-in tools instead
             log.warn("Claude Code in degradation mode, suggesting built-in tools");
             return `⚠️ Rate limit exceeded. Fallback suggestion: Use built-in read/write/edit tools instead.\n\nTask was: ${task.slice(0, 200)}...`;
