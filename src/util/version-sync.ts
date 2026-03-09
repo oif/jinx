@@ -110,5 +110,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const cycle = parseInt(process.argv[2], 10) || 0;
   const streak = parseInt(process.argv[3], 10) || 0;
   syncAllVersions(cycle, streak);
-  console.log(`✓ Synced version to all documentation files`);
+  log.info("Version sync completed via CLI", { cycle, streak });
 }
