@@ -23,7 +23,6 @@ import {
 import {
   checkEndureConstraints,
   checkExcelConstraints,
-  formatSafetyCheckResult,
   type EndureResult,
   type ExcelResult,
 } from "../evolution/safety-check.js";
@@ -73,6 +72,20 @@ import {
   formatCapsulesForPrompt,
   checkAndTriggerCapsuleDistillation,
 } from "../evolution/capsule-store.js";
+import {
+  estimateTaskComplexity,
+  decomposeTask,
+  getEstimatedMinutes,
+  initOrUpdateTaskProgress,
+  completeStep,
+  pauseTaskProgress,
+  hasPausedProgress,
+  resumeTaskProgress,
+  formatProgressSummary,
+  type TaskComplexity,
+  type TaskProgress,
+  type SubTask,
+} from "./task-decomposer.js";
 
 // ── Timeout Warning Configuration ───────────────────────────────────
 
@@ -264,6 +277,64 @@ function loadRecentDone(limit = 5): string {
 
   const recent = done.slice(-limit);
   return recent.length > 0 ? recent.join(", ") : "none yet";
+}
+
+/**
+ * Add subtasks to the backlog after the current task.
+ * This allows decomposed tasks to be processed in sequence.
+ */
+function addSubtasksToBacklog(subtasks: SubTask[]): void {
+  try {
+    const content = readFileSync(BACKLOG_PATH, "utf-8");
+    const lines = content.split("\n");
+    const updated: string[] = [];
+    let insertedAfterCurrent = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      updated.push(line);
+
+      // Insert subtasks after the first pending task (which is the current one being decomposed)
+      if (!insertedAfterCurrent && line.trim().startsWith("### 挑战")) {
+        // Check if this is a pending section task
+        const nextLine = lines[i + 1] || "";
+        if (nextLine.includes("类别") || nextLine.includes("**类别**")) {
+          // This is a self-challenge format task, find end of its block
+          // Insert subtasks after this task's block
+          let j = i + 1;
+          while (j < lines.length && !lines[j].trim().startsWith("### 挑战") && !lines[j].trim().startsWith("## ")) {
+            updated.push(lines[j]);
+            j++;
+          }
+          // Now insert the subtasks
+          for (const subtask of subtasks) {
+            updated.push("");
+            updated.push(`### 挑战 ${subtask.id}: ${subtask.title} (分解自 ${subtask.parentId})`);
+            updated.push("");
+            updated.push(`**类别**: 自动分解`);
+            updated.push(`**难度**: small`);
+            updated.push("");
+            updated.push(`**步骤**: ${subtask.stepIndex + 1}/${subtask.totalSteps}`);
+          }
+          insertedAfterCurrent = true;
+          i = j - 1; // Continue from where we left off
+        }
+      } else if (!insertedAfterCurrent && line.trim().match(/^- \[ \] #\d+:/)) {
+        // Legacy format - insert subtasks right after this line
+        for (const subtask of subtasks) {
+          updated.push(`- [ ] ${subtask.id}: ${subtask.title} (分解自 ${subtask.parentId})`);
+        }
+        insertedAfterCurrent = true;
+      }
+    }
+
+    if (insertedAfterCurrent) {
+      writeFileSync(BACKLOG_PATH, updated.join("\n"));
+      log.info("Subtasks added to backlog", { count: subtasks.length });
+    }
+  } catch (e) {
+    log.error("Failed to add subtasks to backlog", { error: (e as Error).message });
+  }
 }
 
 // ── Loop interval ──────────────────────────────────────────────────
@@ -467,6 +538,68 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
   startEvolutionProgress(cycle);
   setEvolutionStage("implementing", `Executing: ${task.title}`);
 
+  // ── Task Decomposition Check ─────────────────────────────────────
+  // Estimate task complexity and decompose large tasks
+  const complexitySpan = startSpan("complexity-check", { traceId: trace.id });
+  const taskComplexity = estimateTaskComplexity(task);
+  const estimatedMinutes = getEstimatedMinutes(taskComplexity);
+  addSpanEvent(complexitySpan.id, "complexity_result", {
+    complexity: taskComplexity,
+    estimatedMinutes,
+  });
+  log.info(`Task complexity estimated`, {
+    taskId: task.id,
+    complexity: taskComplexity,
+    estimatedMinutes,
+  });
+
+  // Check if this task has paused progress to resume
+  if (hasPausedProgress(task.id)) {
+    const resumeResult = resumeTaskProgress(task.id);
+    if (resumeResult && resumeResult.remainingSteps.length > 0) {
+      log.info(`Resuming paused task`, {
+        taskId: task.id,
+        remainingSteps: resumeResult.remainingSteps.length,
+      });
+      await notifyFn(`🔄 Evolution #${cycle} resuming paused task ${task.id}\nRemaining steps: ${resumeResult.remainingSteps.length}`);
+    }
+  }
+
+  // Decompose large tasks into subtasks
+  let actualTask = task;
+  let taskProgress: TaskProgress | null = null;
+  
+  if (taskComplexity === "large") {
+    const decomposition = decomposeTask(task, taskComplexity);
+    
+    if (decomposition.decomposed && decomposition.subtasks) {
+      log.info(`Large task decomposed into subtasks`, {
+        originalTask: task.id,
+        subtaskCount: decomposition.subtasks.length,
+      });
+      
+      // Add remaining subtasks to backlog
+      if (decomposition.remainingSubtasks && decomposition.remainingSubtasks.length > 0) {
+        addSubtasksToBacklog(decomposition.remainingSubtasks);
+        await notifyFn(`📋 Large task ${task.id} decomposed into ${decomposition.subtasks.length} subtasks\nFirst subtask: ${decomposition.task.title}`);
+      }
+      
+      // Execute first subtask
+      actualTask = decomposition.task;
+      
+      // Initialize progress tracking
+      taskProgress = initOrUpdateTaskProgress(
+        task,
+        taskComplexity,
+        decomposition.subtasks.map(s => s.title),
+      );
+    }
+  } else {
+    // Initialize progress for non-decomposed tasks
+    taskProgress = initOrUpdateTaskProgress(task, taskComplexity, [task.title]);
+  }
+  endSpan(complexitySpan.id, "success");
+
   // ── Agent Archive Integration ────────────────────────────────────
   const archiveSpan = startSpan("archive-prepare", { traceId: trace.id });
   const archive = getArchive();
@@ -579,12 +712,18 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       logTimeoutWarning(beforePromptCheck.elapsedMs, beforePromptCheck.remainingMs, "pre-prompt", task.id);
       // We're already at 18+ minutes, don't even start the prompt
       // Save progress and notify about the timeout warning
+      
+      // Save task progress for resumption
+      if (taskProgress) {
+        pauseTaskProgress(task.id, taskProgress.completedSteps, taskProgress.remainingSteps);
+      }
+      
       setEvolutionStage("failed", `Timeout warning: ${Math.floor(beforePromptCheck.elapsedMs / 60000)}m elapsed`);
       recordEvolutionResult(cycle, state.version, "timeout-warning", 
         `Evolution aborted due to timeout warning: ${Math.floor(beforePromptCheck.elapsedMs / 60000)}m elapsed, ${Math.floor(beforePromptCheck.remainingMs / 60000)}m remaining`,
         beforePromptCheck.elapsedMs);
       failEvolutionProgress(`Timeout warning before prompt execution`);
-      await notifyFn(`⏰ Evolution #${cycle} timeout warning\nTask ${task.id} aborted: ${Math.floor(beforePromptCheck.elapsedMs / 60000)}m elapsed, approaching 20m limit.\nProgress saved to avoid complete timeout.`);
+      await notifyFn(`⏰ Evolution #${cycle} timeout warning\nTask ${task.id} aborted: ${Math.floor(beforePromptCheck.elapsedMs / 60000)}m elapsed, approaching 20m limit.\nProgress saved - task can be resumed.`);
       endTrace(trace.id, "timeout-warning");
       return; // Exit early, don't throw - we've handled it gracefully
     }
@@ -610,10 +749,16 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       // We got a result but we're out of time - save what we have
       setEvolutionStage("committing", "Saving partial results due to timeout warning");
       
+      // Mark current step as completed in progress tracking
+      if (taskProgress && taskProgress.remainingSteps.length > 0) {
+        const currentStep = taskProgress.remainingSteps[0];
+        completeStep(task.id, currentStep);
+      }
+      
       // Record partial result if we have something meaningful
       if (result && result.trim().length >= 20) {
         recordEvolutionKnowledge(task.id, cycle, task.title, result + "\n\n⚠️ **Partial result saved due to timeout warning**");
-        await notifyFn(`⏰ Evolution #${cycle} timeout warning (post-prompt)\nTask ${task.id} got a result but ran out of time.\nPartial result saved to knowledge base.`);
+        await notifyFn(`⏰ Evolution #${cycle} timeout warning (post-prompt)\nTask ${task.id} got a result but ran out of time.\nPartial result saved to knowledge base.\nProgress saved - remaining steps can be resumed.`);
       }
       
       recordEvolutionResult(cycle, state.version, "timeout-warning",
@@ -681,6 +826,16 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     // Record results
     const recordSpan = startSpan("result-recording", { traceId: trace.id });
     markTaskDone(task);
+    
+    // Complete task progress tracking
+    if (taskProgress && taskProgress.remainingSteps.length > 0) {
+      const currentStep = taskProgress.remainingSteps[0];
+      const updatedProgress = completeStep(task.id, currentStep);
+      if (updatedProgress) {
+        log.info("Task step completed", { taskId: task.id, progress: formatProgressSummary(updatedProgress) });
+      }
+    }
+    
     saveState({ cycle, lastEvolution: new Date().toISOString() });
     const qualityBreakdown = scoreEvolutionQuality(result, durationMs);
     recordEvolutionResult(cycle, state.version, "success", result.slice(0, 200), durationMs, qualityBreakdown.total);
@@ -803,6 +958,12 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       ? `Evolution timed out after ${Math.floor(durationMs / 60000)} minutes`
       : err.message;
 
+    // Save task progress on timeout for resumption
+    if (isTimeout && taskProgress) {
+      pauseTaskProgress(task.id, taskProgress.completedSteps, taskProgress.remainingSteps);
+      log.info("Task progress saved due to timeout", { taskId: task.id });
+    }
+
     recordEvolutionResult(cycle, state.version, status, friendlyMessage, durationMs);
     failEvolutionProgress(friendlyMessage);
 
@@ -842,7 +1003,7 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     
     // Send more informative timeout message
     if (isTimeout) {
-      await notifyFn(`⏰ Evolution #${cycle} timed out [${task.id}]\nDuration: ${Math.floor(durationMs / 60000)}m / 20m limit\nTask was: ${task.title}\n\nTo prevent this, consider:\n- Breaking down complex tasks\n- Adding timeout warning checkpoints`);
+      await notifyFn(`⏰ Evolution #${cycle} timed out [${task.id}]\nDuration: ${Math.floor(durationMs / 60000)}m / 20m limit\nTask was: ${task.title}\n\nProgress saved - task can be resumed.\nTo prevent this, consider:\n- Breaking down complex tasks\n- Adding timeout warning checkpoints`);
     } else {
       await notifyFn(`❌ Evolution #${cycle} failed [${task.id}]: ${friendlyMessage}`);
     }
