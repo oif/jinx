@@ -140,6 +140,14 @@ export function recordCircuitSuccess(): void {
 }
 
 /**
+ * Check if the circuit breaker is currently open.
+ * This is a convenience function that returns a boolean.
+ */
+export function isCircuitBreakerOpen(): boolean {
+  return getCircuitBreakerPauseMs() > 0;
+}
+
+/**
  * Format a human-readable circuit breaker status message.
  */
 export function formatCircuitBreakerAlert(

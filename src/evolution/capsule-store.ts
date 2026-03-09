@@ -7,7 +7,7 @@
  *   data/gep/events.jsonl    — audit log for all capsule-related events
  */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
 import { log } from "../util/log.js";
@@ -17,6 +17,10 @@ import { log } from "../util/log.js";
 const GEP_DIR = join(process.cwd(), "data", "gep");
 const CAPSULES_PATH = join(GEP_DIR, "capsules.jsonl");
 const EVENTS_PATH = join(GEP_DIR, "events.jsonl");
+const DISTILLATION_TRIGGER_PATH = join(GEP_DIR, "distillation-trigger.json");
+
+/** Threshold: number of new capsules needed to trigger auto-distillation */
+const DISTILLATION_CAPSULE_THRESHOLD = 5;
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -392,3 +396,103 @@ export function recordSuccessfulEvolution(params: {
 
   appendCapsule(capsule);
 }
+
+// ── Capsule-triggered distillation (AgentC2 Flywheel Step 3) ───────
+
+interface DistillationTriggerState {
+  lastCapsuleLineCount: number;
+  lastTriggeredAt: string | null;
+}
+
+/** Read the distillation trigger state (counts since last auto-distillation). */
+function readTriggerState(): DistillationTriggerState {
+  try {
+    ensureDir();
+    if (!existsSync(DISTILLATION_TRIGGER_PATH)) {
+      return { lastCapsuleLineCount: 0, lastTriggeredAt: null };
+    }
+    const raw = readFileSync(DISTILLATION_TRIGGER_PATH, "utf-8");
+    return JSON.parse(raw) as DistillationTriggerState;
+  } catch {
+    return { lastCapsuleLineCount: 0, lastTriggeredAt: null };
+  }
+}
+
+/** Persist updated trigger state to distillation-trigger.json. */
+function writeTriggerState(state: DistillationTriggerState): void {
+  try {
+    ensureDir();
+    writeFileSync(DISTILLATION_TRIGGER_PATH, JSON.stringify(state, null, 2) + "\n", "utf-8");
+  } catch (e) {
+    log.error("Failed to write distillation trigger state", { error: (e as Error).message });
+  }
+}
+
+/**
+ * Return the number of new capsules written since the last distillation trigger.
+ * Reads from `data/gep/capsules.jsonl` (line count) and compares to
+ * `data/gep/distillation-trigger.json` (lastCapsuleLineCount).
+ */
+export function getCapsulesAddedSinceLastDistillation(): number {
+  const currentCount = getCapsuleCount();
+  const triggerState = readTriggerState();
+  const added = currentCount - triggerState.lastCapsuleLineCount;
+  return Math.max(0, added);
+}
+
+/**
+ * Check if the capsule threshold (5) has been reached since the last distillation.
+ * If so, call distillFromKnowledgeFiles() and update the trigger state.
+ * Failures are logged but never thrown (safe for fire-and-forget usage).
+ *
+ * @param notifyFn - Optional callback to send a stream message on trigger
+ */
+export async function checkAndTriggerCapsuleDistillation(
+  notifyFn?: (message: string) => Promise<void>,
+): Promise<void> {
+  try {
+    const newCapsules = getCapsulesAddedSinceLastDistillation();
+
+    if (newCapsules < DISTILLATION_CAPSULE_THRESHOLD) {
+      log.info("Capsule distillation: threshold not reached", {
+        newCapsules,
+        threshold: DISTILLATION_CAPSULE_THRESHOLD,
+      });
+      return;
+    }
+
+    log.info("Capsule distillation threshold reached — triggering auto-distillation", {
+      newCapsules,
+      threshold: DISTILLATION_CAPSULE_THRESHOLD,
+    });
+
+    // Dynamically import to avoid circular dependency at module load time
+    const { distillFromKnowledgeFiles } = await import("../memory/principle-distiller.js");
+
+    const result = await distillFromKnowledgeFiles();
+
+    // Update trigger state AFTER successful distillation
+    const currentCount = getCapsuleCount();
+    writeTriggerState({
+      lastCapsuleLineCount: currentCount,
+      lastTriggeredAt: new Date().toISOString(),
+    });
+
+    const principleCount = result.principleIds?.length ?? 0;
+    const message =
+      `🔄 **Auto-distillation triggered** (${newCapsules} new capsules)\n` +
+      `📚 Principles refreshed: ${principleCount} principles updated from knowledge files.`;
+
+    log.info("Capsule-triggered distillation complete", { principleCount, newCapsules });
+
+    if (notifyFn) {
+      await notifyFn(message).catch(e => {
+        log.error("Failed to send distillation notification", { error: (e as Error).message });
+      });
+    }
+  } catch (e) {
+    log.error("Capsule-triggered distillation failed", { error: (e as Error).message });
+    // Intentionally NOT re-throwing — distillation failure must not crash the loop
+  }
+}
+

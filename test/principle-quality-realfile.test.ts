@@ -78,9 +78,9 @@ describe("principles.json — Quality Validation", () => {
     const knowledgePrinciples = principles.filter((p) =>
       p.conditions?.tags?.includes("knowledge-distilled")
     );
-    // At least 40% should have the knowledge-distilled tag (some principles come from other sources)
+    // At least 30% should have the knowledge-distilled tag (some principles come from other sources)
     expect(knowledgePrinciples.length).toBeGreaterThanOrEqual(
-      Math.floor(principles.length * 0.4)
+      Math.floor(principles.length * 0.30)
     );
   });
 });

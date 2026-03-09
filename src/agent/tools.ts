@@ -18,6 +18,12 @@ import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js
 import { runSelfDiagnosis, formatDiagnosisReport, executeRepairAction } from "../diagnosis/engine.js";
 import { forceStrategy, getCurrentStrategy, formatStrategyStatus, enableAutoSelect, disableAutoSelect } from "../evolution/strategy.js";
 import {
+  rateLimiter,
+  withRateLimit,
+  formatRateLimitStatus,
+  formatRateLimitEvents,
+} from "../adaptation/rate-limiter.js";
+import {
   listAllSkills,
   searchSkills,
   loadSkill,
@@ -260,6 +266,7 @@ const githubListCommitsParams = Type.Object({
 /**
  * Claude Code CLI — Jinx's "hands" for complex code editing.
  * Uses --print mode for non-interactive output.
+ * Now uses advanced rate limit handling with exponential backoff.
  */
 export const claudeCodeTool: ToolDefinition = {
   name: "claude_code",
@@ -281,69 +288,77 @@ export const claudeCodeTool: ToolDefinition = {
     const task = params.task as string;
     const cwd = (params.cwd as string) || process.cwd();
 
-    // Retry delays for rate-limit errors: 30s, 60s, 120s
-    const RETRY_DELAYS_MS = [30_000, 60_000, 120_000];
-
-    /** Detect whether an error looks like a rate-limit / overload response. */
-    function isRateLimitError(err: Error & { status?: number; stderr?: string }): boolean {
-      const msg = (err.stderr || err.message || "").toLowerCase();
-      return (
-        err.status === 429 ||
-        msg.includes("rate limit") ||
-        msg.includes("overloaded") ||
-        msg.includes("too many requests") ||
-        msg.includes("529") ||
-        msg.includes("quota")
-      );
-    }
-
     const env = { ...process.env };
     // Unset CLAUDECODE so nested claude invocations are allowed.
-    // Claude Code blocks nested sessions by detecting this env var.
     delete env.CLAUDECODE;
 
-    const cmd = `claude --print --dangerously-skip-permissions "${task.replace(/"/g, '\\"')}"`; 
+    const cmd = `claude --print --dangerously-skip-permissions "${task.replace(/"/g, '\\"')}"`;
 
-    let lastErr: (Error & { status?: number; stderr?: string }) | null = null;
-
-    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
-      try {
-        const result = shell(cmd, { cwd, timeout: 600_000, env });
-
-        // Estimate and record cost based on task length and result length
-        const inputTokens = Math.ceil(task.length / 4);  // ~4 chars per token
-        const outputTokens = Math.ceil((result || "").length / 4);
-        recordClaudeUsage(inputTokens, outputTokens, { task: task.slice(0, 100) });
-
-        return textResult(result || "(Claude Code completed with no output)");
-      } catch (e) {
-        lastErr = e as Error & { status?: number; stderr?: string };
-
-        const willRetry = attempt < RETRY_DELAYS_MS.length && isRateLimitError(lastErr);
-        if (willRetry) {
-          const delayMs = RETRY_DELAYS_MS[attempt];
-          log.warn(`Claude Code rate-limited, retrying in ${delayMs / 1000}s`, {
-            attempt: attempt + 1,
-            maxAttempts: RETRY_DELAYS_MS.length + 1,
-            error: lastErr.stderr || lastErr.message,
-          });
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-          continue;
+    // Use advanced rate limit handling with fallback to built-in tools
+    try {
+      const result = await withRateLimit<string>(
+        "claude-code",
+        async () => {
+          const output = shell(cmd, { cwd, timeout: 600_000, env });
+          
+          // Estimate and record cost
+          const inputTokens = Math.ceil(task.length / 4);
+          const outputTokens = Math.ceil((output || "").length / 4);
+          recordClaudeUsage(inputTokens, outputTokens, { task: task.slice(0, 100) });
+          
+          return output || "(Claude Code completed with no output)";
+        },
+        {
+          onWait: (ms: number) => {
+            log.info(`Claude Code rate-limited, waiting ${Math.round(ms / 1000)}s`);
+          },
+          onRetry: (attempt: number, backoffMs: number) => {
+            log.warn(`Claude Code rate limit retry`, {
+              attempt,
+              backoffMs: Math.round(backoffMs / 1000),
+            });
+          },
+          onFallback: async (strategy: string) => {
+            // When rate-limited, suggest using built-in tools instead
+            log.warn("Claude Code in degradation mode, suggesting built-in tools");
+            return `⚠️ Rate limit exceeded. Fallback suggestion: Use built-in read/write/edit tools instead.\n\nTask was: ${task.slice(0, 200)}...`;
+          },
         }
+      );
 
-        // Non-rate-limit error or retries exhausted — record and return
-        break;
+      return textResult(result);
+    } catch (e) {
+      const err = e as Error & { status?: number; stderr?: string };
+      
+      // Check if it's a rate limit error that exhausted retries
+      if (rateLimiter.isRateLimitError(err)) {
+        const status = rateLimiter.getStatus();
+        const claudeStatus = status["claude-code"];
+        
+        // Record the failed attempt
+        recordClaudeUsage(Math.ceil(task.length / 4), 0, { 
+          task: task.slice(0, 100), 
+          error: true,
+          rateLimited: true,
+        });
+        
+        return textResult(
+          `⚠️ Claude Code rate limit exceeded after maximum retries.\n` +
+          `Consecutive hits: ${claudeStatus?.consecutiveHits || 0}\n` +
+          `Wait time remaining: ${Math.round((claudeStatus?.waitTimeMs || 0) / 1000)}s\n\n` +
+          `Fallback: Use built-in read/write/edit/bash tools for this task.\n` +
+          `Error: ${err.stderr || err.message}`
+        );
       }
+
+      // Non-rate-limit error
+      const inputTokens = Math.ceil(task.length / 4);
+      recordClaudeUsage(inputTokens, 500, { task: task.slice(0, 100), error: true });
+
+      return textResult(
+        `Claude Code error (exit ${err.status ?? "?"}): ${err.stderr || err.message}`
+      );
     }
-
-    // All attempts failed
-    const err = lastErr!;
-    const inputTokens = Math.ceil(task.length / 4);
-    recordClaudeUsage(inputTokens, 500, { task: task.slice(0, 100), error: true });
-
-    return textResult(
-      `Claude Code error (exit ${err.status ?? "?"}): ${err.stderr || err.message}`
-    );
   },
 };
 
@@ -1783,6 +1798,70 @@ export const githubListCommitsTool: ToolDefinition = {
   },
 };
 
+// ── Rate Limit Monitoring Tools ─────────────────────────────────────
+
+const rateLimitStatusParams = Type.Object({});
+
+const rateLimitEventsParams = Type.Object({
+  limit: Type.Optional(Type.Number({ description: "Maximum number of events to return (default: 10)" })),
+});
+
+/**
+ * Get rate limit status for all providers
+ */
+export const rateLimitStatusTool: ToolDefinition = {
+  name: "get_rate_limit_status",
+  label: "Get Rate Limit Status",
+  description:
+    "Get the current rate limit status for all API providers. " +
+    "Shows which providers are rate-limited, usage percentages, wait times, " +
+    "and degradation mode status. Use this to understand API constraints.",
+  parameters: rateLimitStatusParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const status = formatRateLimitStatus();
+      return textResult(status);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error getting rate limit status: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Get recent rate limit events
+ */
+export const rateLimitEventsTool: ToolDefinition = {
+  name: "get_rate_limit_events",
+  label: "Get Rate Limit Events",
+  description:
+    "Get recent rate limit events including hits, recoveries, and backoff times. " +
+    "Use this to understand rate limit patterns and troubleshoot API issues.",
+  parameters: rateLimitEventsParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const limit = (params.limit as number) || 10;
+      const events = formatRateLimitEvents(limit);
+      return textResult(events);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error getting rate limit events: ${err.message}`);
+    }
+  },
+};
+
 
 // ── Export all tools ───────────────────────────────────────────────
 
@@ -1825,6 +1904,8 @@ export const jinxTools: ToolDefinition[] = [
   githubAnalyzePRTool,
   githubRepoStatsTool,
   githubListCommitsTool,
+  rateLimitStatusTool,
+  rateLimitEventsTool,
   runSwarmTool,
 ];
 

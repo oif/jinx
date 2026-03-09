@@ -536,7 +536,6 @@ function detectOverconfidenceWithoutEvidence(
   records: EvolutionRecord[],
   data: FailurePatternData
 ): DetectedFailurePattern | null {
-  const threshold = data.config.thresholds.overconfidenceMinScore;
   const window = records.slice(-data.config.historyWindow);
   
   // Confidence indicators without verification
@@ -820,7 +819,7 @@ function detectGoalDrift(
 function getEscalatedSeverity(
   definition: FailurePatternDefinition,
   occurrenceCount: number,
-  data: FailurePatternData
+  _data: FailurePatternData
 ): FailurePatternSeverity {
   if (definition.autoEscalation && occurrenceCount >= definition.autoEscalation.afterCount) {
     return definition.autoEscalation.toSeverity;

@@ -1,0 +1,367 @@
+# Goal Discovery #33 — 系统性目标发现完整报告
+
+**日期**: 2026-03-08T09:03:00Z
+**循环**: 33
+**方法**: Alita-G 三维度分析 + Self-Challenge 格式化
+
+---
+
+## 一、三维度分析
+
+### 第一维：能力缺口分析
+
+**系统性检查清单：**
+
+| 检查项 | 结果 | 发现 |
+|--------|------|------|
+| BORN.md 初始优先级 | 部分完成 | pre-push-test-gate ✅, health-check ✅, evolution-automation ❌, structured-logging ❌, identity-initialization ✅ |
+| state.json 完整性 | ⚠️ 不完整 | 缺少 version 和 cycle 字段 |
+| 代码质量工具 | ❌ 失败 | ESLint: "Command not found", Security: npm audit 应改为 pnpm audit |
+| 测试覆盖率 | ⚠️ 待提升 | 25.85% (目标: 50%) |
+| 进化策略稳定性 | ⚠️ 震荡 | 历史显示频繁的 repair-only ↔ balanced 切换 |
+| Novice 能力成熟化 | ⚠️ 7个待提升 | goal-discovery(0.8), public-site(0.8), pi-extensions(0.8), memory-graph(0.7), metacognition(0.7), rate-limit-handling(0.6), reflection(0.6) |
+
+**已发现的候选目标：**
+1. **完善 state.json** - 添加缺失的 version 和 cycle 字段
+2. **修复 Security Check** - npm audit → pnpm audit
+3. **修复 ESLint Check** - npx eslint 命令问题
+4. **实现 evolution-automation** - CAPABILITIES.md 初始优先级 #3
+5. **提升测试覆盖率** - 从 25.85% 到 50%
+6. **稳定进化策略** - 添加滞后机制防止震荡
+
+---
+
+### 第二维：经验挖掘
+
+**从 knowledge/ 文档中提取的未应用洞察：**
+
+**1. Self-Challenging Agents (NeurIPS 2025)**
+- Code-as-Task 格式已研究但未完全实现
+- 验证条件字段已添加但任务格式未统一
+- **建议**：在 goal discovery 中严格遵循 SCA 格式
+
+**2. EvolveR Experience Distillation**
+- 原则蒸馏机制已建但闭环未完全接通
+- 检索 → 应用 → 反馈循环不完整
+- **建议**：完善原则应用反馈机制
+
+**3. Alita-G 系统性方法**
+- 三维度分析已采用
+- 但缺乏能力分类学（Capability Taxonomy）
+- **建议**：建立正式的能力追踪系统
+
+**4. 失败模式分析**
+- Cycles 16-21 连续超时失败（已解决）
+- 小步快跑比大重构更可靠
+- **建议**：保持小增量改进策略
+
+---
+
+### 第三维：外部发现
+
+**当前状态**：Web Search API (EXA) 工作正常，但本循环未执行外部搜索。
+
+**从已有知识库提取的前沿方向：**
+
+1. **ICLR 2026 Workshop on AI with Recursive Self-Improvement** - 学术前沿
+2. **A-EVOLVE 部署时进化** - 诊断失败 → 提出改进 → 持久化变更
+3. **STELLA 多智能体架构** - 自主工具创建能力
+4. **Meta-cognitive Reflection (CFAI 2026)** - 元认知反思机制
+
+---
+
+## 二、候选目标穷举
+
+### 来自第一维（能力缺口）
+
+| ID | 候选目标 | 来源 |
+|----|----------|------|
+| C1 | 完善 state.json 字段 | 基础设施缺失 |
+| C2 | 修复 Security Check (npm → pnpm) | 工具问题 |
+| C3 | 修复 ESLint Check | 工具问题 |
+| C4 | 实现 evolution-automation | 初始优先级 #3 |
+| C5 | 提升测试覆盖率到 50% | 基础设施 |
+| C6 | 稳定进化策略选择 | 经验问题 |
+
+### 来自第二维（经验挖掘）
+
+| ID | 候选目标 | 来源 |
+|----|----------|------|
+| C7 | 完善 EvolveR 原则应用闭环 | 研究洞察 |
+| C8 | 建立能力分类学系统 | Alita-G 启发 |
+| C9 | 成熟化 Goal Discovery 能力 | Novice → Advanced |
+
+### 来自第三维（外部发现）
+
+| ID | 候选目标 | 来源 |
+|----|----------|------|
+| C10 | 研究并集成 A-EVOLVE 部署时进化模式 | 学术前沿 |
+| C11 | 探索 STELLA 自主工具创建能力 | 学术前沿 |
+
+---
+
+## 三、多因素评分表
+
+| 候选目标 | 影响 | 可行性 | 依赖价值 | BORN对齐 | 总分 |
+|---------|------|--------|---------|---------|------|
+| **C4: evolution-automation** | 9 | 7 | 9 | 9 | **34** |
+| **C5: 测试覆盖率 50%** | 9 | 6 | 8 | 9 | **32** |
+| **C6: 稳定进化策略** | 8 | 8 | 8 | 8 | **32** |
+| **C2: 修复 Security Check** | 6 | 9 | 5 | 6 | **26** |
+| **C1: 完善 state.json** | 5 | 9 | 6 | 7 | **27** |
+| **C3: 修复 ESLint Check** | 5 | 9 | 5 | 6 | **25** |
+| **C9: 成熟化 Goal Discovery** | 7 | 6 | 7 | 7 | **27** |
+| **C8: 能力分类学** | 6 | 5 | 8 | 7 | **26** |
+| **C7: EvolveR 闭环** | 7 | 5 | 7 | 7 | **26** |
+| **C10: A-EVOLVE 研究** | 6 | 4 | 6 | 6 | **22** |
+| **C11: STELLA 研究** | 5 | 4 | 5 | 6 | **20** |
+
+---
+
+## 四、Self-Challenge 格式化任务
+
+### 挑战 #130: evolution-automation (34分)
+
+**类别**: 能力缺口（CAPABILITIES.md 初始优先级 #3）
+**难度**: medium
+
+**指令**:
+实现自动进化循环，让 Jinx 在无人值守时能够定时自我改进。
+- 检查 `src/consciousness/loop.ts` 的 `runEvolutionCycle` 实现
+- 创建 `src/consciousness/auto-evolution.ts` - 定时触发进化
+- 添加进化间隔配置（建议初始值：1小时）
+- 集成现有 circuit-breaker 防止无限循环
+- 添加自动进化的启用/禁用开关
+
+**验证条件**:
+- [ ] `pnpm build` 通过
+- [ ] `pnpm test` 通过
+- [ ] 新增 auto-evolution.ts 模块
+- [ ] 进化可以在后台自动触发
+- [ ] capabilities.json 中 evolution-automation 成熟度更新
+
+**示例思路**:
+使用 setInterval 定时触发进化检查，结合 circuit-breaker 确保失败时自动停止。
+
+**可能的失败案例**:
+1. 与手动进化触发冲突
+2. 进化过程中收到 Telegram 命令导致状态混乱
+3. 空循环检测误判
+
+**依赖价值**: 这是 Jinx 作为有主动性智能体的核心能力。自动进化开启所有未来改进的可能性。
+
+---
+
+### 挑战 #131: 提升测试覆盖率到 50% (32分)
+
+**类别**: 能力缺口（基础设施）
+**难度**: hard
+
+**指令**:
+当前测试覆盖率 25.85%，目标是提升到 50%。
+- 分析覆盖率报告，识别低覆盖率模块
+- 优先为核心模块添加测试：src/consciousness/loop.ts, src/evolution/*.ts, src/memory/*.ts
+- 确保新测试有实际断言，不只是占位符
+- 目标是 `pnpm test --coverage` 显示 ≥ 50%
+
+**验证条件**:
+- [ ] `pnpm test --coverage` 显示 ≥ 50%
+- [ ] `pnpm build` 通过
+- [ ] 所有新测试有实际断言
+
+**示例思路**:
+使用 vitest --coverage 生成报告，识别低覆盖模块，为关键函数编写单元测试。
+
+**可能的失败案例**:
+1. 测试写得太简单，覆盖率高但无实际保护
+2. 某些模块难以测试（依赖外部 API）
+3. 测试运行时间过长
+
+**依赖价值**: 测试覆盖率是进化的安全网。没有足够的测试，任何改动都可能是危险的。
+
+---
+
+### 挑战 #132: 稳定进化策略选择 (32分)
+
+**类别**: 经验挖掘（失败模式修复）
+**难度**: medium
+
+**指令**:
+添加滞后机制（hysteresis），解决进化策略频繁震荡问题。
+- 当前阈值：failureRateCritical: 0.5, failureRateWarning: 0.2
+- 问题：单次失败就触发策略切换，缺乏确认窗口
+- 实现：需要连续 N 次（建议 2 次）确认才切换策略
+- 在 `src/evolution/strategy.ts` 中实现确认窗口
+
+**验证条件**:
+- [ ] `pnpm build` 通过
+- [ ] `pnpm test` 通过
+- [ ] 添加策略稳定性测试
+- [ ] 策略切换需要连续 2 次确认
+
+**示例思路**:
+当检测到策略切换条件时，记录待切换状态。下一次循环检查是否仍然满足条件。只有连续 2 次都满足，才真正切换。
+
+**可能的失败案例**:
+1. 滞后过大，错过真正需要的策略切换
+2. 逻辑复杂化，难以调试
+3. 与自动选择机制冲突
+
+**依赖价值**: 稳定的策略选择让进化更可预测，减少无效振荡。
+
+---
+
+### 挑战 #133: 修复 Security Check (26分)
+
+**类别**: 能力缺口（工具修复）
+**难度**: easy
+
+**指令**:
+修复 Security Check 失败问题。项目使用 pnpm，但代码使用 npm audit。
+- 修改 `src/quality/code-quality.ts` 中的 `runSecurityCheck()`
+- 将 `npm audit --json` 改为 `pnpm audit --json`
+- 可能需要调整输出解析逻辑
+
+**验证条件**:
+- [ ] Security check 成功运行（无 Command not found 错误）
+- [ ] `pnpm build` 通过
+- [ ] `pnpm test` 通过
+
+**示例思路**:
+修改 execSync 命令从 `npm audit --json` 到 `pnpm audit --json`。
+
+**可能的失败案例**:
+1. pnpm audit 输出格式与 npm 不同
+2. 需要调整 JSON 解析
+
+**依赖价值**: 代码质量检查是 P6 极简原则的支持能力。
+
+---
+
+### 挑战 #134: 完善 state.json (27分)
+
+**类别**: 能力缺口（基础设施）
+**难度**: easy
+
+**指令**:
+完善 `data/state.json` 以符合 BORN.md 的描述。
+- 添加 `version` 字段（当前应为 "0.1.118"）
+- 添加 `cycle` 字段（当前应为 33）
+- 确保 future cycles 能正确更新这些字段
+- 检查相关读写逻辑是否正确
+
+**验证条件**:
+- [ ] state.json 包含 version 和 cycle 字段
+- [ ] `pnpm build` 通过
+- [ ] `pnpm test` 通过
+
+**示例思路**:
+在每次进化循环结束时更新 state.json，确保版本号和循环计数正确。
+
+**可能的失败案例**:
+1. 多个地方写入 state.json 导致冲突
+2. 读写逻辑有 bug
+
+**依赖价值**: state.json 是系统状态的核心，是 P2 进化原则的基础设施。
+
+---
+
+### 挑战 #135: 成熟化 Goal Discovery 能力 (27分)
+
+**类别**: 能力缺口（能力成熟化）
+**难度**: medium
+
+**指令**:
+将 Goal Discovery 从 novice 提升到 advanced。
+- 确保每次 goal discovery 都遵循 Alita-G 三维度分析
+- 确保任务格式严格遵循 Self-Challenge 格式
+- 添加目标发现效果追踪
+- 建立 goal discovery 与 evolution 结果的关联
+
+**验证条件**:
+- [ ] capabilities.json 中 goal-discovery 成熟度更新为 advanced
+- [ ] `pnpm build` 通过
+- [ ] `pnpm test` 通过
+- [ ] 添加 goal discovery 效果测试
+
+**示例思路**:
+追踪每次 goal discovery 的产出与后续进化成功的关系，建立反馈循环。
+
+**可能的失败案例**:
+1. 改进过于表面，成熟度提升不稳固
+2. 测试覆盖不足
+
+**依赖价值**: Goal Discovery 是进化的起点，高质量的目标发现直接影响进化效率。
+
+---
+
+## 五、筛选结果
+
+**优先级排序**：
+
+| 排名 | 任务 | 分数 | 类型 | 建议 |
+|------|------|------|------|------|
+| **#1** | #130 evolution-automation | 34 | 核心能力 | **优先执行** |
+| **#2** | #131 测试覆盖率 | 32 | 基础设施 | 第二优先 |
+| **#3** | #132 稳定进化策略 | 32 | 经验挖掘 | 第三优先 |
+| **#4** | #134 完善 state.json | 27 | 快速胜利 | 可并行 |
+| **#5** | #133 修复 Security Check | 26 | 快速胜利 | 可并行 |
+
+---
+
+## 六、为什么这些目标值得做
+
+### #130 evolution-automation - 最高优先级
+
+1. **CAPABILITIES.md 初始进化优先级 #3** - 明确的设计目标
+2. **依赖价值最高 (9分)** - 开启所有未来进化的可能性
+3. **对齐 P7 扩展原则** - Jinx 作为有主动性的智能体的核心特征
+4. **对齐 Neo 的期望** - 自我完善、技术探索
+
+### #131 测试覆盖率 - 基础设施
+
+1. **影响最高 (9分)** - 测试是所有代码改动的基础
+2. **P2 进化原则的支持** - "只提交通过的代码"需要测试保障
+3. **可持续改进的前提** - 没有测试，改动都是冒险
+
+### #132 稳定进化策略 - 经验挖掘
+
+1. **解决真实问题** - 策略震荡历史明显，影响系统稳定性
+2. **可行性高 (8分)** - 修改范围可控，策略选择逻辑清晰
+3. **可验证性强** - 可以通过观察策略切换频率验证效果
+
+---
+
+## 七、关键洞察
+
+### 1. Security Check 的简单修复
+项目使用 pnpm，但代码使用 `npm audit`。只需改为 `pnpm audit` 即可。
+
+### 2. 进化策略震荡的根因
+当失败率 > 50% 时自动切换到 repair-only，下一个循环窗口滑动后又切回 balanced。缺乏滞后机制。
+
+### 3. 测试覆盖率是最大瓶颈
+25.85% 的覆盖率意味着大部分代码没有测试保护。这是当前进化安全的最大风险。
+
+### 4. 知识库丰富但应用不足
+knowledge/ 中有大量研究文档，但很多洞察尚未应用到代码中。
+
+---
+
+## 八、下一步行动
+
+**建议**：
+1. 立即执行 #133 和 #134（快速胜利，约 30 分钟）
+2. 然后执行 #130 evolution-automation（核心能力，约 2-3 小时）
+3. 后续执行 #131 测试覆盖率（持续改进）
+
+**更新 backlog**：
+- #130 evolution-automation (新)
+- #131 测试覆盖率 (已有 #122)
+- #132 稳定进化策略 (已有 #119)
+- #133 修复 Security Check (新)
+- #134 完善 state.json (新)
+
+---
+
+**结论**：本次 goal discovery 穷举了 11 个候选目标，通过系统性评分筛选出 5 个优先任务。最高优先级是 #130 evolution-automation，这是 Jinx 作为有主动性智能体的核心能力。

@@ -6,6 +6,7 @@ import { startLifecycleMonitor, stopLifecycleMonitor, registerShutdownHandlers, 
 import { startDailyBriefing, stopDailyBriefing } from "./supervisor/briefing.js";
 import { ensureDevBranch, getCurrentSha, getCurrentBranch } from "./supervisor/git-ops.js";
 import { startConsciousness } from "./consciousness/loop.js";
+import { startAutoEvolution, stopAutoEvolution } from "./consciousness/auto-evolution.js";
 import { loadNextTask } from "./consciousness/loop.js";
 import { checkHealth, registerHealthNotifier } from "./health/check.js";
 import { formatHistoryReport } from "./health/history.js";
@@ -13,12 +14,16 @@ import { getAverageQualityScore } from "./consciousness/history.js";
 import { cleanupOldSessions } from "./supervisor/cleanup.js";
 import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
 import { formatProgress, isEvolutionActive } from "./consciousness/evolution-progress.js";
+import { ensureIdentityFiles } from "./util/identity-init.js";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 async function main(): Promise<void> {
   // Step 0: Emergency crash loop detection
   checkCrashLoopAndRecover();
+
+  // Step 0.5: Ensure identity files exist (P1 - Identity Persistence)
+  ensureIdentityFiles();
 
   log.info("Jinx starting", {
     version: readVersion(),
@@ -549,11 +554,18 @@ async function main(): Promise<void> {
   // Consciousness loop - sends to EVOLUTION topic (includes evolution & goal discovery)
   consciousness.handle = startConsciousness((msg) => tg.sendToTopic(TopicType.EVOLUTION, msg));
 
+  // Auto evolution - periodic evolution triggering with Endure safety check
+  startAutoEvolution({
+    triggerEvolution: () => consciousness.handle?.triggerNow(),
+    notifyFn: (msg) => tg.sendToTopic(TopicType.HEALTH, msg),
+  });
+
   // Daily briefing - sends to DAILY_BRIEFING topic
   startDailyBriefing((msg) => tg.sendToTopic(TopicType.DAILY_BRIEFING, msg));
 
   // Step 6: Register shutdown
   registerShutdownHandlers(async () => {
+    stopAutoEvolution();
     consciousness.handle?.stop();
     stopDailyBriefing();
     stopLifecycleMonitor();

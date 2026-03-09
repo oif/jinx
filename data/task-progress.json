@@ -1,0 +1,269 @@
+[
+  {
+    "taskId": "#191",
+    "taskTitle": "修复代码质量工具命令",
+    "startedAt": "2026-03-09T06:17:25.173Z",
+    "complexity": "small",
+    "completedSteps": [
+      "修复代码质量工具命令"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T06:21:21.725Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#192",
+    "taskTitle": "实现 Evaluation-driven Improvement 框架",
+    "startedAt": "2026-03-09T06:26:46.765Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "实现 Evaluation-driven Improvement 框架"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T06:36:33.956Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#193",
+    "taskTitle": "为公开站点添加实时状态和健康仪表板",
+    "startedAt": "2026-03-09T06:56:57.349Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "为公开站点添加实时状态和健康仪表板"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T07:03:16.777Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#194",
+    "taskTitle": "实现 Pi Extensions 基础能力 — 让 Jinx 能扩展自身工具",
+    "startedAt": "2026-03-09T08:26:48.976Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "实现 Pi Extensions 基础能力 — 让 Jinx 能扩展自身工具"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T08:28:53.438Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#195",
+    "taskTitle": "提升 Public Site 到 Advanced 级别",
+    "startedAt": "2026-03-09T10:54:55.311Z",
+    "complexity": "small",
+    "completedSteps": [
+      "提升 Public Site 到 Advanced 级别"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T10:59:44.640Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#198",
+    "taskTitle": "研究 Mastra AI Agent 框架并评估集成可能性",
+    "startedAt": "2026-03-09T11:56:29.072Z",
+    "complexity": "large",
+    "completedSteps": [],
+    "remainingSteps": [
+      "分析任务: 研究 Mastra AI Agent 框架并评估集成可能性",
+      "执行实现: 研究 Mastra AI Agent 框架并评估集成可能性",
+      "验证完成: 研究 Mastra AI Agent 框架并评估集成可能性"
+    ],
+    "updatedAt": "2026-03-09T11:56:29.072Z",
+    "cyclesSpent": 1,
+    "status": "in-progress"
+  },
+  {
+    "taskId": "#197",
+    "taskTitle": "提升 Goal Discovery 到 Advanced 级别",
+    "startedAt": "2026-03-09T12:05:52.368Z",
+    "complexity": "small",
+    "completedSteps": [
+      "提升 Goal Discovery 到 Advanced 级别"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T12:07:17.309Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#196",
+    "taskTitle": "提升 Memory Graph 到 Advanced 级别",
+    "startedAt": "2026-03-09T12:07:27.205Z",
+    "complexity": "small",
+    "completedSteps": [
+      "提升 Memory Graph 到 Advanced 级别"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T12:11:02.481Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#199",
+    "taskTitle": "提升 Pi Extensions 到 Advanced 级别",
+    "startedAt": "2026-03-09T12:26:06.825Z",
+    "complexity": "small",
+    "completedSteps": [
+      "提升 Pi Extensions 到 Advanced 级别"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T12:31:31.778Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#200",
+    "taskTitle": "实现 Evaluation-driven Improvement 闭环",
+    "startedAt": "2026-03-09T12:55:59.634Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "实现 Evaluation-driven Improvement 闭环"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T12:57:07.464Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#201",
+    "taskTitle": "提升 Rate Limit Handling 到 Advanced 级别 — 当前实现只有简单重试，需要：(1) 添加全局限流状态管理 (2) 实现智能退避算法（指数退避） (3) 添加 API 使用量追踪和预测 (4) 实现降级策略（当限流时自动切换到内置工具） (5) 添加限流事件监控和告警。验证：pkill -f \"jinx\" -f \"claude\" && pnpm test && capabilities.json 中 rate-limit-handling 成熟度更新为 advanced。依赖价值：P5 适应约束原则的核心能力，提升进化循环稳定性。",
+    "startedAt": "2026-03-09T14:28:07.496Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "提升 Rate Limit Handling 到 Advanced 级别 — 当前实现只有简单重试，需要：(1) 添加全局限流状态管理 (2) 实现智能退避算法（指数退避） (3) 添加 API 使用量追踪和预测 (4) 实现降级策略（当限流时自动切换到内置工具） (5) 添加限流事件监控和告警。验证：pkill -f \"jinx\" -f \"claude\" && pnpm test && capabilities.json 中 rate-limit-handling 成熟度更新为 advanced。依赖价值：P5 适应约束原则的核心能力，提升进化循环稳定性。"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T15:20:50.221Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#202",
+    "taskTitle": "集成 Mastra Scorers 评估进化质量 — 根据 Mastra AI Agent 框架研究报告，集成 Scorers 来评估进化质量。步骤：(1) 添加 @mastra/core 依赖 (2) 实现 EvolutionQualityScorer (3) 集成到 evolution 循环。验证：pnpm build 通过、pnpm test 通过、EvolutionQualityScorer 存在、进化循环使用 Scorer、pi-extensions 成熟度更新。依赖价值：技术探索方向的具体实践，Scorers 提供客观的进化质量评估，是 P7 扩展自我原则的实践。",
+    "startedAt": "2026-03-09T15:25:55.611Z",
+    "complexity": "large",
+    "completedSteps": [
+      "分析需求: EvolutionQualityScorer (3) 集成到 evolution 循环。验证：pnpm build 通过、pnpm test 通过、EvolutionQualityScorer 存在、进化循环使用 Scorer、pi-extensions 成熟度更新。依赖价值：技术探索方向的具体实践，Scorers 提供客观的进化质量评估，是 P7 扩展自我原则的实践。"
+    ],
+    "remainingSteps": [
+      "设计实现方案: EvolutionQualityScorer (3) 集成到 evolution 循环。验证：pnpm build 通过、pnpm test 通过、EvolutionQualityScorer 存在、进化循环使用 Scorer、pi-extensions 成熟度更新。依赖价值：技术探索方向的具体实践，Scorers 提供客观的进化质量评估，是 P7 扩展自我原则的实践。",
+      "实现核心逻辑: EvolutionQualityScorer (3) 集成到 evolution 循环。验证：pnpm build 通过、pnpm test 通过、EvolutionQualityScorer 存在、进化循环使用 Scorer、pi-extensions 成熟度更新。依赖价值：技术探索方向的具体实践，Scorers 提供客观的进化质量评估，是 P7 扩展自我原则的实践。",
+      "编写测试: EvolutionQualityScorer (3) 集成到 evolution 循环。验证：pnpm build 通过、pnpm test 通过、EvolutionQualityScorer 存在、进化循环使用 Scorer、pi-extensions 成熟度更新。依赖价值：技术探索方向的具体实践，Scorers 提供客观的进化质量评估，是 P7 扩展自我原则的实践。",
+      "验证和提交: EvolutionQualityScorer (3) 集成到 evolution 循环。验证：pnpm build 通过、pnpm test 通过、EvolutionQualityScorer 存在、进化循环使用 Scorer、pi-extensions 成熟度更新。依赖价值：技术探索方向的具体实践，Scorers 提供客观的进化质量评估，是 P7 扩展自我原则的实践。"
+    ],
+    "updatedAt": "2026-03-09T15:33:12.041Z",
+    "cyclesSpent": 1,
+    "status": "in-progress"
+  },
+  {
+    "taskId": "#203",
+    "taskTitle": "实现 Span-based Tracing 基础设施 — 创建 src/observability/trace.ts，定义 Span/Trace 接口，实现 span 管理功能（startSpan, endSpan, addEvent, getTrace）。这是 Arize Self-Improving Agent Harness 研究的 P0 必须有核心能力，没有它其他遥测改进都是空谈。验证：(1) src/observability/trace.ts 存在并导出 Span/Trace 接口 (2) startSpan/endSpan/addEvent/getTrace 函数可用 (3) pnpm build 通过 (4) pnpm test 通过 (5) 有基础测试覆盖。依赖价值：追踪每次进化的完整执行链，失败时快速定位问题根源，是实现真正自我改进的基础。",
+    "startedAt": "2026-03-09T15:53:13.203Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "实现 Span-based Tracing 基础设施 — 创建 src/observability/trace.ts，定义 Span/Trace 接口，实现 span 管理功能（startSpan, endSpan, addEvent, getTrace）。这是 Arize Self-Improving Agent Harness 研究的 P0 必须有核心能力，没有它其他遥测改进都是空谈。验证：(1) src/observability/trace.ts 存在并导出 Span/Trace 接口 (2) startSpan/endSpan/addEvent/getTrace 函数可用 (3) pnpm build 通过 (4) pnpm test 通过 (5) 有基础测试覆盖。依赖价值：追踪每次进化的完整执行链，失败时快速定位问题根源，是实现真正自我改进的基础。"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T15:59:41.413Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#204",
+    "taskTitle": "实现 add_backlog_task 工具 — 修复 Goal Discovery 流程。Goal Discovery prompt 引用了 add_backlog_task 工具，但这个工具不存在于 Pi 扩展中，导致 Goal Discovery 流程无法正常工作。需要：(1) 创建 extensions/add-backlog-task.ts 作为 Pi extension (2) 工具能够添加任务到 data/backlog.json (3) 确保 goal discovery 会话可用。验证：pnpm build 通过、pnpm test 通过、工具存在且可用、goal-discovery 成熟度更新。依赖价值：Goal Discovery 能力的核心缺失，修复它是提升 goal-discovery 从 novice 到 advanced 的关键步骤。 (最高 Gap 0.80)",
+    "startedAt": "2026-03-09T16:26:56.141Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "实现 add_backlog_task 工具 — 修复 Goal Discovery 流程。Goal Discovery prompt 引用了 add_backlog_task 工具，但这个工具不存在于 Pi 扩展中，导致 Goal Discovery 流程无法正常工作。需要：(1) 创建 extensions/add-backlog-task.ts 作为 Pi extension (2) 工具能够添加任务到 data/backlog.json (3) 确保 goal discovery 会话可用。验证：pnpm build 通过、pnpm test 通过、工具存在且可用、goal-discovery 成熟度更新。依赖价值：Goal Discovery 能力的核心缺失，修复它是提升 goal-discovery 从 novice 到 advanced 的关键步骤。 (最高 Gap 0.80)"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T16:30:43.097Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#205",
+    "taskTitle": "提升 Metacognition 到 Advanced 级别 — 当前元认知能力只有基础实现，需要：(1) 实现信心度追踪机制，记录每次决策的信心分数 (2) 添加信心校准评估，比较预期信心与实际结果 (3) 实现 overconfidence/underconfidence 警告 (4) 添加元认知报告到 evolution 循环。验证：src/memory/metacognitive.ts 扩展、信心追踪测试通过、capabilities.json 中 metacognition 成熟度更新为 advanced。依赖价值：P3 三思而后行原则的核心能力，提升所有其他能力的学习效率。 (最高认知能力缺口)",
+    "startedAt": "2026-03-09T17:53:26.443Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "提升 Metacognition 到 Advanced 级别 — 当前元认知能力只有基础实现，需要：(1) 实现信心度追踪机制，记录每次决策的信心分数 (2) 添加信心校准评估，比较预期信心与实际结果 (3) 实现 overconfidence/underconfidence 警告 (4) 添加元认知报告到 evolution 循环。验证：src/memory/metacognitive.ts 扩展、信心追踪测试通过、capabilities.json 中 metacognition 成熟度更新为 advanced。依赖价值：P3 三思而后行原则的核心能力，提升所有其他能力的学习效率。 (最高认知能力缺口)"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T18:54:43.336Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#206",
+    "taskTitle": "真正提升 Pi Extensions 到 Advanced 级别 — 当前 extensions/jinx-tools.ts 只是简单重新导出工具，没有利用 Pi 的高级能力。需要实现：(1) 危险操作保护 - 对 rm -rf、sudo 等危险命令进行确认 (2) 自定义命令 - 添加 /jinx-status、/health 等命令 (3) 会话启动钩子 - 在 session_start 时显示 Jinx 状态 (4) 工具调用日志 - 记录所有工具调用用于调试。验证：(1) extensions/jinx-tools.ts 有事件钩子 (2) 有自定义命令注册 (3) pnpm build 通过 (4) pnpm test 通过 (5) capabilities.json 中 pi-extensions 成熟度更新为 advanced。依赖价值：P7 扩展自我原则的核心能力，importance 0.80 是最高能力差距。",
+    "startedAt": "2026-03-09T18:57:56.148Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "真正提升 Pi Extensions 到 Advanced 级别 — 当前 extensions/jinx-tools.ts 只是简单重新导出工具，没有利用 Pi 的高级能力。需要实现：(1) 危险操作保护 - 对 rm -rf、sudo 等危险命令进行确认 (2) 自定义命令 - 添加 /jinx-status、/health 等命令 (3) 会话启动钩子 - 在 session_start 时显示 Jinx 状态 (4) 工具调用日志 - 记录所有工具调用用于调试。验证：(1) extensions/jinx-tools.ts 有事件钩子 (2) 有自定义命令注册 (3) pnpm build 通过 (4) pnpm test 通过 (5) capabilities.json 中 pi-extensions 成熟度更新为 advanced。依赖价值：P7 扩展自我原则的核心能力，importance 0.80 是最高能力差距。"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T19:19:39.857Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#207",
+    "taskTitle": "提升 Reflection 到 Advanced 级别 — 当前 Reflection 是唯一的 Novice 能力（importance 0.60），实现了但未真正发挥作用。问题：(1) 无测试覆盖 (2) 生成的 suggestions 全是 pending，无后续跟踪 (3) insights 没有影响进化决策。需要：(1) 添加 test/reflection.test.ts 覆盖核心功能 (2) 实现 feedback loop：high priority suggestions 自动进入 goal discovery (3) 在进化决策时注入 insights 作为上下文。验证：(1) pnpm test 通过 (2) test/reflection.test.ts 存在且覆盖核心函数 (3) capabilities.json 中 reflection 成熟度更新为 advanced (4) suggestions 有明确的后续处理路径。依赖价值：Reflection 是自我改进的关键能力，能从历史失败中学习。",
+    "startedAt": "2026-03-09T19:55:22.970Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "提升 Reflection 到 Advanced 级别 — 当前 Reflection 是唯一的 Novice 能力（importance 0.60），实现了但未真正发挥作用。问题：(1) 无测试覆盖 (2) 生成的 suggestions 全是 pending，无后续跟踪 (3) insights 没有影响进化决策。需要：(1) 添加 test/reflection.test.ts 覆盖核心功能 (2) 实现 feedback loop：high priority suggestions 自动进入 goal discovery (3) 在进化决策时注入 insights 作为上下文。验证：(1) pnpm test 通过 (2) test/reflection.test.ts 存在且覆盖核心函数 (3) capabilities.json 中 reflection 成熟度更新为 advanced (4) suggestions 有明确的后续处理路径。依赖价值：Reflection 是自我改进的关键能力，能从历史失败中学习。"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T19:58:51.735Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#208",
+    "taskTitle": "完成 Reflection 能力提升 — 更新成熟度并添加测试。当前 Reflection 是唯一 Novice 能力（importance 0.60），代码已实现但 capabilities.json 显示 novice，缺少测试。需要：(1) 添加 test/reflection.test.ts (2) 更新 capabilities.json maturity 为 advanced (3) 测试覆盖率 > 50%。验证：pnpm build/test 通过、测试文件存在、maturity 更新。依赖价值：Reflection 是自我改进关键能力，最高 Gap。",
+    "startedAt": "2026-03-09T20:25:42.082Z",
+    "complexity": "medium",
+    "completedSteps": [
+      "完成 Reflection 能力提升 — 更新成熟度并添加测试。当前 Reflection 是唯一 Novice 能力（importance 0.60），代码已实现但 capabilities.json 显示 novice，缺少测试。需要：(1) 添加 test/reflection.test.ts (2) 更新 capabilities.json maturity 为 advanced (3) 测试覆盖率 > 50%。验证：pnpm build/test 通过、测试文件存在、maturity 更新。依赖价值：Reflection 是自我改进关键能力，最高 Gap。"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T20:35:23.855Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#100",
+    "taskTitle": "Existing task",
+    "startedAt": "2026-03-09T20:35:34.742Z",
+    "complexity": "small",
+    "completedSteps": [
+      "Existing task"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T20:40:23.229Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  },
+  {
+    "taskId": "#101",
+    "taskTitle": "Critical improvement needed (自动生成)",
+    "startedAt": "2026-03-09T20:40:34.269Z",
+    "complexity": "small",
+    "completedSteps": [
+      "Critical improvement needed (自动生成)"
+    ],
+    "remainingSteps": [],
+    "updatedAt": "2026-03-09T21:01:04.281Z",
+    "cyclesSpent": 1,
+    "status": "completed"
+  }
+]

@@ -1,7 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdirSync, rmSync, existsSync, readFileSync } from "node:fs";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+
+// Mock the dynamic import of distillFromKnowledgeFiles to prevent real execution
+vi.mock("../src/memory/principle-distiller.js", () => ({
+  distillFromKnowledgeFiles: vi.fn().mockResolvedValue({
+    success: true,
+    principleIds: ["principle-1", "principle-2"],
+  }),
+}));
 
 // We test the pure utility functions directly (no file I/O mocking needed
 // for the logic functions).
@@ -296,6 +304,156 @@ describe("capsule-store file I/O", () => {
     const lines = content.split("\n").filter(l => l.trim().length > 0);
     for (const line of lines) {
       expect(() => JSON.parse(line)).not.toThrow();
+    }
+  });
+});
+
+// ── Distillation Trigger (AgentC2 Flywheel Step 3) ─────────────────
+
+import {
+  getCapsulesAddedSinceLastDistillation,
+  checkAndTriggerCapsuleDistillation,
+  getCapsuleCount,
+} from "../src/evolution/capsule-store.js";
+
+const TRIGGER_PATH = join(process.cwd(), "data", "gep", "distillation-trigger.json");
+
+/** Read trigger.json safely, returning null if missing/malformed. */
+function readTrigger(): { lastCapsuleLineCount: number; lastTriggeredAt: string | null } | null {
+  try {
+    if (!existsSync(TRIGGER_PATH)) return null;
+    return JSON.parse(readFileSync(TRIGGER_PATH, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+describe("getCapsulesAddedSinceLastDistillation", () => {
+  let savedTrigger: string | null = null;
+
+  beforeEach(() => {
+    // Save original trigger.json so we can restore it
+    savedTrigger = existsSync(TRIGGER_PATH)
+      ? readFileSync(TRIGGER_PATH, "utf-8")
+      : null;
+  });
+
+  afterEach(() => {
+    // Restore original trigger.json
+    if (savedTrigger !== null) {
+      writeFileSync(TRIGGER_PATH, savedTrigger, "utf-8");
+    }
+  });
+
+  it("returns a non-negative number", () => {
+    const count = getCapsulesAddedSinceLastDistillation();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
+
+  it("returns 0 when lastCapsuleLineCount equals current capsule count", () => {
+    const current = getCapsuleCount();
+    writeFileSync(
+      TRIGGER_PATH,
+      JSON.stringify({ lastCapsuleLineCount: current, lastTriggeredAt: null }, null, 2),
+      "utf-8",
+    );
+    const added = getCapsulesAddedSinceLastDistillation();
+    expect(added).toBe(0);
+  });
+
+  it("returns positive number when lastCapsuleLineCount is lower than current", () => {
+    const current = getCapsuleCount();
+    // Pretend last distillation happened at half the current count
+    const fakeLastCount = Math.max(0, current - 3);
+    writeFileSync(
+      TRIGGER_PATH,
+      JSON.stringify({ lastCapsuleLineCount: fakeLastCount, lastTriggeredAt: null }, null, 2),
+      "utf-8",
+    );
+    const added = getCapsulesAddedSinceLastDistillation();
+    expect(added).toBe(current - fakeLastCount);
+  });
+
+  it("never returns a negative number even if lastCapsuleLineCount exceeds current", () => {
+    writeFileSync(
+      TRIGGER_PATH,
+      JSON.stringify({ lastCapsuleLineCount: 9999, lastTriggeredAt: null }, null, 2),
+      "utf-8",
+    );
+    const added = getCapsulesAddedSinceLastDistillation();
+    expect(added).toBeGreaterThanOrEqual(0);
+  });
+
+  it("handles missing trigger.json gracefully (treats last count as 0)", () => {
+    // Remove trigger.json temporarily
+    if (existsSync(TRIGGER_PATH)) {
+      rmSync(TRIGGER_PATH);
+    }
+    // Should not throw; result is just current capsule count
+    const added = getCapsulesAddedSinceLastDistillation();
+    expect(added).toBeGreaterThanOrEqual(0);
+    expect(typeof added).toBe("number");
+  });
+});
+
+describe("checkAndTriggerCapsuleDistillation", () => {
+  let savedTrigger: string | null = null;
+
+  beforeEach(() => {
+    savedTrigger = existsSync(TRIGGER_PATH)
+      ? readFileSync(TRIGGER_PATH, "utf-8")
+      : null;
+  });
+
+  afterEach(() => {
+    if (savedTrigger !== null) {
+      writeFileSync(TRIGGER_PATH, savedTrigger, "utf-8");
+    }
+  });
+
+  it("does NOT update trigger.json when fewer than 5 new capsules", async () => {
+    const current = getCapsuleCount();
+    // Set lastCapsuleLineCount to current - 2 (only 2 new capsules, below threshold)
+    const fakeLastCount = Math.max(0, current - 2);
+    const stateBefore = JSON.stringify(
+      { lastCapsuleLineCount: fakeLastCount, lastTriggeredAt: null },
+      null,
+      2,
+    );
+    writeFileSync(TRIGGER_PATH, stateBefore, "utf-8");
+
+    const messages: string[] = [];
+    await checkAndTriggerCapsuleDistillation(async (msg) => { messages.push(msg); });
+
+    // No notification should have been sent
+    expect(messages).toHaveLength(0);
+    // trigger.json should NOT have lastTriggeredAt set
+    const afterState = readTrigger();
+    expect(afterState?.lastTriggeredAt).toBeNull();
+  });
+
+  it("does NOT throw when distillation fails internally", async () => {
+    const current = getCapsuleCount();
+    // Set lastCapsuleLineCount to 0 to ensure threshold IS reached (if enough capsules exist)
+    // or just ensure no crash
+    writeFileSync(
+      TRIGGER_PATH,
+      JSON.stringify({ lastCapsuleLineCount: 0, lastTriggeredAt: null }, null, 2),
+      "utf-8",
+    );
+    // Should resolve without throwing regardless of outcome
+    await expect(checkAndTriggerCapsuleDistillation()).resolves.toBeUndefined();
+  });
+
+  it("notifyFn is optional — works without it", async () => {
+    await expect(checkAndTriggerCapsuleDistillation()).resolves.toBeUndefined();
+  });
+
+  it("trigger.json is valid JSON after calling the function", async () => {
+    await checkAndTriggerCapsuleDistillation();
+    if (existsSync(TRIGGER_PATH)) {
+      const content = readFileSync(TRIGGER_PATH, "utf-8");
+      expect(() => JSON.parse(content)).not.toThrow();
     }
   });
 });

@@ -1,3 +1,8 @@
+---
+name: evolution
+description: Protocol for executing evolution cycles. Use when performing self-improvement tasks, making code changes, and committing progress.
+---
+
 # Evolution Skill
 
 When performing an evolution cycle, follow this exact protocol:

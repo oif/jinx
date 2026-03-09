@@ -24,13 +24,15 @@
     "@mariozechner/pi-agent-core": "^0.52.12",
     "@mariozechner/pi-ai": "^0.52.12",
     "@mariozechner/pi-coding-agent": "^0.52.12",
+    "@mastra/core": "^1.10.0",
     "@sinclair/typebox": "^0.34.41",
     "@types/turndown": "^5.0.6",
     "cheerio": "^1.2.0",
     "grammy": "^1.35.0",
     "pino": "^10.3.1",
     "systeminformation": "^5.31.1",
-    "turndown": "^7.2.2"
+    "turndown": "^7.2.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

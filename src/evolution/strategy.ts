@@ -39,6 +39,10 @@ export interface StrategyConfig {
   strategyHistory: StrategyChange[];
   autoSelect: boolean; // Whether to auto-select based on state
   thresholds: StrategyThresholds;
+  // Hysteresis mechanism to prevent strategy oscillation
+  pendingSwitch: EvolutionStrategy | null; // Strategy waiting for confirmation
+  confirmationCount: number; // How many times the pending switch has been recommended
+  requiredConfirmations: number; // How many confirmations needed to switch (default 2)
 }
 
 export interface StrategyChange {
@@ -85,6 +89,9 @@ const DEFAULT_CONFIG: StrategyConfig = {
   strategyHistory: [],
   autoSelect: true,
   thresholds: DEFAULT_THRESHOLDS,
+  pendingSwitch: null,
+  confirmationCount: 0,
+  requiredConfirmations: 2, // Require 2 consecutive recommendations to switch
 };
 
 // ── Strategy Descriptions ─────────────────────────────────────────
@@ -149,6 +156,10 @@ export function loadStrategyConfig(): StrategyConfig {
         ...DEFAULT_CONFIG,
         ...saved,
         thresholds: { ...DEFAULT_THRESHOLDS, ...saved.thresholds },
+        // Ensure new hysteresis fields have defaults for backward compatibility
+        pendingSwitch: saved.pendingSwitch ?? null,
+        confirmationCount: saved.confirmationCount ?? 0,
+        requiredConfirmations: saved.requiredConfirmations ?? 2,
       };
     }
   } catch (e) {
@@ -312,14 +323,77 @@ export function getCurrentStrategy(): EvolutionStrategy {
     const state = analyzeSystemState();
     const recommendation = recommendStrategy(state, config.thresholds);
     
-    // Only update if significantly different (threshold 0.5 to allow balanced strategy with confidence 0.6)
-    if (recommendation.recommended !== config.currentStrategy && recommendation.confidence > 0.5) {
-      setStrategy(
-        recommendation.recommended,
-        `Auto-selected: ${recommendation.reasons.join("; ")}`,
-        true
-      );
-      return recommendation.recommended;
+    // Same strategy as current - clear any pending switch
+    if (recommendation.recommended === config.currentStrategy) {
+      if (config.pendingSwitch !== null || config.confirmationCount > 0) {
+        config.pendingSwitch = null;
+        config.confirmationCount = 0;
+        saveStrategyConfig(config);
+      }
+      return config.currentStrategy;
+    }
+    
+    // Different strategy recommended - apply hysteresis
+    // Only update if confidence exceeds threshold
+    if (recommendation.confidence <= 0.5) {
+      return config.currentStrategy;
+    }
+    
+    // Check if this matches the pending switch
+    if (recommendation.recommended === config.pendingSwitch) {
+      // Increment confirmation count
+      config.confirmationCount++;
+      
+      // Check if we have enough confirmations
+      if (config.confirmationCount >= config.requiredConfirmations) {
+        // Execute the switch
+        const newStrategy = recommendation.recommended;
+        const oldStrategy = config.currentStrategy;
+        
+        config.currentStrategy = newStrategy;
+        config.pendingSwitch = null;
+        config.confirmationCount = 0;
+        config.lastStrategyChange = new Date().toISOString();
+        config.strategyHistory.push({
+          timestamp: new Date().toISOString(),
+          from: oldStrategy,
+          to: newStrategy,
+          reason: `Auto-selected after ${config.requiredConfirmations} confirmations: ${recommendation.reasons.join("; ")}`,
+        });
+        
+        // Keep only last 50 changes
+        if (config.strategyHistory.length > 50) {
+          config.strategyHistory = config.strategyHistory.slice(-50);
+        }
+        
+        saveStrategyConfig(config);
+        log.info(`Evolution strategy switched (hysteresis): ${oldStrategy} → ${newStrategy}`, {
+          confirmations: config.requiredConfirmations,
+          reasons: recommendation.reasons,
+        });
+        
+        return newStrategy;
+      } else {
+        // Still need more confirmations
+        saveStrategyConfig(config);
+        log.debug(`Strategy switch pending confirmation`, {
+          pendingSwitch: config.pendingSwitch,
+          confirmationCount: config.confirmationCount,
+          required: config.requiredConfirmations,
+        });
+        return config.currentStrategy;
+      }
+    } else {
+      // New recommendation different from pending - start fresh
+      config.pendingSwitch = recommendation.recommended;
+      config.confirmationCount = 1;
+      saveStrategyConfig(config);
+      log.debug(`New strategy recommendation pending`, {
+        pendingSwitch: config.pendingSwitch,
+        confidence: recommendation.confidence,
+        reasons: recommendation.reasons,
+      });
+      return config.currentStrategy;
     }
   }
   
@@ -363,6 +437,16 @@ export function formatStrategyStatus(): string {
     lines.push(`   Confidence: ${(recommendation.confidence * 100).toFixed(0)}%`);
     lines.push(`   Reasons:`);
     recommendation.reasons.forEach(r => lines.push(`     • ${r}`));
+    
+    // Show hysteresis state
+    if (config.pendingSwitch) {
+      lines.push("");
+      lines.push(`⏳ Pending Switch: ${STRATEGY_DESCRIPTIONS[config.pendingSwitch].label}`);
+      lines.push(`   Confirmations: ${config.confirmationCount}/${config.requiredConfirmations}`);
+    } else if (recommendation.recommended !== currentStrategy) {
+      lines.push("");
+      lines.push(`⏳ New recommendation pending confirmation`);
+    }
     lines.push("");
   }
 
@@ -385,13 +469,39 @@ export function formatStrategyStatus(): string {
 // ── Strategy Control ─────────────────────────────────────────────
 
 export function forceStrategy(strategy: EvolutionStrategy, reason: string): void {
-  setStrategy(strategy, `Manual override: ${reason}`, false);
+  const config = loadStrategyConfig();
+  
+  // Reset hysteresis state on manual override
+  config.pendingSwitch = null;
+  config.confirmationCount = 0;
+  
+  // Record the change
+  const oldStrategy = config.currentStrategy;
+  config.currentStrategy = strategy;
+  config.autoSelect = false;
+  config.lastStrategyChange = new Date().toISOString();
+  config.strategyHistory.push({
+    timestamp: new Date().toISOString(),
+    from: oldStrategy,
+    to: strategy,
+    reason: `Manual override: ${reason}`,
+  });
+  
+  // Keep only last 50 changes
+  if (config.strategyHistory.length > 50) {
+    config.strategyHistory = config.strategyHistory.slice(-50);
+  }
+  
+  saveStrategyConfig(config);
   log.info(`Strategy manually set to ${strategy}`, { reason });
 }
 
 export function enableAutoSelect(): void {
   const config = loadStrategyConfig();
   config.autoSelect = true;
+  // Reset hysteresis state when re-enabling auto-select
+  config.pendingSwitch = null;
+  config.confirmationCount = 0;
   saveStrategyConfig(config);
   log.info("Strategy auto-selection enabled");
 }

@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { STATE_PATH, PACKAGE_PATH, DATA_DIR } from "../supervisor/paths.js";
 
@@ -7,6 +7,8 @@ export interface State {
   cycle: number;
   lastRestart: string | null;
   lastEvolution: string | null;
+  lastBoot: string | null;
+  crashCount: number;
   [key: string]: unknown;
 }
 
@@ -46,15 +48,36 @@ export function readVersion(): string {
 }
 
 /**
+ * Initialize state.json with default values if it doesn't exist.
+ * This ensures state.json exists after system startup.
+ */
+function initializeStateFile(): void {
+  if (!existsSync(STATE_PATH)) {
+    const defaultState = {
+      lastRestart: new Date().toISOString(),
+      lastEvolution: null,
+      lastBoot: null,
+      crashCount: 0,
+    };
+    writeFileSync(STATE_PATH, JSON.stringify(defaultState, null, 2));
+  }
+}
+
+/**
  * Read the full state, merging:
  * - version from package.json (git-tracked)
  * - cycle from evolution-history.json (calculated from actual records)
  * - other fields from state.json (runtime state)
+ *
+ * If state.json doesn't exist, it will be initialized with defaults.
  */
 export function readState(): State {
   // Git-tracked values
   const version = readVersion();
   const cycle = readCycleFromHistory();
+
+  // Ensure state.json exists (initialization fix for #120)
+  initializeStateFile();
 
   // Runtime state from state.json
   try {
@@ -65,14 +88,19 @@ export function readState(): State {
       cycle,   // Always use git-tracked cycle
       lastRestart: runtimeState.lastRestart || null,
       lastEvolution: runtimeState.lastEvolution || null,
+      lastBoot: runtimeState.lastBoot || null,
+      crashCount: runtimeState.crashCount ?? 0,
     };
   } catch {
-    // state.json doesn't exist - return defaults with git-tracked values
+    // This should rarely happen since we just initialized the file
+    // But if it does, return defaults
     return {
       version,
       cycle,
-      lastRestart: null,
+      lastRestart: new Date().toISOString(),
       lastEvolution: null,
+      lastBoot: null,
+      crashCount: 0,
     };
   }
 }

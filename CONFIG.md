@@ -180,6 +180,85 @@ DEFAULT_MODEL=anthropic/claude-3-opus
 
 ---
 
+## Tool Groups Configuration
+
+Similar to GitHub MCP Server's X-MCP-Tools header, Jinx supports selective tool loading to reduce context usage and optimize tool availability.
+
+### Why Tool Groups?
+
+- **Reduce context usage**: Loading all 38 tools fills context with tool descriptions
+- **Optimize for task**: Worker sessions can load only relevant tools
+- **Faster responses**: Fewer tools = faster model decision making
+
+### Configuration
+
+**Via environment variable:**
+```bash
+# Enable specific groups (comma-separated)
+JINX_TOOL_GROUPS=github,evolution,memory
+
+# Enable all groups (default if not set)
+JINX_TOOL_GROUPS=all
+```
+
+**Via config file** (`data/tool-groups.json`):
+```json
+{
+  "enabled": ["github", "evolution", "memory"],
+  "disabled": ["swarm"],
+  "tools": {
+    "include": ["custom_tool"],
+    "exclude": ["run_swarm"]
+  }
+}
+```
+
+### Available Tool Groups
+
+| Group | Description | Tools |
+|-------|-------------|-------|
+| `github` | GitHub integration | `github_list_issues`, `github_create_issue`, `github_update_issue`, `github_add_comment`, `github_list_prs`, `github_analyze_pr`, `github_repo_stats`, `github_list_commits`, `github_create_pr` |
+| `memory` | Knowledge graph | `remember`, `recall`, `relate_memories`, `memory_stats`, `export_memory`, `import_memory`, `advanced_memory_search`, `memory_clusters` |
+| `evolution` | Self-improvement | `claude_code`, `request_restart`, `check_code_quality`, `run_self_diagnosis`, `execute_repair`, `set_evolution_strategy`, `get_strategy_status`, `enable_strategy_auto_select`, `disable_strategy_auto_select`, `add_backlog_task` |
+| `skills` | Skill library | `list_skills`, `get_skill_detail`, `create_skill`, `execute_skill` |
+| `system` | State management | `update_identity`, `update_scratchpad`, `update_state`, `knowledge_write`, `get_performance_report` |
+| `web` | Web interaction | `web_search`, `fetch_webpage` |
+| `swarm` | Multi-agent | `run_swarm` |
+
+### Use Case Examples
+
+**Worker session for GitHub task:**
+```bash
+JINX_TOOL_GROUPS=github,system
+# Only 11 tools loaded instead of 38
+# Saves ~27 tool descriptions in context
+```
+
+**Worker session for evolution cycle:**
+```bash
+JINX_TOOL_GROUPS=evolution,github
+# Focus on code changes and PR management
+```
+
+**Minimal session (conversation only):**
+```bash
+JINX_TOOL_GROUPS=system
+# Just identity and state tools
+```
+
+### Context Savings Estimate
+
+Each tool description averages ~200 tokens. Loading only relevant groups can save:
+
+| Scenario | Tools | Approx. Tokens Saved |
+|----------|-------|---------------------|
+| GitHub only | 9 | ~5,800 |
+| Evolution only | 10 | ~5,600 |
+| GitHub + Evolution | 18 | ~4,000 |
+| Memory only | 8 | ~6,000 |
+
+---
+
 ## Complete Environment File Example
 
 Create `.env` file in project root:
@@ -235,4 +314,4 @@ WARN: Invalid HEALTH_MEMORY_WARNING_THRESHOLD value: abc, using default: 85
 
 ---
 
-*Last updated: Cycle #13 (v0.0.13)*
+*Last updated: Evolution #2 (v0.1.118) - Added Tool Groups configuration*

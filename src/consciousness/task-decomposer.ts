@@ -112,7 +112,6 @@ const COMPLEXITY_KEYWORDS = {
  */
 export function estimateTaskComplexity(task: Task): TaskComplexity {
   const title = task.title.toLowerCase();
-  const id = task.id.toLowerCase();
   
   // Count keyword matches for each complexity level
   let largeScore = 0;

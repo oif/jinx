@@ -30,15 +30,29 @@ import { join, dirname } from "node:path";
 
 // Test data path
 const TEST_DATA_PATH = join(process.cwd(), "data", "memory", "failure-patterns.json");
-const TEST_HISTORY_PATH = join(process.cwd(), "data", "evolution-history.json");
+const HISTORY_PATH = join(process.cwd(), "data", "evolution-history.json");
 
 describe("Failure Pattern Detection", () => {
+  // Store original history content to restore after tests
+  let originalHistoryContent: string | null = null;
+
   beforeEach(() => {
+    // Save original history content to prevent data loss
+    originalHistoryContent = existsSync(HISTORY_PATH) 
+      ? readFileSync(HISTORY_PATH, "utf-8") 
+      : null;
+
     // Reset context before each test
     resetSessionContext();
   });
 
   afterEach(() => {
+    // Restore original history content
+    if (originalHistoryContent !== null) {
+      mkdirSync(join(process.cwd(), "data"), { recursive: true });
+      writeFileSync(HISTORY_PATH, originalHistoryContent);
+    }
+
     // Clean up test data
     try {
       if (existsSync(TEST_DATA_PATH)) {

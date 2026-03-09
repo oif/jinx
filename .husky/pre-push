@@ -1,1 +1,18 @@
-pnpm test
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-push checks..."
+
+# Build check - ensure TypeScript compiles
+pnpm build || {
+  echo "❌ Build failed. Push blocked."
+  exit 1
+}
+
+# Test check - ensure all tests pass
+pnpm test || {
+  echo "❌ Tests failed. Push blocked."
+  exit 1
+}
+
+echo "✅ All pre-push checks passed."

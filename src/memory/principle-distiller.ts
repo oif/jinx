@@ -42,6 +42,7 @@ import {
   getPrincipleStats,
   mergePrinciples,
   prunePrinciples,
+  clearAllPrinciples,
   Principle,
   PrincipleCategory,
   PrincipleConditions,
@@ -50,7 +51,7 @@ import {
   MemoryNode,
 } from "./graph.js";
 import { log } from "../util/log.js";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { DATA_DIR } from "../supervisor/paths.js";
 
@@ -1312,6 +1313,247 @@ export function formatDistillationResult(result: DistillationResult): string {
   return lines.join("\n");
 }
 
+// ── Knowledge-File Distillation ──────────────────────────────────────
+
+const KNOWLEDGE_DIR = join(DATA_DIR, "knowledge");
+const MAX_KNOWLEDGE_CHARS = 80_000; // cap to keep prompt manageable
+
+/**
+ * Raw principle shape returned by the LLM
+ */
+interface RawPrinciple {
+  content: string;
+  summary: string;
+  category: "bug-fix" | "feature" | "integration" | "research";
+  taskTypes: string[];
+  tags: string[];
+  rationale: string;
+  confidence: number;
+}
+
+/**
+ * Map knowledge-file category labels to PrincipleCategory
+ */
+function knowledgeCategoryToPrincipleCategory(cat: string): PrincipleCategory {
+  switch (cat) {
+    case "bug-fix": return "error_handling";
+    case "feature": return "coding";
+    case "integration": return "architecture";
+    case "research": return "learning";
+    default: return "general";
+  }
+}
+
+/**
+ * Read and concatenate knowledge files (capped to MAX_KNOWLEDGE_CHARS)
+ */
+function readKnowledgeFiles(): string {
+  if (!existsSync(KNOWLEDGE_DIR)) {
+    log.warn("Knowledge directory not found", { path: KNOWLEDGE_DIR });
+    return "";
+  }
+
+  const files = readdirSync(KNOWLEDGE_DIR)
+    .filter((f) => f.endsWith(".md"))
+    .sort(); // deterministic order
+
+  const chunks: string[] = [];
+  let totalChars = 0;
+
+  for (const file of files) {
+    if (totalChars >= MAX_KNOWLEDGE_CHARS) break;
+    try {
+      const content = readFileSync(join(KNOWLEDGE_DIR, file), "utf-8");
+      const trimmed = content.slice(0, MAX_KNOWLEDGE_CHARS - totalChars);
+      chunks.push(`\n\n--- FILE: ${file} ---\n${trimmed}`);
+      totalChars += trimmed.length;
+    } catch {
+      // skip unreadable files
+    }
+  }
+
+  log.info("Knowledge files read", { fileCount: files.length, chars: totalChars });
+  return chunks.join("");
+}
+
+/**
+ * Call the NSI LLM API (Anthropic-compatible) to distil principles
+ */
+async function callLLMForPrinciples(knowledgeText: string): Promise<RawPrinciple[]> {
+  const apiKey = process.env.NSI_API_KEY;
+  if (!apiKey) {
+    throw new Error("NSI_API_KEY environment variable is not set");
+  }
+
+  const baseUrl = "https://aig.oo.sb";
+  const model = "claude-sonnet-4-6";
+
+  const systemPrompt = `You are an expert AI agent architect analysing evolution logs and research notes for an autonomous coding agent called Jinx. Your task is to distil highly actionable, specific technical principles from the provided knowledge base.
+
+Rules for good principles:
+- Each principle MUST contain concrete, specific technical advice (not vague generalities)
+- Each principle MUST be actionable (tells what to DO or AVOID specifically)
+- Avoid generic platitudes like "test your code" or "write clean code"
+- Good example: "When fixing TypeScript compilation errors, always run 'tsc --noEmit' first to get the full error list before making changes — partial fixes often introduce new errors"
+- Bad example: "Testing is important for quality"
+
+You must output VALID JSON only — an array of principle objects with NO markdown fences.`;
+
+  const userPrompt = `Analyse the following knowledge base (evolution history + research notes) and extract at least 12 highly actionable, specific technical principles.
+
+Classify each principle into one of these categories:
+- "bug-fix": debugging strategies, error diagnosis, fixing regressions
+- "feature": implementing new functionality, extending existing systems
+- "integration": connecting external services, APIs, modules, file systems
+- "research": applying research findings, adopting new frameworks/patterns
+
+Return a JSON array (no markdown, no commentary) where each element has exactly these fields:
+{
+  "content": "<full actionable principle — at least 2 sentences with specific technical detail>",
+  "summary": "<one-line summary, max 100 chars>",
+  "category": "<bug-fix|feature|integration|research>",
+  "taskTypes": ["<comma-separated list of task types like bugfix/feature/testing/refactor>"],
+  "tags": ["<relevant tags>"],
+  "rationale": "<why this principle matters based on the evidence in the knowledge base>",
+  "confidence": <0.6-0.95>
+}
+
+KNOWLEDGE BASE:
+${knowledgeText}
+
+Output ONLY the JSON array, starting with [ and ending with ].`;
+
+  const body = {
+    model,
+    max_tokens: 8192,
+    messages: [
+      { role: "user", content: userPrompt },
+    ],
+    system: systemPrompt,
+  };
+
+  const response = await fetch(`${baseUrl}/v1/messages`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`LLM API error ${response.status}: ${errorText.slice(0, 300)}`);
+  }
+
+  const data = await response.json() as {
+    content: Array<{ type: string; text: string }>;
+  };
+
+  const text = data.content?.find((c) => c.type === "text")?.text ?? "";
+  
+  // Extract JSON array — handle possible leading/trailing whitespace
+  const jsonStart = text.indexOf("[");
+  const jsonEnd = text.lastIndexOf("]");
+  if (jsonStart === -1 || jsonEnd === -1) {
+    throw new Error(`LLM response did not contain a JSON array. Got: ${text.slice(0, 200)}`);
+  }
+
+  const jsonStr = text.slice(jsonStart, jsonEnd + 1);
+  const parsed = JSON.parse(jsonStr) as RawPrinciple[];
+
+  log.info("LLM distilled principles", { count: parsed.length });
+  return parsed;
+}
+
+/**
+ * Result of knowledge-file distillation
+ */
+export interface KnowledgeDistillationResult {
+  filesRead: number;
+  principlesGenerated: number;
+  principlesStored: number;
+  principleIds: string[];
+  categories: Record<string, number>;
+}
+
+/**
+ * Distil actionable principles from data/knowledge/*.md using an LLM.
+ *
+ * This function:
+ * 1. Reads all knowledge .md files
+ * 2. Sends them to the LLM with a structured prompt
+ * 3. Clears old (garbage) principles
+ * 4. Stores the new high-quality principles
+ */
+export async function distillFromKnowledgeFiles(): Promise<KnowledgeDistillationResult> {
+  log.info("Starting knowledge-file distillation");
+
+  // 1. Read knowledge files
+  const knowledgeText = readKnowledgeFiles();
+  const filesRead = readdirSync(existsSync(KNOWLEDGE_DIR) ? KNOWLEDGE_DIR : DATA_DIR)
+    .filter((f) => f.endsWith(".md")).length;
+
+  if (!knowledgeText || knowledgeText.length < 100) {
+    throw new Error("No knowledge files found — cannot distil principles");
+  }
+
+  // 2. Call LLM
+  const rawPrinciples = await callLLMForPrinciples(knowledgeText);
+
+  if (rawPrinciples.length < 10) {
+    throw new Error(`LLM returned only ${rawPrinciples.length} principles (need ≥10)`);
+  }
+
+  // 3. Clear old garbage principles
+  clearAllPrinciples();
+  log.info("Cleared old principles");
+
+  // 4. Store new principles
+  const principleIds: string[] = [];
+  const categories: Record<string, number> = {};
+
+  for (const raw of rawPrinciples) {
+    // Basic validation
+    if (!raw.content || raw.content.length < 20) continue;
+    if (!raw.summary) raw.summary = raw.content.slice(0, 80);
+
+    const principleCategory = knowledgeCategoryToPrincipleCategory(raw.category);
+    categories[raw.category] = (categories[raw.category] ?? 0) + 1;
+
+    const stored = storePrinciple({
+      content: raw.content,
+      summary: raw.summary,
+      category: principleCategory,
+      conditions: {
+        taskTypes: raw.taskTypes ?? [],
+        tags: [...(raw.tags ?? []), `knowledge-distilled`, raw.category],
+      },
+      derivedFrom: ["knowledge-files"],
+      confidence: Math.min(0.95, Math.max(0.5, raw.confidence ?? 0.7)),
+      rationale: raw.rationale ?? "Distilled from knowledge base",
+      examples: [],
+    });
+
+    principleIds.push(stored.id);
+  }
+
+  log.info("Knowledge distillation complete", {
+    filesRead,
+    principlesStored: principleIds.length,
+    categories,
+  });
+
+  return {
+    filesRead,
+    principlesGenerated: rawPrinciples.length,
+    principlesStored: principleIds.length,
+    principleIds,
+    categories,
+  };
+}
+
 // Re-export from principle-store for convenience
 export {
   storePrinciple,
@@ -1323,4 +1565,5 @@ export {
   getPrincipleStats,
   mergePrinciples,
   prunePrinciples,
+  clearAllPrinciples,
 };

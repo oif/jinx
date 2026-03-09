@@ -929,3 +929,263 @@ export function getReflectionSummary(): string {
 
   return lines.join("\n");
 }
+
+// ── Feedback Loop Integration ──────────────────────────────────────
+
+/**
+ * Process high priority suggestions and convert them to backlog tasks.
+ * This implements the feedback loop where reflection insights automatically
+ * influence the evolution direction.
+ * 
+ * @returns Number of suggestions processed
+ */
+export function processHighPrioritySuggestions(): {
+  processed: number;
+  suggestions: ImprovementSuggestion[];
+} {
+  const pending = getPendingSuggestions();
+  const highPriority = pending.filter(s => s.priority === "high");
+  
+  if (highPriority.length === 0) {
+    return { processed: 0, suggestions: [] };
+  }
+
+  // Read current backlog to determine next ID
+  const backlogPath = join(process.cwd(), "data", "backlog.md");
+  let backlogContent = "";
+  try {
+    if (existsSync(backlogPath)) {
+      backlogContent = readFileSync(backlogPath, "utf-8");
+    }
+  } catch (e) {
+    log.error("Failed to read backlog for suggestion processing", { error: (e as Error).message });
+    return { processed: 0, suggestions: [] };
+  }
+
+  // Find the highest existing task number
+  const lines = backlogContent.split("\n");
+  const existingIds = lines
+    .filter(l => /^- \[ \] #\d+:/.test(l.trim()) || /^### 挑战 #\d+:/.test(l.trim()))
+    .map(l => {
+      const match = l.match(/#(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+  
+  let nextId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 192;
+  const updated: string[] = [];
+  let inserted = false;
+  let inPending = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    if (trimmed === "## Pending") {
+      inPending = true;
+    } else if (trimmed.startsWith("## ")) {
+      inPending = false;
+    }
+
+    updated.push(line);
+
+    // Insert suggestion tasks after "## Pending" header
+    if (inPending && !inserted && !trimmed.startsWith("##")) {
+      for (const suggestion of highPriority) {
+        const backlogId = `#${nextId.toString().padStart(3, "0")}`;
+        
+        const challengeLines = [
+          "",
+          `### 挑战 ${backlogId}: ${suggestion.title} (自动生成)`,
+          "",
+          `**类别**: reflection-feedback | **优先级**: high | **来源**: Reflection`,
+          "",
+          `**描述**: ${suggestion.description}`,
+          "",
+          `**原因**: ${suggestion.rationale}`,
+          "",
+        ];
+        
+        updated.push(...challengeLines);
+        nextId++;
+        
+        // Mark suggestion as in_progress
+        suggestion.status = "in_progress";
+        log.info("High priority suggestion added to backlog", { 
+          suggestionId: suggestion.id, 
+          backlogId,
+          title: suggestion.title 
+        });
+      }
+      inserted = true;
+    }
+  }
+
+  if (inserted) {
+    try {
+      writeFileSync(backlogPath, updated.join("\n"));
+      
+      // Save updated suggestions status
+      const reflections = loadReflections();
+      saveReflections(reflections);
+      
+      log.info("Processed high priority suggestions to backlog", { 
+        count: highPriority.length 
+      });
+    } catch (e) {
+      log.error("Failed to write backlog with suggestion tasks", { error: (e as Error).message });
+      return { processed: 0, suggestions: [] };
+    }
+  }
+
+  return { processed: highPriority.length, suggestions: highPriority };
+}
+
+// ── Insights Context for Evolution ─────────────────────────────────
+
+/**
+ * Get recent insights formatted for evolution prompt context.
+ * This injects reflection insights into evolution decisions.
+ * 
+ * @param limit Maximum number of insights to include
+ * @returns Formatted insights string for prompt injection
+ */
+export function getInsightsForPrompt(limit: number = 5): string {
+  const reflections = loadReflections();
+  
+  if (reflections.length === 0) {
+    return "";
+  }
+
+  // Collect recent insights from last few sessions
+  const recentSessions = reflections.slice(-3);
+  const allInsights: ReflectionInsight[] = [];
+  
+  for (const session of recentSessions) {
+    allInsights.push(...session.insights);
+  }
+
+  // Sort by confidence and recency
+  const sortedInsights = allInsights
+    .filter(i => i.confidence >= 0.7 && i.actionable)
+    .sort((a, b) => {
+      // First by confidence, then by reinforcement count (less reinforced = newer)
+      if (b.confidence !== a.confidence) return b.confidence - a.confidence;
+      return a.reinforcementCount - b.reinforcementCount;
+    })
+    .slice(0, limit);
+
+  if (sortedInsights.length === 0) {
+    return "";
+  }
+
+  const lines: string[] = [
+    "",
+    "【Reflection Insights - 从历史经验中学习】",
+    "",
+  ];
+
+  for (const insight of sortedInsights) {
+    const icon = insight.type === "success_factor" ? "✅"
+      : insight.type === "failure_cause" ? "❌"
+      : insight.type === "warning" ? "⚠️"
+      : "📌";
+    
+    lines.push(`${icon} **${insight.category}**: ${insight.title}`);
+    if (insight.actionSuggestion) {
+      lines.push(`   💡 ${insight.actionSuggestion}`);
+    }
+    lines.push("");
+  }
+
+  // Add pending high priority suggestions
+  const pendingHigh = getPendingSuggestions().filter(s => s.priority === "high");
+  if (pendingHigh.length > 0) {
+    lines.push("【待处理的高优先级建议】");
+    for (const s of pendingHigh.slice(0, 3)) {
+      lines.push(`🔴 ${s.title}: ${s.description}`);
+    }
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Get performance trends from reflection history.
+ * Useful for evolution strategy decisions.
+ */
+export function getPerformanceTrends(): {
+  successRateTrend: "improving" | "declining" | "stable";
+  avgSuccessRate: number;
+  topFailureCategories: string[];
+  topSuccessCategories: string[];
+  recentWarningCount: number;
+} {
+  const reflections = loadReflections();
+  
+  if (reflections.length < 2) {
+    return {
+      successRateTrend: "stable",
+      avgSuccessRate: 0,
+      topFailureCategories: [],
+      topSuccessCategories: [],
+      recentWarningCount: 0,
+    };
+  }
+
+  // Calculate success rate trend
+  const recent = reflections.slice(-5);
+  const rates = recent.map(r => r.stats.successRate);
+  const avgSuccessRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+  
+  // Determine trend by comparing first half to second half
+  const mid = Math.floor(rates.length / 2);
+  const firstHalf = rates.slice(0, mid);
+  const secondHalf = rates.slice(mid);
+  const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+  const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+  
+  let successRateTrend: "improving" | "declining" | "stable" = "stable";
+  if (secondAvg > firstAvg + 0.1) {
+    successRateTrend = "improving";
+  } else if (secondAvg < firstAvg - 0.1) {
+    successRateTrend = "declining";
+  }
+
+  // Aggregate category performance
+  const categorySuccess = new Map<string, number>();
+  const categoryFailure = new Map<string, number>();
+  
+  for (const session of recent) {
+    for (const [cat, perf] of Object.entries(session.stats.categoryPerformance)) {
+      categorySuccess.set(cat, (categorySuccess.get(cat) || 0) + perf.success);
+      categoryFailure.set(cat, (categoryFailure.get(cat) || 0) + perf.failure);
+    }
+  }
+
+  // Top failure categories (most failures)
+  const topFailureCategories = Array.from(categoryFailure.entries())
+    .filter(([, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat]) => cat);
+
+  // Top success categories (most successes)
+  const topSuccessCategories = Array.from(categorySuccess.entries())
+    .filter(([, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat]) => cat);
+
+  // Count recent warnings
+  const recentWarningCount = recent.reduce((sum, r) => 
+    sum + r.insights.filter(i => i.type === "warning").length, 0
+  );
+
+  return {
+    successRateTrend,
+    avgSuccessRate,
+    topFailureCategories,
+    topSuccessCategories,
+    recentWarningCount,
+  };
+}

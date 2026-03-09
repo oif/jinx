@@ -437,7 +437,9 @@ export function formatDiagnosisReport(report: DiagnosisReport): string {
       lines.push(`    Affected: ${pattern.affectedComponents.join(", ")}`);
       lines.push("");
     }
+  }
 
+  if (report.recommendations.length > 0) {
     lines.push("🔧 Recommendations:");
     lines.push("");
 

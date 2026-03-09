@@ -6,55 +6,87 @@
 
 ## 当前状态
 
-- 总循环: 15（Evolution #15 进行中）
-- 上次活跃: 2026-03-05 21:30
+- 总循环: 42 (从 evolution-history.json)
+- 上次活跃: 2026-03-09 03:34
 - 系统健康: healthy
+- 构建状态: ✅ 通过
+- 测试状态: ⚠️ 覆盖率 25.86% < 50%
 - 进化策略: balanced
-- **当前任务**: #068 - 清理 scratchpad 过时信息
+- **Backlog 状态**: 8 个 pending 任务（#184-#191）
+- **上次目标发现**: Goal Discovery #20（本次）
 
 ---
 
-## 系统集成状态（已验证 ✅）
+## Goal Discovery #20 — 2026-03-09 03:34
 
-以下功能已正确集成到 loop.ts，代码审计确认：
+### 三维度分析完成
 
-1. **Tracing 系统** ✅
-   - `startTrace` / `endTrace` 已在 loop.ts 中正确调用（第310、485、520、622、629行）
-   - `data/traces/` 目录存在，包含 trace 数据
-   - 轨迹模式检测功能可用
+**第一维：能力缺口分析**
+- 测试覆盖率: 25.86% < 50% 目标（确认）
+- evolution-automation: 未实现（唯一 desiredCapability）
+- state.json: 缺少 version/cycle 字段（新发现）
+- ESLint/Security check: 命令找不到（新发现）
+- 7个 Novice 能力需要提升
 
-2. **Principle 系统** ✅
-   - `principle-distiller.ts` 已集成（第38行导入）
-   - `principle-retriever.ts` 已集成（第43行导入）
-   - principle retrieval 在进化前执行（第352-360行）
-   - distillation 在进化后触发（第469-480行）
+**第二维：经验挖掘**
+- SEA 三定律: 已研究但未集成
+- 策略震荡: 34次切换历史，频繁振荡
+- 超时失败: cycles 16-21 连续超时
 
-3. **相关已完成任务**
-   - #054: 集成 Tracing 到 Evolution Loop ✅
-   - #057: 调试 Tracing 系统初始化问题 ✅
-   - #058: 初始化 Principle Store 种子数据 ✅
-   - #060: 真正初始化 Principle Store 种子数据 ✅
-   - #062: 增强 Trajectory Mapping ✅
-   - #063: 真正集成 Tracing 到 Evolution Loop ✅
-   - #064: 真正集成 Principle Store 到 Evolution Loop ✅
-   - #065: 添加 Principle Voting 机制 ✅
-   - #067: 验证 traces 持久化问题 ✅
+**第三维：外部发现**
+- Tavily API 不可用
+- knowledge/ 已有丰富前沿研究
 
----
+### 候选目标评分
 
-## Goal Discovery 历史发现
+| 任务 | 影响 | 可行性 | 依赖价值 | BORN对齐 | 总分 |
+|-----|-----|-------|---------|---------|-----|
+| #184 evolution-automation | 10 | 7 | 10 | 10 | **37** |
+| #186 SEA 三定律集成 | 8 | 7 | 7 | 9 | **31** |
+| #185 测试覆盖率 50% | 8 | 5 | 8 | 8 | **29** |
+| #187 策略滞后机制 | 7 | 9 | 6 | 7 | **29** |
+| #190 state.json 字段 | 6 | 10 | 5 | 8 | **26** |
+| #191 ESLint/Security check | 5 | 10 | 4 | 7 | **26** |
 
-### ACE Pattern - Memory Voting ⭐
-- 公式：effectiveness = (helpful_votes - harmful_votes) / (total_votes + 1)
-- 创建质量信号区分有用/无用记忆
-- 已在 #065 中实现 Principle Voting 机制
+### 决策
 
-### AgentC2 - Continuous Learning Flywheel
-- 5 步飞轮：Evaluation Scorers → Collect Signals → Proposals → A/B Experiments → Promote
-- Google DeepMind 2025 研究：continuous learning loops 比 static systems 好 25-40%
+**新增 2 个快速胜利任务** (#190, #191)。
+**建议执行顺序**：#184 → #186 → #185 → #187
 
 ---
 
-## 下一步
+## 关键洞察（保留）
 
-待 Neo 分配新任务，或进行 goal discovery 探索新的改进方向。
+### 1. evolution-automation 是核心瓶颈
+没有自动进化，Jinx 只是响应式工具。实现后可开启所有未来改进。
+
+### 2. 测试覆盖率是最大风险
+25.86% 意味着大部分代码无保护。任何改动都可能是危险的。
+
+### 3. SEA 三定律提供了现成的安全框架
+Endure/Excel/Evolve 三定律可直接集成到进化循环，提升安全性。
+
+### 4. 策略震荡和超时失败是可修复的历史问题
+有明确的解决方案，值得投入。
+
+### 5. state.json 和代码质量工具是快速胜利
+10分钟内可完成，提升系统完整性。
+
+---
+
+## 学术前沿洞察（来自 knowledge 文档）
+
+### Self-Evolving Agents 三定律 (087-*)
+- Endure（安全适应）：修改必须保持系统稳定
+- Excel（性能保持）：进化不能降低现有任务性能
+- Evolve（自主进化）：在前两个约束下优化内部模块
+
+### Self-Challenging Agents (061-*)
+- Code-as-Task 形式：指令 + 验证条件 + 示例思路 + 失败案例
+- 双角色机制：Challenger + Solver
+- 自验证：通过代码验证成功
+
+### EvolveR Experience Distillation (047-*)
+- 两阶段闭环：离线自我蒸馏 + 在线交互
+- 原则存储：抽象化经验
+- 主动检索：决策前检索原则

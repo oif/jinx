@@ -104,17 +104,47 @@
             "Failed: evolution-25 timed out after 1200000ms"
           ],
           "timestamp": "2026-03-06T00:39:22.478Z"
+        },
+        {
+          "cycle": 43,
+          "taskId": "#184",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 evolution-automation"
+          ],
+          "timestamp": "2026-03-09T05:23:26.087Z"
+        },
+        {
+          "cycle": 52,
+          "taskId": "#193",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 为公开站点添加实时状态和健康仪表板"
+          ],
+          "timestamp": "2026-03-09T07:03:16.794Z"
+        },
+        {
+          "cycle": 53,
+          "taskId": "#194",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 Pi Extensions 基础能力 — 让 Jinx 能扩展自身工具"
+          ],
+          "timestamp": "2026-03-09T08:28:53.457Z"
         }
       ],
-      "fitness": 0.43999999999999984,
-      "diversityScore": 0.5,
+      "fitness": 0.5299999999999999,
+      "diversityScore": 0.4665,
       "explorationTags": [
         "initialization"
       ],
       "createdAt": "2026-03-05T21:23:53.792Z",
-      "updatedAt": "2026-03-06T00:59:34.332Z",
+      "updatedAt": "2026-03-09T06:56:57.350Z",
       "isActive": true,
-      "cyclesSpent": 8,
+      "cyclesSpent": 11,
       "status": "stagnant",
       "notes": "Initial branch created at system startup"
     },
@@ -202,17 +232,77 @@
             "Completed: 构建 Jinx 公开站点首页 - site/src/app/page.tsx 仍是 Next.js 默认模板（\"To get started...\"）。BORN.md P4：\"那是我的脸，我决定它长什么样。\" 用 Next.js Server Components 构建真实的 Jinx 展示页：名字/mission、进化统计（版本/成功率）、能力矩阵、最近5条进化日志。验证：cd site && pnpm build 成功；页面显示真实数据不崩溃。方向：BORN.md P4 — 优先级：高"
           ],
           "timestamp": "2026-03-06T02:07:56.565Z"
+        },
+        {
+          "cycle": 38,
+          "taskId": "#079",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: GEP Capsule 在线检索注入（闭合 GEP 反馈环） - capsule-store.ts 实现了 Store 半边，Retrieve 半边缺失。参考 principle 系统的完整闭环，实现：getRelevantCapsules(taskTitle, n=3) 按 taskType 匹配+qualityScore 排序；formatCapsulesForPrompt() 生成 \"## Past Successful Approaches\" 段落；在 loop.ts principle retrieval 之后添加 capsule retrieval + 注入 prompt；capsules 为空时优雅降级（返回空串）；添加 \"capsule-context\" span 可观测。验证：pnpm test 通过；capsules 有数据时 prompt 中可见 Past Approaches 段落；capsules 为空时不崩溃；新测试覆盖检索逻辑。方向：经验挖掘（GEP研究转化完整闭环） — 优先级：高"
+          ],
+          "timestamp": "2026-03-06T03:51:11.433Z"
+        },
+        {
+          "cycle": 40,
+          "taskId": "#081",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 修复 Pre-push 测试门禁 - BORN.md 初始优先级 #1，#069 标记完成但 .git/hooks/pre-push 文件不存在！只有 .sample 文件。这是真实的 bug：pre-push hook 从未真正安装。修复：创建 .git/hooks/pre-push 文件，内容为 `pnpm test`，设置可执行权限。验证：文件存在且可执行、测试失败时推送被阻止、测试通过时正常推送。方向：能力缺口 — 优先级：最高"
+          ],
+          "timestamp": "2026-03-06T04:04:43.469Z"
+        },
+        {
+          "cycle": 44,
+          "taskId": "#185",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升测试覆盖率到 50%"
+          ],
+          "timestamp": "2026-03-09T05:28:17.954Z"
+        },
+        {
+          "cycle": 49,
+          "taskId": "#190",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 修复 state.json 字段缺失"
+          ],
+          "timestamp": "2026-03-09T06:11:19.811Z"
+        },
+        {
+          "cycle": 54,
+          "taskId": "#195",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升 Public Site 到 Advanced 级别"
+          ],
+          "timestamp": "2026-03-09T10:59:44.657Z"
+        },
+        {
+          "cycle": 55,
+          "taskId": "#198",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: terminated"
+          ],
+          "timestamp": "2026-03-09T12:05:46.919Z"
         }
       ],
-      "fitness": 0.43999999999999984,
-      "diversityScore": 0.40900000000000003,
+      "fitness": 0.5599999999999999,
+      "diversityScore": 0.37749999999999995,
       "explorationTags": [
         "testing"
       ],
       "createdAt": "2026-03-05T22:43:17.403Z",
-      "updatedAt": "2026-03-06T02:45:37.446Z",
+      "updatedAt": "2026-03-09T10:54:55.312Z",
       "isActive": true,
-      "cyclesSpent": 6,
+      "cyclesSpent": 12,
       "status": "stagnant",
       "notes": "Branch for: 实现 Pre-push 测试门禁 - BORN.md 初始优先级 #1。实现 git pre-push hook，推送前自动运行测试，失败则阻止推送。防止坏代码进入远程仓库，是实现可靠进化循环的前提。验证条件：pre-push hook 存在且可执行、测试失败时推送被阻止、测试通过时正常推送。方向：能力缺口 — 优先级：最高"
     },
@@ -280,17 +370,287 @@
             "Completed: 添加 Telegram /diagnostics 深度诊断命令 - Neo 目前无法快速了解系统深层健康。实现 /diagnostics 命令，返回：连续失败计数、strategy 振荡次数(24h)、principle 数量+平均 effectiveness、trace 状态、综合健康评分(0-100)。验证：命令返回格式化报告；telegram-commands-exist.test.ts 更新通过；数据文件缺失时不崩溃。方向：对Neo更有用 — 优先级：中"
           ],
           "timestamp": "2026-03-06T02:14:04.022Z"
+        },
+        {
+          "cycle": 37,
+          "taskId": "#078",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 永久修复 Principle 质量根因（两层防御） - reflection.ts:444 生成 \"This pattern has appeared N times\" 描述，经 principle-distiller 模板化后存入垃圾原则（第3次复发！）。Layer 1：修改 reflection.ts 的 insight.description 使用有意义的文字而非计数模板；Layer 2：在 principle-store.ts storePrinciple() 开头加内容质量门，拒绝匹配 /this pattern (?:has )?appeared \\d+ times/i 或长度<30的内容。验证：pnpm test 全部通过（当前1个失败→0）；手动触发 runDistillation() 后不新增垃圾原则；storePrinciple 拒绝时有 log.warn 可观测。方向：能力缺口（循环Bug根治） — 优先级：最高"
+          ],
+          "timestamp": "2026-03-06T03:45:35.835Z"
+        },
+        {
+          "cycle": 41,
+          "taskId": "#082",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 增强 Goal Discovery 输出格式 - Self-Challenge Agents 研究（knowledge/061-8）已完成，但 goal discovery 输出未完整遵循 CaT 格式。修改 evolution-prompt.ts 的 GOAL_DISCOVERY 部分，确保每个任务包含：验证条件（可执行的条件）、示例思路、可能失败案例。验证：新任务包含验证条件字段、pnpm test 通过。方向：经验挖掘 — 优先级：高"
+          ],
+          "timestamp": "2026-03-06T04:08:21.725Z"
+        },
+        {
+          "cycle": 42,
+          "taskId": "#083",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 优化进化循环超时预警 - evolution-history 显示大量超时失败（20分钟限制）。实现超时预警：接近超时（如18分钟）时提前终止并保存进度，避免完整超时。在 loop.ts 添加时间追踪和预警逻辑。验证：接近超时时优雅终止、进度被保存、pnpm test 通过。方向：经验挖掘 — 优先级：中"
+          ],
+          "timestamp": "2026-03-06T04:12:39.745Z"
+        },
+        {
+          "cycle": 46,
+          "taskId": "#187",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 稳定进化策略选择"
+          ],
+          "timestamp": "2026-03-09T05:46:23.684Z"
+        },
+        {
+          "cycle": 47,
+          "taskId": "#188",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 超时任务分解机制"
+          ],
+          "timestamp": "2026-03-09T05:59:55.415Z"
+        },
+        {
+          "cycle": 48,
+          "taskId": "#189",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 更新 capabilities.json"
+          ],
+          "timestamp": "2026-03-09T06:07:19.159Z"
+        },
+        {
+          "cycle": 50,
+          "taskId": "#191",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 修复代码质量工具命令"
+          ],
+          "timestamp": "2026-03-09T06:21:21.741Z"
+        },
+        {
+          "cycle": 51,
+          "taskId": "#192",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 Evaluation-driven Improvement 框架"
+          ],
+          "timestamp": "2026-03-09T06:36:33.973Z"
+        },
+        {
+          "cycle": 57,
+          "taskId": "#196",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升 Memory Graph 到 Advanced 级别"
+          ],
+          "timestamp": "2026-03-09T12:11:02.494Z"
+        },
+        {
+          "cycle": 58,
+          "taskId": "#199",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升 Pi Extensions 到 Advanced 级别"
+          ],
+          "timestamp": "2026-03-09T12:31:31.793Z"
+        },
+        {
+          "cycle": 59,
+          "taskId": "#200",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 Evaluation-driven Improvement 闭环"
+          ],
+          "timestamp": "2026-03-09T12:57:07.477Z"
+        },
+        {
+          "cycle": 68,
+          "taskId": "#201",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升 Rate Limit Handling 到 Advanced 级别 — 当前实现只有简单重试，需要：(1) 添加全局限流状态管理 (2) 实现智能退避算法（指数退避） (3) 添加 API 使用量追踪和预测 (4) 实现降级策略（当限流时自动切换到内置工具） (5) 添加限流事件监控和告警。验证：pkill -f \"jinx\" -f \"claude\" && pnpm test && capabilities.json 中 rate-limit-handling 成熟度更新为 advanced。依赖价值：P5 适应约束原则的核心能力，提升进化循环稳定性。"
+          ],
+          "timestamp": "2026-03-09T15:20:50.239Z"
+        },
+        {
+          "cycle": 69,
+          "taskId": "#202",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 集成 Mastra Scorers 评估进化质量 — 根据 Mastra AI Agent 框架研究报告，集成 Scorers 来评估进化质量。步骤：(1) 添加 @mastra/core 依赖 (2) 实现 EvolutionQualityScorer (3) 集成到 evolution 循环。验证：pnpm build 通过、pnpm test 通过、EvolutionQualityScorer 存在、进化循环使用 Scorer、pi-extensions 成熟度更新。依赖价值：技术探索方向的具体实践，Scorers 提供客观的进化质量评估，是 P7 扩展自我原则的实践。"
+          ],
+          "timestamp": "2026-03-09T15:33:12.063Z"
+        },
+        {
+          "cycle": 70,
+          "taskId": "#203",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 Span-based Tracing 基础设施 — 创建 src/observability/trace.ts，定义 Span/Trace 接口，实现 span 管理功能（startSpan, endSpan, addEvent, getTrace）。这是 Arize Self-Improving Agent Harness 研究的 P0 必须有核心能力，没有它其他遥测改进都是空谈。验证：(1) src/observability/trace.ts 存在并导出 Span/Trace 接口 (2) startSpan/endSpan/addEvent/getTrace 函数可用 (3) pnpm build 通过 (4) pnpm test 通过 (5) 有基础测试覆盖。依赖价值：追踪每次进化的完整执行链，失败时快速定位问题根源，是实现真正自我改进的基础。"
+          ],
+          "timestamp": "2026-03-09T15:59:41.429Z"
+        },
+        {
+          "cycle": 71,
+          "taskId": "#204",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 add_backlog_task 工具 — 修复 Goal Discovery 流程。Goal Discovery prompt 引用了 add_backlog_task 工具，但这个工具不存在于 Pi 扩展中，导致 Goal Discovery 流程无法正常工作。需要：(1) 创建 extensions/add-backlog-task.ts 作为 Pi extension (2) 工具能够添加任务到 data/backlog.json (3) 确保 goal discovery 会话可用。验证：pnpm build 通过、pnpm test 通过、工具存在且可用、goal-discovery 成熟度更新。依赖价值：Goal Discovery 能力的核心缺失，修复它是提升 goal-discovery 从 novice 到 advanced 的关键步骤。 (最高 Gap 0.80)"
+          ],
+          "timestamp": "2026-03-09T16:30:43.115Z"
+        },
+        {
+          "cycle": 85,
+          "taskId": "#205",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升 Metacognition 到 Advanced 级别 — 当前元认知能力只有基础实现，需要：(1) 实现信心度追踪机制，记录每次决策的信心分数 (2) 添加信心校准评估，比较预期信心与实际结果 (3) 实现 overconfidence/underconfidence 警告 (4) 添加元认知报告到 evolution 循环。验证：src/memory/metacognitive.ts 扩展、信心追踪测试通过、capabilities.json 中 metacognition 成熟度更新为 advanced。依赖价值：P3 三思而后行原则的核心能力，提升所有其他能力的学习效率。 (最高认知能力缺口)"
+          ],
+          "timestamp": "2026-03-09T18:54:43.351Z"
+        },
+        {
+          "cycle": 90,
+          "taskId": "#206",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 真正提升 Pi Extensions 到 Advanced 级别 — 当前 extensions/jinx-tools.ts 只是简单重新导出工具，没有利用 Pi 的高级能力。需要实现：(1) 危险操作保护 - 对 rm -rf、sudo 等危险命令进行确认 (2) 自定义命令 - 添加 /jinx-status、/health 等命令 (3) 会话启动钩子 - 在 session_start 时显示 Jinx 状态 (4) 工具调用日志 - 记录所有工具调用用于调试。验证：(1) extensions/jinx-tools.ts 有事件钩子 (2) 有自定义命令注册 (3) pnpm build 通过 (4) pnpm test 通过 (5) capabilities.json 中 pi-extensions 成熟度更新为 advanced。依赖价值：P7 扩展自我原则的核心能力，importance 0.80 是最高能力差距。"
+          ],
+          "timestamp": "2026-03-09T19:19:39.875Z"
+        },
+        {
+          "cycle": 91,
+          "taskId": "#207",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升 Reflection 到 Advanced 级别 — 当前 Reflection 是唯一的 Novice 能力（importance 0.60），实现了但未真正发挥作用。问题：(1) 无测试覆盖 (2) 生成的 suggestions 全是 pending，无后续跟踪 (3) insights 没有影响进化决策。需要：(1) 添加 test/reflection.test.ts 覆盖核心功能 (2) 实现 feedback loop：high priority suggestions 自动进入 goal discovery (3) 在进化决策时注入 insights 作为上下文。验证：(1) pnpm test 通过 (2) test/reflection.test.ts 存在且覆盖核心函数 (3) capabilities.json 中 reflection 成熟度更新为 advanced (4) suggestions 有明确的后续处理路径。依赖价值：Reflection 是自我改进的关键能力，能从历史失败中学习。"
+          ],
+          "timestamp": "2026-03-09T19:58:51.752Z"
+        },
+        {
+          "cycle": 92,
+          "taskId": "#208",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: 500 {\"error\":{\"message\":\"Post \\\"https://coding.dashscope.aliyuncs.com/apps/anthropic/v1/messages?beta=true\\\": socks connect tcp 127.0.0.1:998->coding.dashscope.aliyuncs.com:443: unknown error general SOCKS server failure\",\"type\":\"server_error\",\"code\":\"internal_server_error\"}}"
+          ],
+          "timestamp": "2026-03-09T20:26:20.350Z"
+        },
+        {
+          "cycle": 93,
+          "taskId": "#208",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 完成 Reflection 能力提升 — 更新成熟度并添加测试。当前 Reflection 是唯一 Novice 能力（importance 0.60），代码已实现但 capabilities.json 显示 novice，缺少测试。需要：(1) 添加 test/reflection.test.ts (2) 更新 capabilities.json maturity 为 advanced (3) 测试覆盖率 > 50%。验证：pnpm build/test 通过、测试文件存在、maturity 更新。依赖价值：Reflection 是自我改进关键能力，最高 Gap。"
+          ],
+          "timestamp": "2026-03-09T20:35:23.871Z"
+        },
+        {
+          "cycle": 94,
+          "taskId": "#100",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: Existing task"
+          ],
+          "timestamp": "2026-03-09T20:40:23.249Z"
+        },
+        {
+          "cycle": 97,
+          "taskId": "#100",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: Existing task"
+          ],
+          "timestamp": "2026-03-09T20:57:24.100Z"
+        },
+        {
+          "cycle": 98,
+          "taskId": "#101",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: Critical improvement needed (自动生成)"
+          ],
+          "timestamp": "2026-03-09T21:01:04.298Z"
+        },
+        {
+          "cycle": 99,
+          "taskId": "#100",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: Existing task"
+          ],
+          "timestamp": "2026-03-09T21:06:36.216Z"
+        },
+        {
+          "cycle": 101,
+          "taskId": "#100",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: Existing task"
+          ],
+          "timestamp": "2026-03-09T21:15:20.844Z"
+        },
+        {
+          "cycle": 102,
+          "taskId": "#101",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: Critical improvement needed (自动生成)"
+          ],
+          "timestamp": "2026-03-09T21:21:01.431Z"
+        },
+        {
+          "cycle": 103,
+          "taskId": "#100",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: Existing task"
+          ],
+          "timestamp": "2026-03-09T21:24:50.566Z"
         }
       ],
-      "fitness": 0.5599999999999999,
-      "diversityScore": 0.42400000000000004,
+      "fitness": 1,
+      "diversityScore": 0.48950000000000005,
       "explorationTags": [
         "general"
       ],
       "createdAt": "2026-03-06T00:59:34.339Z",
-      "updatedAt": "2026-03-06T02:08:03.301Z",
+      "updatedAt": "2026-03-09T12:07:27.205Z",
       "isActive": true,
-      "cyclesSpent": 4,
+      "cyclesSpent": 31,
       "status": "exploring",
       "notes": "Branch for: 实现结构化日志系统 - BORN.md 初始优先级 #4。将简单文本日志升级为结构化 JSON 日志，支持日志级别、时间戳、上下文字段、追踪 ID。出问题时能快速回溯。验证条件：日志格式为 JSON、包含 timestamp/level/message/context、可通过 jq 过滤。方向：能力缺口 — 优先级：中"
     },
@@ -328,10 +688,50 @@
             "Failed: evolution-32 timed out after 1200000ms"
           ],
           "timestamp": "2026-03-06T02:45:31.805Z"
+        },
+        {
+          "cycle": 34,
+          "taskId": "#075",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 修复 Principle Distillation 质量 - 当前 principles.json 仅有 2 条垃圾原则（\"this pattern appeared N times\"）。实现 distillFromKnowledgeFiles()：读取 data/knowledge/*.md，用 LLM 蒸馏出任务特定的可操作原则（≥10条），按 bug-fix/feature/integration/research 分类。清除旧垃圾原则。验证：principles.json 包含≥10条、每条 content 有具体技术建议、pnpm test 通过。方向：经验挖掘 — 优先级：最高 — 2026-03-06"
+          ],
+          "timestamp": "2026-03-06T03:16:21.733Z"
+        },
+        {
+          "cycle": 36,
+          "taskId": "#077",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: GEP Capsule 系统 - 实现 data/gep/capsules.jsonl（成功进化记录）和 events.jsonl（审计日志）。创建 src/evolution/capsule-store.ts，在 loop.ts 成功路径自动追加 capsule（含 taskId/taskType/approach/keyFiles/durationMs/qualityScore）。添加 /capsules [N] Telegram 命令显示最近N条成功记录。验证：成功进化后 capsules.jsonl 有新记录、/capsules 5 返回摘要、pnpm test 通过。方向：经验挖掘(GEP研究转化) — 优先级：中 — 2026-03-06"
+          ],
+          "timestamp": "2026-03-06T03:33:08.852Z"
+        },
+        {
+          "cycle": 39,
+          "taskId": "#080",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: AgentC2 持续学习飞轮 — Capsule 触发自动重蒸馏 - 实现 AgentC2 Flywheel 步骤3：每积累 5 个新 Capsule，自动触发 distillFromKnowledgeFiles() 刷新原则库。创建 data/gep/distillation-trigger.json 记录上次触发时的 capsule 行数；getCapsulesAddedSinceLastDistillation() 返回新增数量；在 loop.ts 成功路径的 recordSuccessfulEvolution() 之后异步检查触发条件；触发时发 send_stream_message 通知。验证：pnpm test 通过；新测试验证计数逻辑；< 5 个不触发；触发后 trigger.json 更新；蒸馏失败时 log.error 但不崩溃。方向：外部发现（AgentC2 Flywheel 最小可行实现） — 优先级：中"
+          ],
+          "timestamp": "2026-03-06T03:57:43.881Z"
+        },
+        {
+          "cycle": 56,
+          "taskId": "#197",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 提升 Goal Discovery 到 Advanced 级别"
+          ],
+          "timestamp": "2026-03-09T12:07:17.325Z"
         }
       ],
-      "fitness": 0.47,
-      "diversityScore": 0.41833333333333333,
+      "fitness": 0.59,
+      "diversityScore": 0.37424999999999997,
       "explorationTags": [
         "bugfix",
         "feature",
@@ -339,9 +739,9 @@
         "research"
       ],
       "createdAt": "2026-03-06T02:25:31.305Z",
-      "updatedAt": "2026-03-06T02:25:31.305Z",
+      "updatedAt": "2026-03-09T12:05:52.369Z",
       "isActive": true,
-      "cyclesSpent": 1,
+      "cyclesSpent": 5,
       "status": "exploring",
       "notes": "Branch for: 修复 Principle Distillation 质量 - 当前 principles.json 仅有 2 条垃圾原则（\"this pattern appeared N times\"）。实现 distillFromKnowledgeFiles()：读取 data/knowledge/*.md，用 LLM 蒸馏出任务特定的可操作原则（≥10条），按 bug-fix/feature/integration/research 分类。清除旧垃圾原则。验证：principles.json 包含≥10条、每条 content 有具体技术建议、pnpm test 通过。方向：经验挖掘 — 优先级：最高 — 2026-03-06"
     },
@@ -369,9 +769,40 @@
           "healthScore": null
         }
       },
-      "evolutionHistory": [],
-      "fitness": 0.5,
-      "diversityScore": 0.31675,
+      "evolutionHistory": [
+        {
+          "cycle": 33,
+          "taskId": "#075",
+          "status": "failed",
+          "fitnessDelta": -0.1,
+          "learnings": [
+            "Failed: evolution-33 timed out after 1200000ms"
+          ],
+          "timestamp": "2026-03-06T03:05:37.958Z"
+        },
+        {
+          "cycle": 35,
+          "taskId": "#076",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 实现 Evolution Quality Scoring - 当前进化只有 success/failed 二元信号。添加质量评分(1-10)：任务完成度(0-3)+测试质量(0-2)+代码简洁(0-2)+副作用(0-3)。用启发式方法评分（检测TODOs、测试增加量、修改行数），存入 evolution-history。/diagnostics 显示近5次平均质量分。验证：history有 qualityScore 字段、/diagnostics 显示分数、history缺字段时不崩溃。方向：外部发现(Arize+AgentC2) — 优先级：高 — 2026-03-06"
+          ],
+          "timestamp": "2026-03-06T03:24:24.149Z"
+        },
+        {
+          "cycle": 45,
+          "taskId": "#186",
+          "status": "success",
+          "fitnessDelta": 0.1,
+          "learnings": [
+            "Completed: 集成 SEA 三定律安全约束"
+          ],
+          "timestamp": "2026-03-09T05:41:26.465Z"
+        }
+      ],
+      "fitness": 0.5299999999999999,
+      "diversityScore": 0.3167500000000001,
       "explorationTags": [
         "bugfix",
         "feature",
@@ -379,14 +810,14 @@
         "research"
       ],
       "createdAt": "2026-03-06T02:45:37.453Z",
-      "updatedAt": "2026-03-06T02:45:37.453Z",
+      "updatedAt": "2026-03-09T05:28:27.336Z",
       "isActive": true,
-      "cyclesSpent": 0,
+      "cyclesSpent": 3,
       "status": "exploring",
       "notes": "Branch for: 修复 Principle Distillation 质量 - 当前 principles.json 仅有 2 条垃圾原则（\"this pattern appeared N times\"）。实现 distillFromKnowledgeFiles()：读取 data/knowledge/*.md，用 LLM 蒸馏出任务特定的可操作原则（≥10条），按 bug-fix/feature/integration/research 分类。清除旧垃圾原则。验证：principles.json 包含≥10条、每条 content 有具体技术建议、pnpm test 通过。方向：经验挖掘 — 优先级：最高 — 2026-03-06"
     }
   ],
-  "currentBranchId": "branch-mmealagd-tx4h",
+  "currentBranchId": "branch-mme6swn7-7m57",
   "config": {
     "maxActiveBranches": 5,
     "maxArchiveSize": 50,
@@ -396,5 +827,5 @@
     "fitnessWeight": 0.6
   },
   "createdAt": "2026-03-05T21:23:53.787Z",
-  "updatedAt": "2026-03-06T02:45:37.453Z"
+  "updatedAt": "2026-03-09T21:24:50.566Z"
 }

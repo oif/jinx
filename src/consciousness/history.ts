@@ -10,7 +10,7 @@ export interface EvolutionRecord {
   cycle: number;
   timestamp: string;
   version: string;
-  status: "success" | "failed" | "skipped";
+  status: "success" | "failed" | "skipped" | "timeout" | "timeout-warning";
   summary: string;
   durationMs?: number;
   /** Quality score 1-10 (task completion + test quality + code conciseness + side effects) */
@@ -22,6 +22,8 @@ export interface EvolutionStats {
   successfulCycles: number;
   failedCycles: number;
   skippedCycles: number;
+  timeoutCycles: number;
+  timeoutWarningCycles: number;
   currentStreak: number;
   longestStreak: number;
   lastSuccessAt?: string;
@@ -123,6 +125,8 @@ export function calculateEvolutionStats(): EvolutionStats {
       successfulCycles: 0,
       failedCycles: 0,
       skippedCycles: 0,
+      timeoutCycles: 0,
+      timeoutWarningCycles: 0,
       currentStreak: 0,
       longestStreak: 0,
     };
@@ -131,6 +135,8 @@ export function calculateEvolutionStats(): EvolutionStats {
   const successful = history.filter((h) => h.status === "success");
   const failed = history.filter((h) => h.status === "failed");
   const skipped = history.filter((h) => h.status === "skipped");
+  const timeouts = history.filter((h) => h.status === "timeout");
+  const timeoutWarnings = history.filter((h) => h.status === "timeout-warning");
 
   let currentStreak = 0;
   let longestStreak = 0;
@@ -160,6 +166,8 @@ export function calculateEvolutionStats(): EvolutionStats {
     successfulCycles: successful.length,
     failedCycles: failed.length,
     skippedCycles: skipped.length,
+    timeoutCycles: timeouts.length,
+    timeoutWarningCycles: timeoutWarnings.length,
     currentStreak,
     longestStreak,
     lastSuccessAt: lastSuccess?.timestamp,

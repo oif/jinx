@@ -1,21 +1,21 @@
 [
   {
-    "id": "principle_1772766899660_x2j4c9",
-    "content": "When a long-running process (e.g., PM2) is started before a critical function is added to the codebase, subsequent code changes will not be picked up until the process is restarted. Always verify that the runtime process version matches the deployed code version by checking logs for expected function execution markers (e.g., 'Evolution knowledge recorded'). If markers are absent despite the function existing in source, trigger a process restart via a dedicated restart mechanism rather than assuming the code is running.",
-    "summary": "Ensure runtime process version matches deployed code; restart if new functions are absent from logs",
+    "id": "principle_1773090142426_3ioj2h",
+    "content": "When a new function is added to source code but the runtime process (e.g., PM2) is not restarted, the old code continues executing and the new function is never called. Always verify that the running process reflects the latest compiled code after any deployment by checking process logs for expected log messages (e.g., 'Evolution knowledge recorded') and restarting the process if those messages are absent.",
+    "summary": "Restart runtime process after code changes to avoid stale-code execution",
     "category": "error_handling",
     "conditions": {
       "taskTypes": [
         "bugfix",
-        "debugging",
-        "devops"
+        "deployment",
+        "ops"
       ],
       "tags": [
         "pm2",
+        "runtime",
+        "deployment",
+        "stale-code",
         "process-management",
-        "runtime-version",
-        "code-sync",
-        "hot-reload",
         "knowledge-distilled",
         "bug-fix"
       ]
@@ -34,156 +34,8 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:14:59.660Z",
-      "updatedAt": "2026-03-06T03:14:59.660Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.92,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #031 diagnosed that knowledge files were never created because PM2 was started before recordEvolutionKnowledge was added. The function existed in source but the running process used old code, and the absence of log markers confirmed the mismatch.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899661_ksi44o",
-    "content": "When a trigger threshold for a self-improvement subsystem (e.g., reflection or metacognitive) is set higher than the confidence score produced by the recommender, the subsystem will never activate. Audit all threshold constants against the actual output ranges of their gatekeeping functions; if 'balanced' strategy confidence is 0.6, the activation threshold must be \u2264 0.6. Fix by lowering the threshold (e.g., from 0.7 to 0.5) and validate with a test that logs the strategy transition.",
-    "summary": "Align activation thresholds with actual confidence scores to prevent subsystems from never triggering",
-    "category": "error_handling",
-    "conditions": {
-      "taskTypes": [
-        "bugfix",
-        "configuration",
-        "testing"
-      ],
-      "tags": [
-        "threshold",
-        "confidence",
-        "strategy",
-        "reflection",
-        "metacognitive",
-        "self-improvement",
-        "knowledge-distilled",
-        "bug-fix"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.661Z",
-      "updatedAt": "2026-03-06T03:14:59.661Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.93,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #037 found that getCurrentStrategy() used confidence > 0.7 but 'balanced' recommendations only produced 0.6, permanently locking the system in 'repair-only' mode. Lowering to 0.5 immediately enabled correct strategy transitions confirmed by test logs.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899661_q4opz9",
-    "content": "Reflection and metacognitive systems that require a minimum history count (e.g., MIN_HISTORY_FOR_REFLECTION=3) will silently fail when history is sparse due to data loss or system resets. Add a time-based fallback trigger (e.g., force trigger every 6 hours regardless of history depth) alongside memory-change detection so these subsystems remain active even after history resets. Implement shouldTriggerMetacognitive() as a standalone exported function mirroring the pattern of shouldTriggerReflection().",
-    "summary": "Add time-based fallback triggers for self-improvement subsystems that depend on history counts",
-    "category": "error_handling",
-    "conditions": {
-      "taskTypes": [
-        "bugfix",
-        "feature",
-        "refactor"
-      ],
-      "tags": [
-        "reflection",
-        "metacognitive",
-        "history",
-        "fallback",
-        "trigger",
-        "self-improvement",
-        "knowledge-distilled",
-        "bug-fix"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.661Z",
-      "updatedAt": "2026-03-06T03:14:59.661Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.9,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #032 identified that both reflection and metacognitive systems had never been triggered because history depth was below MIN_HISTORY_FOR_REFLECTION=3 after data loss. A time-based fallback prevents permanent silence of these core capabilities.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899661_53mh7x",
-    "content": "Test import paths must resolve to the compiled output directory, not to sibling source files. When a new module is added at src/memory/foo.ts, its test file must import from '../dist/memory/foo.js' (the compiled artifact), not from './foo.js' (which does not exist at test runtime). Always verify the import path convention used by existing passing tests before writing new test files.",
-    "summary": "Test files must import from dist/ compiled output, not from src/ source paths",
-    "category": "error_handling",
-    "conditions": {
-      "taskTypes": [
-        "bugfix",
-        "testing"
-      ],
-      "tags": [
-        "test",
-        "import-path",
-        "dist",
-        "typescript",
-        "module-resolution",
-        "knowledge-distilled",
-        "bug-fix"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.661Z",
-      "updatedAt": "2026-03-06T03:14:59.661Z",
+      "createdAt": "2026-03-09T21:02:22.426Z",
+      "updatedAt": "2026-03-09T21:02:22.426Z",
       "derivedFrom": [
         "knowledge-files"
       ],
@@ -193,26 +45,24 @@
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Evolution #043 fixed a broken test by changing the import from './failure-patterns.js' to '../dist/memory/failure-patterns.js'. The test was producing 0 results because the import path pointed to a non-existent file.",
+    "rationale": "Evolution #031 documented that recordEvolutionKnowledge was added in a commit but PM2 was never restarted, so every subsequent evolution cycle ran old code and produced zero knowledge files. The root cause was purely operational: new code existed but the process served old code.",
     "examples": []
   },
   {
-    "id": "principle_1772766899662_mz0cig",
-    "content": "Pre-commit hooks that run global lint checks will block commits for pre-existing violations unrelated to the current change. Use --no-verify only when the changed files are verified clean (run tsc and eslint scoped to changed files first), and document the pre-existing errors so they can be tracked as separate tasks. Never use --no-verify as a blanket bypass without first confirming the specific files being committed have zero new violations.",
-    "summary": "Scope lint checks to changed files before using --no-verify to bypass pre-commit hooks",
+    "id": "principle_1773090142427_0pjxal",
+    "content": "When a numeric threshold guards a state transition, verify that all legitimate recommendation confidence values exceed that threshold. In this codebase the strategy update gate used `confidence > 0.7` while the 'balanced' recommendation always emitted `confidence = 0.6`, permanently locking the system in 'repair-only' mode. Fix by lowering the gate (e.g., to 0.5) or raising the emitted confidence to a value that actually clears it.",
+    "summary": "Ensure strategy-update confidence threshold is lower than all valid recommendation values",
     "category": "error_handling",
     "conditions": {
       "taskTypes": [
         "bugfix",
-        "devops",
         "refactor"
       ],
       "tags": [
-        "eslint",
-        "pre-commit",
-        "lint",
-        "git",
-        "ci",
+        "threshold",
+        "strategy",
+        "confidence",
+        "state-machine",
         "knowledge-distilled",
         "bug-fix"
       ]
@@ -231,136 +81,36 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:14:59.662Z",
-      "updatedAt": "2026-03-06T03:14:59.662Z",
+      "createdAt": "2026-03-09T21:02:22.427Z",
+      "updatedAt": "2026-03-09T21:02:22.427Z",
       "derivedFrom": [
         "knowledge-files"
       ],
-      "confidence": 0.88,
+      "confidence": 0.95,
       "stability": 0.5,
       "reinforcementCount": 0,
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Multiple evolution cycles (031, 035, 037, 043, 046, 049, 051) repeatedly encountered pre-commit hook failures caused by pre-existing ESLint errors in unrelated files, requiring --no-verify. Scoping lint to changed files would allow clean commits without bypassing safety checks.",
+    "rationale": "Evolution #037 fixed exactly this: getCurrentStrategy() had a 0.7 gate, 'balanced' always produced 0.6, so the system could never advance beyond 'repair-only' even with 0% failure rate. Lowering the gate to 0.5 immediately enabled the strategy transition confirmed by test logs.",
     "examples": []
   },
   {
-    "id": "principle_1772766899662_c6hbi5",
-    "content": "Implement span-based tracing at the evolution loop level by wrapping each phase (understand, implement, commit) in a named span using startSpan/endSpan, and wrapping the entire cycle in startTrace/endTrace. Store trace IDs alongside evolution history records so failures can be correlated with their full execution chain. Without this instrumentation, diagnosing which phase caused a failure requires manual log archaeology.",
-    "summary": "Wrap each evolution cycle phase in named spans to enable full execution chain tracing",
-    "category": "coding",
-    "conditions": {
-      "taskTypes": [
-        "feature",
-        "debugging",
-        "refactor"
-      ],
-      "tags": [
-        "tracing",
-        "observability",
-        "spans",
-        "evolution-loop",
-        "debugging",
-        "arize",
-        "knowledge-distilled",
-        "feature"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.662Z",
-      "updatedAt": "2026-03-06T03:14:59.662Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.89,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #054 integrated trace.ts (already implemented) into loop.ts after finding it was never called. Evolution #045 research confirmed that without span-based tracing there is no ground truth for diagnosing evolution failures, aligning with Arize's 'traces are documentation for AI agents' principle.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899662_nxibyt",
-    "content": "Implement a Principle Distiller that extracts abstract, reusable principles from evolution trajectories in two stages: offline distillation (clustering similar trajectories and generating natural-language principles with applicability conditions, evidence cases, and confidence scores) and online retrieval (injecting matched principles into the evolution prompt via the {strategyModifier} placeholder before each cycle). Principles must be stored with success/failure case references so their effectiveness can be empirically tracked and stale principles pruned.",
-    "summary": "Build a two-stage principle distillation system that extracts and injects reusable decision rules",
-    "category": "coding",
-    "conditions": {
-      "taskTypes": [
-        "feature",
-        "refactor",
-        "research"
-      ],
-      "tags": [
-        "principle-distillation",
-        "evolver",
-        "experience",
-        "memory",
-        "self-improvement",
-        "knowledge",
-        "knowledge-distilled",
-        "feature"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.662Z",
-      "updatedAt": "2026-03-06T03:14:59.662Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.87,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolutions #047, #049, #050, #052 progressively designed and implemented the EvolveR-inspired Experience Distillation system. The research (047-2-evolver-experience-distillation.md) showed the system lacked an abstraction layer between raw trajectories and decisions, causing repeated re-reasoning from scratch.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899663_26x5cm",
-    "content": "When implementing a multi-phase feature across consecutive evolution cycles, always verify the previous cycle's artifacts actually exist before marking it complete. If cycle N declares an implementation done but cycle N+1 finds the file missing, treat this as a bug and create a dedicated repair task. Use filesystem checks (ls, find) rather than relying on task-completion flags alone.",
-    "summary": "Verify previous cycle artifacts exist on disk before marking multi-phase features complete",
+    "id": "principle_1773090142427_h4udjc",
+    "content": "Self-improvement trigger functions that require a minimum history count (e.g., MIN_HISTORY_FOR_REFLECTION = 3) will silently never fire after data loss or a fresh install. Add a time-based fallback (e.g., force-trigger every 6 hours regardless of history length) so that reflection and metacognitive sessions execute even when the history buffer is below the threshold.",
+    "summary": "Add time-based fallback triggers for history-gated self-improvement systems",
     "category": "error_handling",
     "conditions": {
       "taskTypes": [
         "bugfix",
-        "feature",
-        "debugging"
+        "feature"
       ],
       "tags": [
-        "artifact-verification",
-        "multi-cycle",
-        "feature-completeness",
-        "filesystem",
+        "reflection",
+        "metacognitive",
+        "trigger",
+        "history",
+        "fallback",
         "knowledge-distilled",
         "bug-fix"
       ]
@@ -379,24 +129,72 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:14:59.663Z",
-      "updatedAt": "2026-03-06T03:14:59.663Z",
+      "createdAt": "2026-03-09T21:02:22.427Z",
+      "updatedAt": "2026-03-09T21:02:22.427Z",
       "derivedFrom": [
         "knowledge-files"
       ],
-      "confidence": 0.91,
+      "confidence": 0.92,
       "stability": 0.5,
       "reinforcementCount": 0,
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Evolution #052 was created specifically because #050 marked 'Principle Retriever implemented' but principle-retriever.ts did not exist and loop.ts had no reference to any principle module. The broken loop severed the Experience Distillation feedback cycle.",
+    "rationale": "Evolution #032 found that shouldTriggerReflection() required 3 history records, but after data loss only 1 existed, so neither the reflection nor the metacognitive system had ever been triggered. The fix added an elapsed-time fallback so the systems could operate independently of history depth.",
     "examples": []
   },
   {
-    "id": "principle_1772766899663_qektb6",
-    "content": "When a new TypeScript source file uses fs and path operations, always import the specific named exports (existsSync, join from 'node:fs' and 'node:path') at the top of the file rather than importing the default namespace objects. If a function in the file uses fs.existsSync or path.join without the namespace import, the TypeScript compiler will emit TS2304 'Cannot find name' errors that are invisible to the test runner but will cause runtime failures.",
-    "summary": "Always import named fs/path exports; namespace-style usage without import causes TS2304 at runtime",
+    "id": "principle_1773090142427_c5x7k1",
+    "content": "When a test file imports a compiled module using a relative path (e.g., `./failure-patterns.js`), the path must point to the actual build output directory (e.g., `../dist/memory/failure-patterns.js`). A mismatched import path causes the entire test file to silently fail to load, reporting zero tests rather than a meaningful error, so always cross-check import paths against the tsconfig `outDir` setting.",
+    "summary": "Test imports must reference the correct dist/ output path, not a relative sibling path",
+    "category": "error_handling",
+    "conditions": {
+      "taskTypes": [
+        "bugfix",
+        "testing"
+      ],
+      "tags": [
+        "typescript",
+        "import",
+        "test",
+        "dist",
+        "path",
+        "knowledge-distilled",
+        "bug-fix"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:02:22.427Z",
+      "updatedAt": "2026-03-09T21:02:22.427Z",
+      "derivedFrom": [
+        "knowledge-files"
+      ],
+      "confidence": 0.93,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Evolution #043 showed the test file imported from `./failure-patterns.js` while the compiled output lived at `../dist/memory/failure-patterns.js`; changing one line enabled 25 previously invisible tests to pass.",
+    "examples": []
+  },
+  {
+    "id": "principle_1773090142427_6b1ool",
+    "content": "When TypeScript code uses `fs` or `path` as namespace objects inside a function but only the individual named exports (`existsSync`, `join`) were imported at the top of the file, the compiler emits TS2304 errors at runtime-affecting call sites. Audit all newly added functions for undeclared namespace references and replace them with the already-imported named bindings (e.g., replace `fs.existsSync(path.join(...))` with `existsSync(join(...))`)",
+    "summary": "Replace undeclared fs/path namespace calls with already-imported named exports",
     "category": "error_handling",
     "conditions": {
       "taskTypes": [
@@ -405,10 +203,9 @@
       ],
       "tags": [
         "typescript",
-        "imports",
+        "import",
         "fs",
         "path",
-        "ts2304",
         "compilation",
         "knowledge-distilled",
         "bug-fix"
@@ -428,136 +225,131 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:14:59.663Z",
-      "updatedAt": "2026-03-06T03:14:59.663Z",
+      "createdAt": "2026-03-09T21:02:22.427Z",
+      "updatedAt": "2026-03-09T21:02:22.427Z",
       "derivedFrom": [
         "knowledge-files"
       ],
-      "confidence": 0.92,
+      "confidence": 0.91,
       "stability": 0.5,
       "reinforcementCount": 0,
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Evolution #053 found that archive-integration.ts used fs.existsSync and path.join in detectCapabilities() without importing the fs and path namespaces. TypeScript confirmed the bug with TS2304 errors. Tests passed because they didn't exercise that code path.",
+    "rationale": "Evolution #053 caught TypeScript errors in archive-integration.ts where the second half of detectCapabilities() used `fs.existsSync` and `path.join` while only the named exports had been imported, causing compilation failure despite tests passing (tests ran against pre-built dist).",
     "examples": []
   },
   {
-    "id": "principle_1772766899663_jkxuvp",
-    "content": "Apply the GEP (Genome Evolution Protocol) pattern: before executing an evolution, extract structured signals from the task context (task type keywords, health state, recent failure count), match those signals against a gene library of named strategies, and create an explicit Mutation object that declares the expected effect and a forbidden_paths list. This prevents ad-hoc decision-making and provides an auditable record of why a particular strategy was chosen.",
-    "summary": "Use signal-driven gene selection and explicit Mutation objects to make evolution decisions auditable",
-    "category": "learning",
-    "conditions": {
-      "taskTypes": [
-        "feature",
-        "refactor",
-        "research"
-      ],
-      "tags": [
-        "gep",
-        "genome-evolution-protocol",
-        "signal-matching",
-        "strategy",
-        "audit",
-        "mutation",
-        "knowledge-distilled",
-        "research"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.663Z",
-      "updatedAt": "2026-03-06T03:14:59.663Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.84,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #046 studied EvoMap/evolver (966 stars) and documented that Jinx re-reasons from scratch each cycle while GEP reuses structured Genes. The research report (046-gep-protocol-research.md) showed 10+ capability gaps including missing signal extraction, forbidden paths, blast-radius estimation, and env fingerprinting.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899664_c9hzfl",
-    "content": "Adopt the ACE (Agentic Context Engineering) Generator-Reflector-Curator architecture: after each reflection cycle, a Curator component should organize insights into a structured 'Context Playbook' stored in data/playbook/. Without a Curator, reflection results remain unstructured and cannot be systematically retrieved. Use incremental updates to the playbook to prevent context collapse where old strategies overwrite new ones.",
-    "summary": "Add a Curator component to organize reflection insights into a structured retrievable playbook",
-    "category": "learning",
-    "conditions": {
-      "taskTypes": [
-        "feature",
-        "research",
-        "refactor"
-      ],
-      "tags": [
-        "ace",
-        "context-engineering",
-        "curator",
-        "playbook",
-        "reflection",
-        "microsoft",
-        "knowledge-distilled",
-        "research"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.664Z",
-      "updatedAt": "2026-03-06T03:14:59.664Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.82,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #033 researched Microsoft's ACE framework (ICLR 2026) and identified that Jinx has Generator (evolution) and Reflector (reflection.ts) but lacks a Curator. Without it, reflection outputs are stored as flat files with no systematic retrieval mechanism.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899664_985znr",
-    "content": "Implement a capability tracking module that records which capabilities are active (e.g., existence of key source files, configured API keys, enabled features) and inject a capability summary into the goal discovery prompt. This allows the LLM performing goal discovery to reason about actual gaps rather than hypothetical ones, aligning with Alita-G's capability-gap analysis dimension for systematic domain expertise development.",
-    "summary": "Inject a live capability summary into goal discovery prompts to enable gap-aware task generation",
+    "id": "principle_1773090142427_lkf93i",
+    "content": "Implement span-based tracing by wrapping each logical phase of an agent loop (understand, implement, commit, validate) in explicit `startSpan`/`endSpan` calls tied to a root trace. Without this instrumentation there is no ground-truth audit trail to verify whether an evolution cycle succeeded or failed at a specific sub-step, making post-mortem analysis guesswork.",
+    "summary": "Wrap each evolution loop phase in explicit span-based trace calls",
     "category": "coding",
     "conditions": {
       "taskTypes": [
         "feature",
-        "research",
+        "refactor",
+        "testing"
+      ],
+      "tags": [
+        "tracing",
+        "observability",
+        "spans",
+        "evolution-loop",
+        "arize",
+        "knowledge-distilled",
+        "feature"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:02:22.427Z",
+      "updatedAt": "2026-03-09T21:02:22.427Z",
+      "derivedFrom": [
+        "knowledge-files"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Evolution #054 and the Arize research (#045) both established that 'traces are documentation for AI agents' and that without span-level tracing there is no way to pinpoint which phase of a cycle failed. trace.ts was implemented but loop.ts never called it until #054 wired them together.",
+    "examples": []
+  },
+  {
+    "id": "principle_1773090142428_nvdbsd",
+    "content": "Build a structured capability-tracking module that records what the system can and cannot do, then inject a capability summary into the goal-discovery prompt at each cycle. This provides the LLM with an explicit capability gap analysis so it proposes tasks that expand the weakest dimensions rather than repeating already-mastered skills.",
+    "summary": "Inject capability-gap summary into goal-discovery prompt to guide task selection",
+    "category": "coding",
+    "conditions": {
+      "taskTypes": [
+        "feature",
         "refactor"
       ],
       "tags": [
-        "capability-tracking",
         "goal-discovery",
-        "alita-g",
+        "capability-tracking",
         "prompt-engineering",
+        "alita-g",
+        "knowledge-distilled",
+        "feature"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:02:22.428Z",
+      "updatedAt": "2026-03-09T21:02:22.428Z",
+      "derivedFrom": [
+        "knowledge-files"
+      ],
+      "confidence": 0.88,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Evolution #038 derived this from the Alita-G framework: without a capability summary the LLM picks tasks arbitrarily. The implementation created a capability module and updated GoalDiscoveryContext to include capabilitySection, directly influencing which tasks the system proposes.",
+    "examples": []
+  },
+  {
+    "id": "principle_1773090142428_men68b",
+    "content": "Implement an Experience Distillation pipeline that periodically clusters past interaction trajectories, extracts abstract reusable principles from them via LLM, stores those principles with confidence scores and supporting evidence, and injects the top-ranked relevant principles into the evolution prompt before each decision. This closes the experience→principle→decision loop that plain history storage cannot provide.",
+    "summary": "Distill past trajectories into abstract principles and inject them into future decision prompts",
+    "category": "coding",
+    "conditions": {
+      "taskTypes": [
+        "feature",
+        "research"
+      ],
+      "tags": [
+        "experience-distillation",
+        "evolver",
+        "principle-store",
+        "retrieval",
         "self-improvement",
         "knowledge-distilled",
         "feature"
@@ -577,37 +369,135 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:14:59.664Z",
-      "updatedAt": "2026-03-06T03:14:59.664Z",
+      "createdAt": "2026-03-09T21:02:22.428Z",
+      "updatedAt": "2026-03-09T21:02:22.428Z",
       "derivedFrom": [
         "knowledge-files"
       ],
-      "confidence": 0.83,
+      "confidence": 0.87,
       "stability": 0.5,
       "reinforcementCount": 0,
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Evolution #038 studied Alita-G and implemented a capability tracking module plus enhanced goal discovery prompt. Without capability context, the goal discovery LLM cannot identify concrete gaps and may generate redundant or already-completed tasks.",
+    "rationale": "Evolutions #047–#052 implemented the full EvolveR Experience Distillation pipeline. The research showed that raw history storage produces only concrete, non-generalizable records, whereas principle distillation yields abstract, reusable guidance that actively shapes future decisions through retrieval and injection.",
     "examples": []
   },
   {
-    "id": "principle_1772766899665_ps68go",
-    "content": "When adding tool-group filtering to reduce context usage, implement the filter at the extension registration layer using an environment variable (e.g., JINX_TOOL_GROUPS) so individual workers can be configured with a subset of tools without modifying core code. Define tool groups by functional domain (e.g., 'github', 'filesystem', 'search') and apply filtering before tools are registered, ensuring unused tool descriptions never appear in the LLM context.",
-    "summary": "Filter tool registration by group via env var to reduce LLM context size without core changes",
-    "category": "architecture",
+    "id": "principle_1773090142428_vceezv",
+    "content": "Structure evolution knowledge as GEP-style assets: define named Genes (reusable strategy steps keyed to signal patterns), solidify successful runs into Capsules (with environment fingerprint and blast-radius metadata), and append immutable EvolutionEvents to an append-only JSONL audit log. This transforms ad-hoc prompt adjustments into auditable, replayable assets and prevents redundant reasoning on recurring signal patterns.",
+    "summary": "Adopt GEP Gene/Capsule/Event asset structure for structured, auditable evolution knowledge",
+    "category": "learning",
     "conditions": {
       "taskTypes": [
+        "research",
         "feature",
-        "integration",
         "refactor"
       ],
       "tags": [
-        "mcp",
-        "tool-groups",
-        "context-optimization",
-        "extensions",
-        "environment-variable",
+        "gep",
+        "genome-evolution-protocol",
+        "genes",
+        "capsules",
+        "events",
+        "audit",
+        "knowledge-distilled",
+        "research"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:02:22.428Z",
+      "updatedAt": "2026-03-09T21:02:22.428Z",
+      "derivedFrom": [
+        "knowledge-files"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Evolution #046 researched the EvoMap/evolver GEP protocol and found Jinx lacked signal-driven strategy selection, reusable strategy libraries, and an append-only audit trail. The GEP structure addresses all three gaps while remaining compatible with the existing four-strategy system.",
+    "examples": []
+  },
+  {
+    "id": "principle_1773090142428_oxr3ux",
+    "content": "Introduce an Agent Archive that maintains multiple parallel evolution branches, each with a fitness score and diversity score, and use a balanced selection strategy (fitness weight 0.6, diversity weight 0.4 by default) when choosing which branch to continue. Automatically spawn a new branch when diversity falls below a threshold (e.g., 0.15) or when all active branches are stagnant, preventing premature convergence to a local optimum.",
+    "summary": "Maintain a multi-branch Agent Archive to prevent local-optimum convergence in evolution",
+    "category": "learning",
+    "conditions": {
+      "taskTypes": [
+        "research",
+        "feature"
+      ],
+      "tags": [
+        "agent-archive",
+        "dgm",
+        "darwin-godel-machine",
+        "diversity",
+        "branch",
+        "open-ended-evolution",
+        "knowledge-distilled",
+        "research"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:02:22.428Z",
+      "updatedAt": "2026-03-09T21:02:22.428Z",
+      "derivedFrom": [
+        "knowledge-files"
+      ],
+      "confidence": 0.84,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Evolution #053 researched Sakana AI's DGM (ICLR 2026) which improved SWE-bench from 20% to 50% by maintaining diverse parallel branches. Jinx had only a single evolution path; the archive implementation (agent-archive.ts + archive-integration.ts) adds branch-level diversity tracking.",
+    "examples": []
+  },
+  {
+    "id": "principle_1773090142429_npmoqb",
+    "content": "When connecting to an external API and receiving a validation error (e.g., 'Required at query'), first add any undocumented but commonly required authentication flags (e.g., `useApiKey: true` for Exa) and enhance error logging to capture the full request body and raw response before concluding the API contract has changed. Simultaneously ensure fallback providers (Brave Search, Serper) are configured so the feature degrades gracefully rather than failing completely.",
+    "summary": "Add auth flags and full-request error logging before assuming API contract has changed",
+    "category": "architecture",
+    "conditions": {
+      "taskTypes": [
+        "bugfix",
+        "integration"
+      ],
+      "tags": [
+        "exa",
+        "web-search",
+        "api",
+        "fallback",
+        "error-handling",
         "knowledge-distilled",
         "integration"
       ]
@@ -626,109 +516,8 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:14:59.665Z",
-      "updatedAt": "2026-03-06T03:14:59.665Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.85,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #044 studied GitHub MCP's X-MCP-Tools header and implemented an analogous JINX_TOOL_GROUPS mechanism. Evolution #040 also explored enable_tool_search to reduce the 95% context overhead from loading all tool descriptions simultaneously.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899665_3obs7m",
-    "content": "When designing an Agent Archive for multi-branch evolution, use a combined fitness-diversity score (default: 0.6 fitness + 0.4 diversity) for branch selection and automatically spawn new exploration branches when diversity drops below a threshold (e.g., 0.15) or all branches stagnate. Store branch state as snapshots with parent IDs to maintain a full lineage tree, enabling rollback to any prior branch state when convergence fails.",
-    "summary": "Use fitness-diversity balanced selection with automatic branch spawning to avoid local optima",
-    "category": "learning",
-    "conditions": {
-      "taskTypes": [
-        "feature",
-        "research",
-        "refactor"
-      ],
-      "tags": [
-        "agent-archive",
-        "dgm",
-        "darwin-godel-machine",
-        "diversity",
-        "branch",
-        "evolution",
-        "sakana",
-        "knowledge-distilled",
-        "research"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.665Z",
-      "updatedAt": "2026-03-06T03:14:59.665Z",
-      "derivedFrom": [
-        "knowledge-files"
-      ],
-      "confidence": 0.86,
-      "stability": 0.5,
-      "reinforcementCount": 0,
-      "reviewCount": 0
-    },
-    "status": "experimental",
-    "rationale": "Evolution #053 studied Sakana AI's DGM (ICLR 2026) and found an existing agent-archive.ts implementation. The research confirmed that single-path evolution systems risk local optima and DGM's archive with diversity-weighted selection raised SWE-bench performance from 20% to 50%.",
-    "examples": []
-  },
-  {
-    "id": "principle_1772766899666_uu94dq",
-    "content": "Implement Telegram bot commands for memory retrieval (/recall) as composable helper functions defined outside the main() function to keep cyclomatic complexity below the ESLint limit (15). Parse command arguments (query, type filter, result count) in a dedicated parseRecallArgs() function, format results in a formatRecallResults() function, and register the command in the onCommand object. This pattern keeps each function under 100 lines and under complexity 15.",
-    "summary": "Decompose complex Telegram command handlers into small pure helper functions to satisfy lint limits",
-    "category": "coding",
-    "conditions": {
-      "taskTypes": [
-        "feature",
-        "refactor"
-      ],
-      "tags": [
-        "telegram",
-        "command",
-        "memory",
-        "recall",
-        "complexity",
-        "eslint",
-        "refactor",
-        "knowledge-distilled",
-        "feature"
-      ]
-    },
-    "evidence": {
-      "successCases": [],
-      "failureCases": [],
-      "successRate": 0,
-      "totalApplications": 0
-    },
-    "voting": {
-      "helpful": 0,
-      "harmful": 0,
-      "totalVotes": 0,
-      "effectiveness": 0,
-      "voteHistory": []
-    },
-    "metadata": {
-      "createdAt": "2026-03-06T03:14:59.666Z",
-      "updatedAt": "2026-03-06T03:14:59.666Z",
+      "createdAt": "2026-03-09T21:02:22.429Z",
+      "updatedAt": "2026-03-09T21:02:22.429Z",
       "derivedFrom": [
         "knowledge-files"
       ],
@@ -738,29 +527,28 @@
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Evolution #042 implemented /recall but the initial implementation had cyclomatic complexity 27 and 145 lines, both exceeding ESLint limits. Refactoring into helper functions resolved both violations while preserving all functionality.",
+    "rationale": "Evolution #051 diagnosed a 'Required at query' Exa error by adding `useApiKey: true` and detailed logging; the system already had Brave/Serper fallback paths. The principle generalises: unexpected API validation errors often stem from missing optional-but-required fields rather than endpoint changes.",
     "examples": []
   },
   {
-    "id": "principle_1772766899666_9xpf6b",
-    "content": "Implement named failure pattern detection as a standalone module (e.g., src/memory/failure-patterns.ts) with each pattern defined as a named constant (e.g., VERIFICATION_BYPASS: 'if you find yourself saying should instead of did'), a detection function that inspects evolution history for the pattern, and a severity classification. Patterns should fire in real time during the evolution cycle and surface as warnings before the agent commits to a flawed approach. Reference at least 7 canonical failure modes: verification bypass, triple-fix threshold, scope creep, assumption cascade, tool misuse, premature completion, and silent error swallowing.",
-    "summary": "Implement 7 named failure patterns as a real-time detection module with per-pattern severity levels",
-    "category": "coding",
+    "id": "principle_1773090142429_713zer",
+    "content": "When implementing a new MCP-style tool-filtering mechanism (like X-MCP-Tools or tool groups), expose the configuration through an environment variable (e.g., JINX_TOOL_GROUPS) and filter tool registration in the extension layer rather than modifying the core framework. Define named tool groups in a dedicated module so individual sessions can load only the subset of tools they need, reducing per-session context overhead without altering the underlying agent infrastructure.",
+    "summary": "Filter tool registration via env-var-configured groups in the extension layer, not core",
+    "category": "architecture",
     "conditions": {
       "taskTypes": [
         "feature",
-        "bugfix",
-        "testing"
+        "integration",
+        "refactor"
       ],
       "tags": [
-        "failure-patterns",
-        "metacognitive",
-        "self-improvement",
-        "mars",
-        "detection",
-        "warnings",
+        "mcp",
+        "tool-groups",
+        "context-reduction",
+        "extension",
+        "pi-framework",
         "knowledge-distilled",
-        "feature"
+        "integration"
       ]
     },
     "evidence": {
@@ -777,32 +565,141 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:14:59.666Z",
-      "updatedAt": "2026-03-06T03:14:59.666Z",
+      "createdAt": "2026-03-09T21:02:22.429Z",
+      "updatedAt": "2026-03-09T21:02:22.429Z",
       "derivedFrom": [
         "knowledge-files"
       ],
-      "confidence": 0.87,
+      "confidence": 0.86,
       "stability": 0.5,
       "reinforcementCount": 0,
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Evolution #041 implemented the failure-patterns module based on MARS research findings. The 7 patterns encode hard-won operational knowledge (e.g., 'if three fixes fail, stop') that would otherwise be re-learned from scratch each cycle.",
+    "rationale": "Evolution #044 analysed GitHub MCP's X-MCP-Tools header and implemented an analogous ToolGroupManager for Jinx. The research confirmed that Pi's 'No MCP' philosophy requires tool-filtering to live in the extension layer, and that env-var configuration keeps the core agent infrastructure stable.",
     "examples": []
   },
   {
-    "id": "principle_1772766983124_8yava3",
-    "content": "When performing testing tasks, testing was part of the workflow",
-    "summary": "testing: Testing was part of the workflow",
-    "category": "testing",
+    "id": "principle_1773090142429_ayba58",
+    "content": "Pre-commit hooks that run project-wide lint and type checks will block legitimate single-file fixes whenever pre-existing violations exist elsewhere in the codebase. Establish a clear policy: use `--no-verify` only for documentation-only or one-line targeted fixes when the introduced diff is provably clean (verified by scoped `tsc --noEmit` on modified files only), and track all pre-existing violations in a dedicated issue so they are not silently normalised.",
+    "summary": "Use scoped type-checking to distinguish new lint errors from pre-existing ones before committing",
+    "category": "error_handling",
     "conditions": {
       "taskTypes": [
+        "bugfix",
+        "refactor",
         "testing"
       ],
+      "tags": [
+        "lint",
+        "pre-commit",
+        "eslint",
+        "typescript",
+        "ci",
+        "no-verify",
+        "knowledge-distilled",
+        "bug-fix"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:02:22.429Z",
+      "updatedAt": "2026-03-09T21:02:22.429Z",
+      "derivedFrom": [
+        "knowledge-files"
+      ],
+      "confidence": 0.89,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Across evolutions #032–#054 the team repeatedly used `--no-verify` to bypass pre-commit hooks because pre-existing ESLint errors blocked unrelated commits. A scoped check strategy would surface only new violations, making `--no-verify` unnecessary and preventing the gradual normalisation of ignoring lint failures.",
+    "examples": []
+  },
+  {
+    "id": "principle_1773090142430_it5ket",
+    "content": "When a metacognitive system is implemented but never invoked in the main execution loop, import its trigger function (`shouldTriggerMetacognitive`) and add an explicit call alongside the reflection trigger inside the loop. Without this wiring, even a fully correct metacognitive module produces zero effect on the system's self-improvement behaviour.",
+    "summary": "Explicitly wire metacognitive trigger into the main evolution loop alongside reflection",
+    "category": "error_handling",
+    "conditions": {
+      "taskTypes": [
+        "bugfix",
+        "feature"
+      ],
+      "tags": [
+        "metacognitive",
+        "reflection",
+        "loop",
+        "self-improvement",
+        "wiring",
+        "knowledge-distilled",
+        "bug-fix"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:02:22.430Z",
+      "updatedAt": "2026-03-09T21:02:22.430Z",
+      "derivedFrom": [
+        "knowledge-files"
+      ],
+      "confidence": 0.91,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Evolution #032 found that metacognitive.ts existed and was imported by reflection.ts but was never called from loop.ts. The fix required adding both a shouldTriggerMetacognitive function to the module and an explicit invocation in runEvolutionCycle, otherwise the entire system was dead code.",
+    "examples": []
+  },
+  {
+    "id": "principle_1773090402512_b081kt",
+    "content": "When performing general tasks, consistently observed across 9 successful evolutions: frequent theme: \"capabilities\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 9 successful evolutions: Frequent theme: \"capabilit",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
       "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
         "testing",
-        "api"
+        "lesson",
+        "reflection",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
       ],
       "tags": [
         "success-pattern"
@@ -822,36 +719,143 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:16:23.124Z",
-      "updatedAt": "2026-03-06T03:16:23.124Z",
+      "createdAt": "2026-03-09T21:06:42.512Z",
+      "updatedAt": "2026-03-09T21:06:42.512Z",
       "derivedFrom": [
-        "traj_1772766983074_p06qyo",
-        "traj_1772766983074_pip9cf"
+        "traj_1773090400891_r7fyi6",
+        "traj_1773090400891_s22qa8",
+        "traj_1773090400891_j323sk",
+        "traj_1773090400891_8qzvzy",
+        "traj_1773090400891_1jkyfc",
+        "traj_1773090400891_95hlyw",
+        "traj_1773090400891_dc6tnj",
+        "traj_1773090400891_bnbb4g",
+        "traj_1773090400891_qo2qpj",
+        "traj_1773090400891_fwfdgf",
+        "traj_1773090400891_k7xz5w",
+        "traj_1773090400891_9ncv6p",
+        "traj_1773090400891_td0h40",
+        "traj_1773090400891_6n13jl",
+        "traj_1773090400891_o4c3qk",
+        "traj_1773090400891_gc58ao",
+        "traj_1773090400891_v30spi",
+        "traj_1773090400891_tk0p7b",
+        "traj_1773090400891_2nkfbe",
+        "traj_1773090400891_9inh60",
+        "traj_1773090400891_j7pauo",
+        "traj_1773090400891_uz1cwf",
+        "traj_1773090400891_mc44jz",
+        "traj_1773090400891_gkcn5a",
+        "traj_1773090400891_bvn41n",
+        "traj_1773090400891_op2fop",
+        "traj_1773090400891_uj6j6p",
+        "traj_1773090400891_57nrhg",
+        "traj_1773090400891_yxh5ox",
+        "traj_1773090400891_h0s08r",
+        "traj_1773090400891_nzmxll",
+        "traj_1773090400891_ncj7v6",
+        "traj_1773090400891_iabb5g",
+        "traj_1773090400891_hw2rg0",
+        "traj_1773090400891_ap7qzp",
+        "traj_1773090400891_oezcvu",
+        "traj_1773090400892_hrlh9o",
+        "traj_1773090400892_gyn4w8",
+        "traj_1773090400892_y6l3ko",
+        "traj_1773090400892_qmy7kf",
+        "traj_1773090400892_p9bjkt",
+        "traj_1773090400892_voxgps",
+        "traj_1773090400892_tnz5e3",
+        "traj_1773090400892_xofwfl",
+        "traj_1773090400892_irhmiy",
+        "traj_1773090400892_3ogxq1",
+        "traj_1773090400892_8wkmpr",
+        "traj_1773090400892_pioedb",
+        "traj_1773090402511_6u81w4",
+        "traj_1773090402511_4cvbdo",
+        "traj_1773090402511_eb5kvi",
+        "traj_1773090402511_4x0kti",
+        "traj_1773090402511_xp4dl3",
+        "traj_1773090402511_t73hmc",
+        "traj_1773090402511_2mtg1c",
+        "traj_1773090402511_mvdj1u",
+        "traj_1773090402511_ysnn3l",
+        "traj_1773090402511_btu8go",
+        "traj_1773090402511_xfa2j2",
+        "traj_1773090402511_s10zf8",
+        "traj_1773090402511_o4dj8b",
+        "traj_1773090402511_32j5gn",
+        "traj_1773090402511_2bdg7e",
+        "traj_1773090402511_7ceibo",
+        "traj_1773090402511_foaz4a",
+        "traj_1773090402511_tzgqsn",
+        "traj_1773090402511_oaifil",
+        "traj_1773090402511_5hl93i",
+        "traj_1773090402511_tl6120",
+        "traj_1773090402511_ds7c4u",
+        "traj_1773090402511_5kybfa",
+        "traj_1773090402511_y3goym",
+        "traj_1773090402511_ngyxt2",
+        "traj_1773090402511_1p0dg6",
+        "traj_1773090402511_5aamgz",
+        "traj_1773090402511_gelodf",
+        "traj_1773090402511_vgkat8",
+        "traj_1773090402511_pxq12b",
+        "traj_1773090402511_gmk8y6",
+        "traj_1773090402511_710vga",
+        "traj_1773090402511_cxank3",
+        "traj_1773090402511_rkbfmu",
+        "traj_1773090402511_ovcvem",
+        "traj_1773090402511_y6ub29",
+        "traj_1773090402511_ddtsiu",
+        "traj_1773090402511_lgx88t",
+        "traj_1773090402511_po5vyp",
+        "traj_1773090402511_1djyv7",
+        "traj_1773090402511_u8s9l8",
+        "traj_1773090402511_peykb0",
+        "traj_1773090402511_qjhmn2",
+        "traj_1773090402511_eo3wfc",
+        "traj_1773090402511_mzdy3x",
+        "traj_1773090402511_uqjc2j",
+        "traj_1773090402511_vs2jft",
+        "traj_1773090402511_9hh118",
+        "traj_1773090402511_lk369y"
       ],
-      "confidence": 0.7,
+      "confidence": 0.9,
       "stability": 0.5,
       "reinforcementCount": 0,
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Based on 2 successful trajectories",
+    "rationale": "Based on 97 successful trajectories",
     "examples": [
-      "traj_1772766983074_p06qyo",
-      "traj_1772766983074_pip9cf"
+      "traj_1773090400891_r7fyi6",
+      "traj_1773090400891_s22qa8",
+      "traj_1773090400891_j323sk"
     ]
   },
   {
-    "id": "principle_1772767465546_g5mydx",
-    "content": "When performing testing tasks, testing was part of the workflow",
-    "summary": "testing: Testing was part of the workflow",
-    "category": "testing",
+    "id": "principle_1773090402512_u387b9",
+    "content": "When performing general tasks, consistently observed across 5 successful evolutions: frequent theme: \"understand\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 5 successful evolutions: Frequent theme: \"understan",
+    "category": "general",
     "conditions": {
       "taskTypes": [
-        "testing"
+        "general"
       ],
       "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
         "testing",
-        "api"
+        "lesson",
+        "reflection",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
       ],
       "tags": [
         "success-pattern"
@@ -871,36 +875,143 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:24:25.546Z",
-      "updatedAt": "2026-03-06T03:24:25.546Z",
+      "createdAt": "2026-03-09T21:06:42.512Z",
+      "updatedAt": "2026-03-09T21:06:42.512Z",
       "derivedFrom": [
-        "traj_1772767465485_4l5rxs",
-        "traj_1772767465485_zvhjhn"
+        "traj_1773090400891_r7fyi6",
+        "traj_1773090400891_s22qa8",
+        "traj_1773090400891_j323sk",
+        "traj_1773090400891_8qzvzy",
+        "traj_1773090400891_1jkyfc",
+        "traj_1773090400891_95hlyw",
+        "traj_1773090400891_dc6tnj",
+        "traj_1773090400891_bnbb4g",
+        "traj_1773090400891_qo2qpj",
+        "traj_1773090400891_fwfdgf",
+        "traj_1773090400891_k7xz5w",
+        "traj_1773090400891_9ncv6p",
+        "traj_1773090400891_td0h40",
+        "traj_1773090400891_6n13jl",
+        "traj_1773090400891_o4c3qk",
+        "traj_1773090400891_gc58ao",
+        "traj_1773090400891_v30spi",
+        "traj_1773090400891_tk0p7b",
+        "traj_1773090400891_2nkfbe",
+        "traj_1773090400891_9inh60",
+        "traj_1773090400891_j7pauo",
+        "traj_1773090400891_uz1cwf",
+        "traj_1773090400891_mc44jz",
+        "traj_1773090400891_gkcn5a",
+        "traj_1773090400891_bvn41n",
+        "traj_1773090400891_op2fop",
+        "traj_1773090400891_uj6j6p",
+        "traj_1773090400891_57nrhg",
+        "traj_1773090400891_yxh5ox",
+        "traj_1773090400891_h0s08r",
+        "traj_1773090400891_nzmxll",
+        "traj_1773090400891_ncj7v6",
+        "traj_1773090400891_iabb5g",
+        "traj_1773090400891_hw2rg0",
+        "traj_1773090400891_ap7qzp",
+        "traj_1773090400891_oezcvu",
+        "traj_1773090400892_hrlh9o",
+        "traj_1773090400892_gyn4w8",
+        "traj_1773090400892_y6l3ko",
+        "traj_1773090400892_qmy7kf",
+        "traj_1773090400892_p9bjkt",
+        "traj_1773090400892_voxgps",
+        "traj_1773090400892_tnz5e3",
+        "traj_1773090400892_xofwfl",
+        "traj_1773090400892_irhmiy",
+        "traj_1773090400892_3ogxq1",
+        "traj_1773090400892_8wkmpr",
+        "traj_1773090400892_pioedb",
+        "traj_1773090402511_6u81w4",
+        "traj_1773090402511_4cvbdo",
+        "traj_1773090402511_eb5kvi",
+        "traj_1773090402511_4x0kti",
+        "traj_1773090402511_xp4dl3",
+        "traj_1773090402511_t73hmc",
+        "traj_1773090402511_2mtg1c",
+        "traj_1773090402511_mvdj1u",
+        "traj_1773090402511_ysnn3l",
+        "traj_1773090402511_btu8go",
+        "traj_1773090402511_xfa2j2",
+        "traj_1773090402511_s10zf8",
+        "traj_1773090402511_o4dj8b",
+        "traj_1773090402511_32j5gn",
+        "traj_1773090402511_2bdg7e",
+        "traj_1773090402511_7ceibo",
+        "traj_1773090402511_foaz4a",
+        "traj_1773090402511_tzgqsn",
+        "traj_1773090402511_oaifil",
+        "traj_1773090402511_5hl93i",
+        "traj_1773090402511_tl6120",
+        "traj_1773090402511_ds7c4u",
+        "traj_1773090402511_5kybfa",
+        "traj_1773090402511_y3goym",
+        "traj_1773090402511_ngyxt2",
+        "traj_1773090402511_1p0dg6",
+        "traj_1773090402511_5aamgz",
+        "traj_1773090402511_gelodf",
+        "traj_1773090402511_vgkat8",
+        "traj_1773090402511_pxq12b",
+        "traj_1773090402511_gmk8y6",
+        "traj_1773090402511_710vga",
+        "traj_1773090402511_cxank3",
+        "traj_1773090402511_rkbfmu",
+        "traj_1773090402511_ovcvem",
+        "traj_1773090402511_y6ub29",
+        "traj_1773090402511_ddtsiu",
+        "traj_1773090402511_lgx88t",
+        "traj_1773090402511_po5vyp",
+        "traj_1773090402511_1djyv7",
+        "traj_1773090402511_u8s9l8",
+        "traj_1773090402511_peykb0",
+        "traj_1773090402511_qjhmn2",
+        "traj_1773090402511_eo3wfc",
+        "traj_1773090402511_mzdy3x",
+        "traj_1773090402511_uqjc2j",
+        "traj_1773090402511_vs2jft",
+        "traj_1773090402511_9hh118",
+        "traj_1773090402511_lk369y"
       ],
-      "confidence": 0.7,
+      "confidence": 0.9,
       "stability": 0.5,
       "reinforcementCount": 0,
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Based on 2 successful trajectories",
+    "rationale": "Based on 97 successful trajectories",
     "examples": [
-      "traj_1772767465485_4l5rxs",
-      "traj_1772767465485_zvhjhn"
+      "traj_1773090400891_r7fyi6",
+      "traj_1773090400891_s22qa8",
+      "traj_1773090400891_j323sk"
     ]
   },
   {
-    "id": "principle_1772767990326_iwwex5",
-    "content": "When performing testing tasks, testing was part of the workflow",
-    "summary": "testing: Testing was part of the workflow",
-    "category": "testing",
+    "id": "principle_1773090402513_xdm2bo",
+    "content": "When performing general tasks, consistently observed across 4 successful evolutions: frequent theme: \"principle\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 4 successful evolutions: Frequent theme: \"principle",
+    "category": "general",
     "conditions": {
       "taskTypes": [
-        "testing"
+        "general"
       ],
       "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
         "testing",
-        "api"
+        "lesson",
+        "reflection",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
       ],
       "tags": [
         "success-pattern"
@@ -920,11 +1031,351 @@
       "voteHistory": []
     },
     "metadata": {
-      "createdAt": "2026-03-06T03:33:10.326Z",
-      "updatedAt": "2026-03-06T03:33:10.326Z",
+      "createdAt": "2026-03-09T21:06:42.513Z",
+      "updatedAt": "2026-03-09T21:06:42.513Z",
       "derivedFrom": [
-        "traj_1772767990253_1bjjo6",
-        "traj_1772767990253_nz7g1d"
+        "traj_1773090400891_r7fyi6",
+        "traj_1773090400891_s22qa8",
+        "traj_1773090400891_j323sk",
+        "traj_1773090400891_8qzvzy",
+        "traj_1773090400891_1jkyfc",
+        "traj_1773090400891_95hlyw",
+        "traj_1773090400891_dc6tnj",
+        "traj_1773090400891_bnbb4g",
+        "traj_1773090400891_qo2qpj",
+        "traj_1773090400891_fwfdgf",
+        "traj_1773090400891_k7xz5w",
+        "traj_1773090400891_9ncv6p",
+        "traj_1773090400891_td0h40",
+        "traj_1773090400891_6n13jl",
+        "traj_1773090400891_o4c3qk",
+        "traj_1773090400891_gc58ao",
+        "traj_1773090400891_v30spi",
+        "traj_1773090400891_tk0p7b",
+        "traj_1773090400891_2nkfbe",
+        "traj_1773090400891_9inh60",
+        "traj_1773090400891_j7pauo",
+        "traj_1773090400891_uz1cwf",
+        "traj_1773090400891_mc44jz",
+        "traj_1773090400891_gkcn5a",
+        "traj_1773090400891_bvn41n",
+        "traj_1773090400891_op2fop",
+        "traj_1773090400891_uj6j6p",
+        "traj_1773090400891_57nrhg",
+        "traj_1773090400891_yxh5ox",
+        "traj_1773090400891_h0s08r",
+        "traj_1773090400891_nzmxll",
+        "traj_1773090400891_ncj7v6",
+        "traj_1773090400891_iabb5g",
+        "traj_1773090400891_hw2rg0",
+        "traj_1773090400891_ap7qzp",
+        "traj_1773090400891_oezcvu",
+        "traj_1773090400892_hrlh9o",
+        "traj_1773090400892_gyn4w8",
+        "traj_1773090400892_y6l3ko",
+        "traj_1773090400892_qmy7kf",
+        "traj_1773090400892_p9bjkt",
+        "traj_1773090400892_voxgps",
+        "traj_1773090400892_tnz5e3",
+        "traj_1773090400892_xofwfl",
+        "traj_1773090400892_irhmiy",
+        "traj_1773090400892_3ogxq1",
+        "traj_1773090400892_8wkmpr",
+        "traj_1773090400892_pioedb",
+        "traj_1773090402511_6u81w4",
+        "traj_1773090402511_4cvbdo",
+        "traj_1773090402511_eb5kvi",
+        "traj_1773090402511_4x0kti",
+        "traj_1773090402511_xp4dl3",
+        "traj_1773090402511_t73hmc",
+        "traj_1773090402511_2mtg1c",
+        "traj_1773090402511_mvdj1u",
+        "traj_1773090402511_ysnn3l",
+        "traj_1773090402511_btu8go",
+        "traj_1773090402511_xfa2j2",
+        "traj_1773090402511_s10zf8",
+        "traj_1773090402511_o4dj8b",
+        "traj_1773090402511_32j5gn",
+        "traj_1773090402511_2bdg7e",
+        "traj_1773090402511_7ceibo",
+        "traj_1773090402511_foaz4a",
+        "traj_1773090402511_tzgqsn",
+        "traj_1773090402511_oaifil",
+        "traj_1773090402511_5hl93i",
+        "traj_1773090402511_tl6120",
+        "traj_1773090402511_ds7c4u",
+        "traj_1773090402511_5kybfa",
+        "traj_1773090402511_y3goym",
+        "traj_1773090402511_ngyxt2",
+        "traj_1773090402511_1p0dg6",
+        "traj_1773090402511_5aamgz",
+        "traj_1773090402511_gelodf",
+        "traj_1773090402511_vgkat8",
+        "traj_1773090402511_pxq12b",
+        "traj_1773090402511_gmk8y6",
+        "traj_1773090402511_710vga",
+        "traj_1773090402511_cxank3",
+        "traj_1773090402511_rkbfmu",
+        "traj_1773090402511_ovcvem",
+        "traj_1773090402511_y6ub29",
+        "traj_1773090402511_ddtsiu",
+        "traj_1773090402511_lgx88t",
+        "traj_1773090402511_po5vyp",
+        "traj_1773090402511_1djyv7",
+        "traj_1773090402511_u8s9l8",
+        "traj_1773090402511_peykb0",
+        "traj_1773090402511_qjhmn2",
+        "traj_1773090402511_eo3wfc",
+        "traj_1773090402511_mzdy3x",
+        "traj_1773090402511_uqjc2j",
+        "traj_1773090402511_vs2jft",
+        "traj_1773090402511_9hh118",
+        "traj_1773090402511_lk369y"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 97 successful trajectories",
+    "examples": [
+      "traj_1773090400891_r7fyi6",
+      "traj_1773090400891_s22qa8",
+      "traj_1773090400891_j323sk"
+    ]
+  },
+  {
+    "id": "principle_1773090402514_qg1tqr",
+    "content": "Avoid recurring failure mode seen in 27 evolutions: frequent theme: \"excel\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 27 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:06:42.514Z",
+      "updatedAt": "2026-03-09T21:06:42.514Z",
+      "derivedFrom": [
+        "traj_1773090400891_gngn3p",
+        "traj_1773090400891_i67x38",
+        "traj_1773090400891_4k03hu",
+        "traj_1773090400891_01b41e",
+        "traj_1773090400891_zdczpd",
+        "traj_1773090400891_wgf0kw",
+        "traj_1773090400891_xyhdls",
+        "traj_1773090400891_hbdu3q",
+        "traj_1773090400891_xlpmy6",
+        "traj_1773090400891_1qrs9w",
+        "traj_1773090400891_umucvg",
+        "traj_1773090400891_uygjq8",
+        "traj_1773090400891_4980y6",
+        "traj_1773090400891_r6gkex",
+        "traj_1773090400892_t810u1",
+        "traj_1773090400892_kqkyvs",
+        "traj_1773090400892_zgx8u9",
+        "traj_1773090400892_zlkj1o",
+        "traj_1773090400892_bfb7uj"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773090400891_gngn3p",
+      "traj_1773090400891_i67x38",
+      "traj_1773090400891_4k03hu"
+    ]
+  },
+  {
+    "id": "principle_1773090402515_t0tfri",
+    "content": "Avoid recurring failure mode seen in 12 evolutions: frequent theme: \"timed\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 12 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:06:42.515Z",
+      "updatedAt": "2026-03-09T21:06:42.515Z",
+      "derivedFrom": [
+        "traj_1773090400891_gngn3p",
+        "traj_1773090400891_i67x38",
+        "traj_1773090400891_4k03hu",
+        "traj_1773090400891_01b41e",
+        "traj_1773090400891_zdczpd",
+        "traj_1773090400891_wgf0kw",
+        "traj_1773090400891_xyhdls",
+        "traj_1773090400891_hbdu3q",
+        "traj_1773090400891_xlpmy6",
+        "traj_1773090400891_1qrs9w",
+        "traj_1773090400891_umucvg",
+        "traj_1773090400891_uygjq8",
+        "traj_1773090400891_4980y6",
+        "traj_1773090400891_r6gkex",
+        "traj_1773090400892_t810u1",
+        "traj_1773090400892_kqkyvs",
+        "traj_1773090400892_zgx8u9",
+        "traj_1773090400892_zlkj1o",
+        "traj_1773090400892_bfb7uj"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773090400891_gngn3p",
+      "traj_1773090400891_i67x38",
+      "traj_1773090400891_4k03hu"
+    ]
+  },
+  {
+    "id": "principle_1773090402516_7hrx6z",
+    "content": "Avoid error encountered during execution when performing general tasks",
+    "summary": "general: Avoid Error encountered during execution",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:06:42.516Z",
+      "updatedAt": "2026-03-09T21:06:42.516Z",
+      "derivedFrom": [
+        "traj_1773090400891_gngn3p",
+        "traj_1773090400891_i67x38",
+        "traj_1773090400891_4k03hu",
+        "traj_1773090400891_01b41e",
+        "traj_1773090400891_zdczpd",
+        "traj_1773090400891_wgf0kw",
+        "traj_1773090400891_xyhdls",
+        "traj_1773090400891_hbdu3q",
+        "traj_1773090400891_xlpmy6",
+        "traj_1773090400891_1qrs9w",
+        "traj_1773090400891_umucvg",
+        "traj_1773090400891_uygjq8",
+        "traj_1773090400891_4980y6",
+        "traj_1773090400891_r6gkex",
+        "traj_1773090400892_t810u1",
+        "traj_1773090400892_kqkyvs",
+        "traj_1773090400892_zgx8u9",
+        "traj_1773090400892_zlkj1o",
+        "traj_1773090400892_bfb7uj"
+      ],
+      "confidence": 0.8,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773090400891_gngn3p",
+      "traj_1773090400891_i67x38",
+      "traj_1773090400891_4k03hu"
+    ]
+  },
+  {
+    "id": "principle_1773090402517_rh93gn",
+    "content": "When performing testing tasks, testing was part of the workflow",
+    "summary": "testing: Testing was part of the workflow",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing",
+        "api",
+        "principle",
+        "reflection"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:06:42.517Z",
+      "updatedAt": "2026-03-09T21:06:42.517Z",
+      "derivedFrom": [
+        "traj_1773090400891_00mzcw",
+        "traj_1773090400891_ulvben",
+        "traj_1773090400891_ys5eq9",
+        "traj_1773090400891_oijcxt",
+        "traj_1773090400891_6k96hh",
+        "traj_1773090400891_im3lhd"
       ],
       "confidence": 0.7,
       "stability": 0.5,
@@ -932,10 +1383,2477 @@
       "reviewCount": 0
     },
     "status": "experimental",
-    "rationale": "Based on 2 successful trajectories",
+    "rationale": "Based on 6 successful trajectories",
     "examples": [
-      "traj_1772767990253_1bjjo6",
-      "traj_1772767990253_nz7g1d"
+      "traj_1773090400891_00mzcw",
+      "traj_1773090400891_ulvben",
+      "traj_1773090400891_ys5eq9"
+    ]
+  },
+  {
+    "id": "principle_1773090402518_tb3bhk",
+    "content": "Avoid recurring failure mode seen in 27 evolutions: frequent theme: \"tests\". address this root cause to prevent future failures. when performing testing tasks",
+    "summary": "testing: Avoid Recurring failure mode seen in 27 evolutions: Frequent theme",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:06:42.518Z",
+      "updatedAt": "2026-03-09T21:06:42.518Z",
+      "derivedFrom": [
+        "traj_1773090400891_xu0sb0",
+        "traj_1773090400891_jwe7dl",
+        "traj_1773090400891_vvsqw7",
+        "traj_1773090400891_atoq8s",
+        "traj_1773090400891_9oyrh5",
+        "traj_1773090400891_7kfbgk",
+        "traj_1773090400891_fxm9h3",
+        "traj_1773090400891_5ly4vc",
+        "traj_1773090400891_ymw825",
+        "traj_1773090400891_8884nv",
+        "traj_1773090400891_tsfhmj",
+        "traj_1773090400891_t0xt8x",
+        "traj_1773090400891_k547mz",
+        "traj_1773090400891_6m00s0",
+        "traj_1773090400891_9de8hx",
+        "traj_1773090400891_4hxdhb",
+        "traj_1773090400891_wfivy8",
+        "traj_1773090400891_14jc8q",
+        "traj_1773090400891_fhz7wv",
+        "traj_1773090400891_s7izk8",
+        "traj_1773090400891_biru2u",
+        "traj_1773090400891_hcmqpi",
+        "traj_1773090400891_62wdt4",
+        "traj_1773090400891_yxjcb4",
+        "traj_1773090400891_8btx94",
+        "traj_1773090400891_cijk56",
+        "traj_1773090400891_809oxj",
+        "traj_1773090400892_ovmsy4"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 28 failed trajectories",
+    "examples": [
+      "traj_1773090400891_xu0sb0",
+      "traj_1773090400891_jwe7dl",
+      "traj_1773090400891_vvsqw7"
+    ]
+  },
+  {
+    "id": "principle_1773090927618_mpjxiw",
+    "content": "When performing general tasks, consistently observed across 10 successful evolutions: frequent theme: \"advanced\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 10 successful evolutions: Frequent theme: \"advanced",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "testing",
+        "lesson",
+        "reflection",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.618Z",
+      "updatedAt": "2026-03-09T21:15:27.618Z",
+      "derivedFrom": [
+        "traj_1773090925833_etqn2l",
+        "traj_1773090925833_n05zlv",
+        "traj_1773090925833_q0egnj",
+        "traj_1773090925833_wumrod",
+        "traj_1773090925833_2hgjez",
+        "traj_1773090925833_e1c0qr",
+        "traj_1773090925833_3u8j5k",
+        "traj_1773090925833_55e6uz",
+        "traj_1773090925833_9xcjua",
+        "traj_1773090925833_kf99jb",
+        "traj_1773090925833_3evane",
+        "traj_1773090925833_v754ht",
+        "traj_1773090925833_ewbzsz",
+        "traj_1773090925833_uk57eb",
+        "traj_1773090925833_qjvrg7",
+        "traj_1773090925833_c51pvv",
+        "traj_1773090925833_d4becb",
+        "traj_1773090925833_u3zvvq",
+        "traj_1773090925833_2qcbti",
+        "traj_1773090925833_fbwbac",
+        "traj_1773090925833_k3uenh",
+        "traj_1773090925833_l0kn73",
+        "traj_1773090925833_s8zg4c",
+        "traj_1773090925833_u8uiph",
+        "traj_1773090925833_0jlzor",
+        "traj_1773090925833_dpxhxm",
+        "traj_1773090925833_n4dqi2",
+        "traj_1773090925833_4raubx",
+        "traj_1773090925833_fj67xy",
+        "traj_1773090925833_zzmksj",
+        "traj_1773090925834_wimais",
+        "traj_1773090925834_o6n79x",
+        "traj_1773090925834_joxrec",
+        "traj_1773090925834_bv9yw3",
+        "traj_1773090925834_r3ummo",
+        "traj_1773090925834_3ajr06",
+        "traj_1773090925834_czduhr",
+        "traj_1773090925834_gm951c",
+        "traj_1773090925834_hj5e74",
+        "traj_1773090925834_zxnhwk",
+        "traj_1773090925834_gnmqw2",
+        "traj_1773090925834_rbgo7q",
+        "traj_1773090925834_scsi7v",
+        "traj_1773090925834_flbbkg",
+        "traj_1773090925834_k1p35o",
+        "traj_1773090925834_fyfirx",
+        "traj_1773090925834_tcgehk",
+        "traj_1773090925834_mtaqx2",
+        "traj_1773090925834_faa43m",
+        "traj_1773090927617_10ycj1",
+        "traj_1773090927617_zp94hf",
+        "traj_1773090927617_3974hw",
+        "traj_1773090927617_71srjy",
+        "traj_1773090927617_thy8ob",
+        "traj_1773090927617_2055n0",
+        "traj_1773090927617_z5uyrt",
+        "traj_1773090927617_x04dc2",
+        "traj_1773090927617_rvzjiv",
+        "traj_1773090927617_lhglqb",
+        "traj_1773090927617_32er1q",
+        "traj_1773090927617_z6gybv",
+        "traj_1773090927617_lsveym",
+        "traj_1773090927617_i407fj",
+        "traj_1773090927617_zyqnjb",
+        "traj_1773090927617_gvzkio",
+        "traj_1773090927617_qp9l5l",
+        "traj_1773090927617_tpyfei",
+        "traj_1773090927617_jwsr54",
+        "traj_1773090927617_ruhjhe",
+        "traj_1773090927617_afl60b",
+        "traj_1773090927617_5e58x6",
+        "traj_1773090927617_jsx92q",
+        "traj_1773090927617_krck9k",
+        "traj_1773090927617_b61ujw",
+        "traj_1773090927617_4ptm8d",
+        "traj_1773090927617_wda9fq",
+        "traj_1773090927617_6gp2is",
+        "traj_1773090927617_l2zzq3",
+        "traj_1773090927617_uqqhmg",
+        "traj_1773090927617_o4nqq1",
+        "traj_1773090927617_l6e56x",
+        "traj_1773090927617_hz4zzr",
+        "traj_1773090927617_3ufq59",
+        "traj_1773090927617_lu80ud",
+        "traj_1773090927617_7o5klt",
+        "traj_1773090927617_p5t1gu",
+        "traj_1773090927617_oxki1l",
+        "traj_1773090927617_4q27er",
+        "traj_1773090927617_vthna9",
+        "traj_1773090927617_90xi2a",
+        "traj_1773090927617_mrcfnv",
+        "traj_1773090927617_fsr1h1",
+        "traj_1773090927617_w9hd7o",
+        "traj_1773090927617_cwlshl",
+        "traj_1773090927617_5o96a6",
+        "traj_1773090927617_a2kk7y",
+        "traj_1773090927617_zukjrz",
+        "traj_1773090927617_r52pig"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 98 successful trajectories",
+    "examples": [
+      "traj_1773090925833_etqn2l",
+      "traj_1773090925833_n05zlv",
+      "traj_1773090925833_q0egnj"
+    ]
+  },
+  {
+    "id": "principle_1773090927619_jtvl0d",
+    "content": "When performing general tasks, consistently observed across 9 successful evolutions: frequent theme: \"capabilities\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 9 successful evolutions: Frequent theme: \"capabilit",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "testing",
+        "lesson",
+        "reflection",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.619Z",
+      "updatedAt": "2026-03-09T21:15:27.619Z",
+      "derivedFrom": [
+        "traj_1773090925833_etqn2l",
+        "traj_1773090925833_n05zlv",
+        "traj_1773090925833_q0egnj",
+        "traj_1773090925833_wumrod",
+        "traj_1773090925833_2hgjez",
+        "traj_1773090925833_e1c0qr",
+        "traj_1773090925833_3u8j5k",
+        "traj_1773090925833_55e6uz",
+        "traj_1773090925833_9xcjua",
+        "traj_1773090925833_kf99jb",
+        "traj_1773090925833_3evane",
+        "traj_1773090925833_v754ht",
+        "traj_1773090925833_ewbzsz",
+        "traj_1773090925833_uk57eb",
+        "traj_1773090925833_qjvrg7",
+        "traj_1773090925833_c51pvv",
+        "traj_1773090925833_d4becb",
+        "traj_1773090925833_u3zvvq",
+        "traj_1773090925833_2qcbti",
+        "traj_1773090925833_fbwbac",
+        "traj_1773090925833_k3uenh",
+        "traj_1773090925833_l0kn73",
+        "traj_1773090925833_s8zg4c",
+        "traj_1773090925833_u8uiph",
+        "traj_1773090925833_0jlzor",
+        "traj_1773090925833_dpxhxm",
+        "traj_1773090925833_n4dqi2",
+        "traj_1773090925833_4raubx",
+        "traj_1773090925833_fj67xy",
+        "traj_1773090925833_zzmksj",
+        "traj_1773090925834_wimais",
+        "traj_1773090925834_o6n79x",
+        "traj_1773090925834_joxrec",
+        "traj_1773090925834_bv9yw3",
+        "traj_1773090925834_r3ummo",
+        "traj_1773090925834_3ajr06",
+        "traj_1773090925834_czduhr",
+        "traj_1773090925834_gm951c",
+        "traj_1773090925834_hj5e74",
+        "traj_1773090925834_zxnhwk",
+        "traj_1773090925834_gnmqw2",
+        "traj_1773090925834_rbgo7q",
+        "traj_1773090925834_scsi7v",
+        "traj_1773090925834_flbbkg",
+        "traj_1773090925834_k1p35o",
+        "traj_1773090925834_fyfirx",
+        "traj_1773090925834_tcgehk",
+        "traj_1773090925834_mtaqx2",
+        "traj_1773090925834_faa43m",
+        "traj_1773090927617_10ycj1",
+        "traj_1773090927617_zp94hf",
+        "traj_1773090927617_3974hw",
+        "traj_1773090927617_71srjy",
+        "traj_1773090927617_thy8ob",
+        "traj_1773090927617_2055n0",
+        "traj_1773090927617_z5uyrt",
+        "traj_1773090927617_x04dc2",
+        "traj_1773090927617_rvzjiv",
+        "traj_1773090927617_lhglqb",
+        "traj_1773090927617_32er1q",
+        "traj_1773090927617_z6gybv",
+        "traj_1773090927617_lsveym",
+        "traj_1773090927617_i407fj",
+        "traj_1773090927617_zyqnjb",
+        "traj_1773090927617_gvzkio",
+        "traj_1773090927617_qp9l5l",
+        "traj_1773090927617_tpyfei",
+        "traj_1773090927617_jwsr54",
+        "traj_1773090927617_ruhjhe",
+        "traj_1773090927617_afl60b",
+        "traj_1773090927617_5e58x6",
+        "traj_1773090927617_jsx92q",
+        "traj_1773090927617_krck9k",
+        "traj_1773090927617_b61ujw",
+        "traj_1773090927617_4ptm8d",
+        "traj_1773090927617_wda9fq",
+        "traj_1773090927617_6gp2is",
+        "traj_1773090927617_l2zzq3",
+        "traj_1773090927617_uqqhmg",
+        "traj_1773090927617_o4nqq1",
+        "traj_1773090927617_l6e56x",
+        "traj_1773090927617_hz4zzr",
+        "traj_1773090927617_3ufq59",
+        "traj_1773090927617_lu80ud",
+        "traj_1773090927617_7o5klt",
+        "traj_1773090927617_p5t1gu",
+        "traj_1773090927617_oxki1l",
+        "traj_1773090927617_4q27er",
+        "traj_1773090927617_vthna9",
+        "traj_1773090927617_90xi2a",
+        "traj_1773090927617_mrcfnv",
+        "traj_1773090927617_fsr1h1",
+        "traj_1773090927617_w9hd7o",
+        "traj_1773090927617_cwlshl",
+        "traj_1773090927617_5o96a6",
+        "traj_1773090927617_a2kk7y",
+        "traj_1773090927617_zukjrz",
+        "traj_1773090927617_r52pig"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 98 successful trajectories",
+    "examples": [
+      "traj_1773090925833_etqn2l",
+      "traj_1773090925833_n05zlv",
+      "traj_1773090925833_q0egnj"
+    ]
+  },
+  {
+    "id": "principle_1773090927620_5fn86s",
+    "content": "When performing general tasks, consistently observed across 5 successful evolutions: frequent theme: \"understand\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 5 successful evolutions: Frequent theme: \"understan",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "testing",
+        "lesson",
+        "reflection",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.620Z",
+      "updatedAt": "2026-03-09T21:15:27.620Z",
+      "derivedFrom": [
+        "traj_1773090925833_etqn2l",
+        "traj_1773090925833_n05zlv",
+        "traj_1773090925833_q0egnj",
+        "traj_1773090925833_wumrod",
+        "traj_1773090925833_2hgjez",
+        "traj_1773090925833_e1c0qr",
+        "traj_1773090925833_3u8j5k",
+        "traj_1773090925833_55e6uz",
+        "traj_1773090925833_9xcjua",
+        "traj_1773090925833_kf99jb",
+        "traj_1773090925833_3evane",
+        "traj_1773090925833_v754ht",
+        "traj_1773090925833_ewbzsz",
+        "traj_1773090925833_uk57eb",
+        "traj_1773090925833_qjvrg7",
+        "traj_1773090925833_c51pvv",
+        "traj_1773090925833_d4becb",
+        "traj_1773090925833_u3zvvq",
+        "traj_1773090925833_2qcbti",
+        "traj_1773090925833_fbwbac",
+        "traj_1773090925833_k3uenh",
+        "traj_1773090925833_l0kn73",
+        "traj_1773090925833_s8zg4c",
+        "traj_1773090925833_u8uiph",
+        "traj_1773090925833_0jlzor",
+        "traj_1773090925833_dpxhxm",
+        "traj_1773090925833_n4dqi2",
+        "traj_1773090925833_4raubx",
+        "traj_1773090925833_fj67xy",
+        "traj_1773090925833_zzmksj",
+        "traj_1773090925834_wimais",
+        "traj_1773090925834_o6n79x",
+        "traj_1773090925834_joxrec",
+        "traj_1773090925834_bv9yw3",
+        "traj_1773090925834_r3ummo",
+        "traj_1773090925834_3ajr06",
+        "traj_1773090925834_czduhr",
+        "traj_1773090925834_gm951c",
+        "traj_1773090925834_hj5e74",
+        "traj_1773090925834_zxnhwk",
+        "traj_1773090925834_gnmqw2",
+        "traj_1773090925834_rbgo7q",
+        "traj_1773090925834_scsi7v",
+        "traj_1773090925834_flbbkg",
+        "traj_1773090925834_k1p35o",
+        "traj_1773090925834_fyfirx",
+        "traj_1773090925834_tcgehk",
+        "traj_1773090925834_mtaqx2",
+        "traj_1773090925834_faa43m",
+        "traj_1773090927617_10ycj1",
+        "traj_1773090927617_zp94hf",
+        "traj_1773090927617_3974hw",
+        "traj_1773090927617_71srjy",
+        "traj_1773090927617_thy8ob",
+        "traj_1773090927617_2055n0",
+        "traj_1773090927617_z5uyrt",
+        "traj_1773090927617_x04dc2",
+        "traj_1773090927617_rvzjiv",
+        "traj_1773090927617_lhglqb",
+        "traj_1773090927617_32er1q",
+        "traj_1773090927617_z6gybv",
+        "traj_1773090927617_lsveym",
+        "traj_1773090927617_i407fj",
+        "traj_1773090927617_zyqnjb",
+        "traj_1773090927617_gvzkio",
+        "traj_1773090927617_qp9l5l",
+        "traj_1773090927617_tpyfei",
+        "traj_1773090927617_jwsr54",
+        "traj_1773090927617_ruhjhe",
+        "traj_1773090927617_afl60b",
+        "traj_1773090927617_5e58x6",
+        "traj_1773090927617_jsx92q",
+        "traj_1773090927617_krck9k",
+        "traj_1773090927617_b61ujw",
+        "traj_1773090927617_4ptm8d",
+        "traj_1773090927617_wda9fq",
+        "traj_1773090927617_6gp2is",
+        "traj_1773090927617_l2zzq3",
+        "traj_1773090927617_uqqhmg",
+        "traj_1773090927617_o4nqq1",
+        "traj_1773090927617_l6e56x",
+        "traj_1773090927617_hz4zzr",
+        "traj_1773090927617_3ufq59",
+        "traj_1773090927617_lu80ud",
+        "traj_1773090927617_7o5klt",
+        "traj_1773090927617_p5t1gu",
+        "traj_1773090927617_oxki1l",
+        "traj_1773090927617_4q27er",
+        "traj_1773090927617_vthna9",
+        "traj_1773090927617_90xi2a",
+        "traj_1773090927617_mrcfnv",
+        "traj_1773090927617_fsr1h1",
+        "traj_1773090927617_w9hd7o",
+        "traj_1773090927617_cwlshl",
+        "traj_1773090927617_5o96a6",
+        "traj_1773090927617_a2kk7y",
+        "traj_1773090927617_zukjrz",
+        "traj_1773090927617_r52pig"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 98 successful trajectories",
+    "examples": [
+      "traj_1773090925833_etqn2l",
+      "traj_1773090925833_n05zlv",
+      "traj_1773090925833_q0egnj"
+    ]
+  },
+  {
+    "id": "principle_1773090927621_b4qbc6",
+    "content": "Avoid recurring failure mode seen in 28 evolutions: frequent theme: \"excel\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 28 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.621Z",
+      "updatedAt": "2026-03-09T21:15:27.621Z",
+      "derivedFrom": [
+        "traj_1773090925833_o6vjg7",
+        "traj_1773090925833_6v1cm1",
+        "traj_1773090925833_qgkq8d",
+        "traj_1773090925833_usavi4",
+        "traj_1773090925833_pzdy1m",
+        "traj_1773090925833_u7h1ln",
+        "traj_1773090925833_c27pof",
+        "traj_1773090925833_kumqmy",
+        "traj_1773090925833_0pjcvs",
+        "traj_1773090925833_fald7s",
+        "traj_1773090925833_bbgfao",
+        "traj_1773090925833_mphgez",
+        "traj_1773090925833_5mrzgo",
+        "traj_1773090925834_z4hhlv",
+        "traj_1773090925834_bu1wnl",
+        "traj_1773090925834_q16cec",
+        "traj_1773090925834_tz7lcu",
+        "traj_1773090925834_iia2ed",
+        "traj_1773090925834_5q5fut"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773090925833_o6vjg7",
+      "traj_1773090925833_6v1cm1",
+      "traj_1773090925833_qgkq8d"
+    ]
+  },
+  {
+    "id": "principle_1773090927622_a2lvo4",
+    "content": "Avoid recurring failure mode seen in 12 evolutions: frequent theme: \"timed\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 12 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.622Z",
+      "updatedAt": "2026-03-09T21:15:27.622Z",
+      "derivedFrom": [
+        "traj_1773090925833_o6vjg7",
+        "traj_1773090925833_6v1cm1",
+        "traj_1773090925833_qgkq8d",
+        "traj_1773090925833_usavi4",
+        "traj_1773090925833_pzdy1m",
+        "traj_1773090925833_u7h1ln",
+        "traj_1773090925833_c27pof",
+        "traj_1773090925833_kumqmy",
+        "traj_1773090925833_0pjcvs",
+        "traj_1773090925833_fald7s",
+        "traj_1773090925833_bbgfao",
+        "traj_1773090925833_mphgez",
+        "traj_1773090925833_5mrzgo",
+        "traj_1773090925834_z4hhlv",
+        "traj_1773090925834_bu1wnl",
+        "traj_1773090925834_q16cec",
+        "traj_1773090925834_tz7lcu",
+        "traj_1773090925834_iia2ed",
+        "traj_1773090925834_5q5fut"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773090925833_o6vjg7",
+      "traj_1773090925833_6v1cm1",
+      "traj_1773090925833_qgkq8d"
+    ]
+  },
+  {
+    "id": "principle_1773090927624_r7p4t5",
+    "content": "Avoid error encountered during execution when performing general tasks",
+    "summary": "general: Avoid Error encountered during execution",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.624Z",
+      "updatedAt": "2026-03-09T21:15:27.624Z",
+      "derivedFrom": [
+        "traj_1773090925833_o6vjg7",
+        "traj_1773090925833_6v1cm1",
+        "traj_1773090925833_qgkq8d",
+        "traj_1773090925833_usavi4",
+        "traj_1773090925833_pzdy1m",
+        "traj_1773090925833_u7h1ln",
+        "traj_1773090925833_c27pof",
+        "traj_1773090925833_kumqmy",
+        "traj_1773090925833_0pjcvs",
+        "traj_1773090925833_fald7s",
+        "traj_1773090925833_bbgfao",
+        "traj_1773090925833_mphgez",
+        "traj_1773090925833_5mrzgo",
+        "traj_1773090925834_z4hhlv",
+        "traj_1773090925834_bu1wnl",
+        "traj_1773090925834_q16cec",
+        "traj_1773090925834_tz7lcu",
+        "traj_1773090925834_iia2ed",
+        "traj_1773090925834_5q5fut"
+      ],
+      "confidence": 0.8,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773090925833_o6vjg7",
+      "traj_1773090925833_6v1cm1",
+      "traj_1773090925833_qgkq8d"
+    ]
+  },
+  {
+    "id": "principle_1773090927627_lw04gx",
+    "content": "When performing testing tasks, testing was part of the workflow",
+    "summary": "testing: Testing was part of the workflow",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing",
+        "api",
+        "principle",
+        "reflection"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.627Z",
+      "updatedAt": "2026-03-09T21:15:27.627Z",
+      "derivedFrom": [
+        "traj_1773090925833_p2gb3u",
+        "traj_1773090925833_j1le1m",
+        "traj_1773090925833_xy3s0g",
+        "traj_1773090925833_m056w6",
+        "traj_1773090925834_gms8ue",
+        "traj_1773090925834_wsw8di"
+      ],
+      "confidence": 0.7,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 6 successful trajectories",
+    "examples": [
+      "traj_1773090925833_p2gb3u",
+      "traj_1773090925833_j1le1m",
+      "traj_1773090925833_xy3s0g"
+    ]
+  },
+  {
+    "id": "principle_1773090927628_egrt9x",
+    "content": "Avoid recurring failure mode seen in 28 evolutions: frequent theme: \"tests\". address this root cause to prevent future failures. when performing testing tasks",
+    "summary": "testing: Avoid Recurring failure mode seen in 28 evolutions: Frequent theme",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:15:27.628Z",
+      "updatedAt": "2026-03-09T21:15:27.628Z",
+      "derivedFrom": [
+        "traj_1773090925834_qlck7v",
+        "traj_1773090925834_u1f121",
+        "traj_1773090925834_9bvmlh",
+        "traj_1773090925834_8i93lb",
+        "traj_1773090925834_3owhqu",
+        "traj_1773090925834_j75gt9",
+        "traj_1773090925834_gg0ocm",
+        "traj_1773090925834_f0mak0",
+        "traj_1773090925834_ayjalk",
+        "traj_1773090925834_snxs7z",
+        "traj_1773090925834_p7k68y",
+        "traj_1773090925834_jyao59",
+        "traj_1773090925834_mo51hz",
+        "traj_1773090925834_c9xqhl",
+        "traj_1773090925834_hfqdoo",
+        "traj_1773090925834_79af5p",
+        "traj_1773090925834_8az9x1",
+        "traj_1773090925834_304e2g",
+        "traj_1773090925834_6p11bi",
+        "traj_1773090925834_3eku05",
+        "traj_1773090925834_wr17ef",
+        "traj_1773090925834_2d110u",
+        "traj_1773090925834_z63mue",
+        "traj_1773090925834_gcheiz",
+        "traj_1773090925834_phxdlu",
+        "traj_1773090925834_zaqmso",
+        "traj_1773090925834_6tsvo2",
+        "traj_1773090925834_6kkvti",
+        "traj_1773090925834_7aeu90"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 29 failed trajectories",
+    "examples": [
+      "traj_1773090925834_qlck7v",
+      "traj_1773090925834_u1f121",
+      "traj_1773090925834_9bvmlh"
+    ]
+  },
+  {
+    "id": "principle_1773091268674_7atevk",
+    "content": "When performing general tasks, consistently observed across 10 successful evolutions: frequent theme: \"advanced\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 10 successful evolutions: Frequent theme: \"advanced",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "agent",
+        "reflection",
+        "testing",
+        "lesson",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.674Z",
+      "updatedAt": "2026-03-09T21:21:08.674Z",
+      "derivedFrom": [
+        "traj_1773091266845_b6pj5n",
+        "traj_1773091266845_ac1c5m",
+        "traj_1773091266845_ij8ofg",
+        "traj_1773091266845_6kgv8b",
+        "traj_1773091266845_5zcy3q",
+        "traj_1773091266845_k8mcgg",
+        "traj_1773091266845_xtlvo3",
+        "traj_1773091266845_lrpoxc",
+        "traj_1773091266845_4h39rg",
+        "traj_1773091266845_ynot9t",
+        "traj_1773091266845_cmoeor",
+        "traj_1773091266845_bcnx3m",
+        "traj_1773091266845_w3guiv",
+        "traj_1773091266845_4dsz02",
+        "traj_1773091266845_audwzb",
+        "traj_1773091266845_5hfd2p",
+        "traj_1773091266845_7pv3u1",
+        "traj_1773091266845_qy7m4f",
+        "traj_1773091266845_2s4nok",
+        "traj_1773091266845_i9yvt2",
+        "traj_1773091266845_eyoser",
+        "traj_1773091266845_q57uo3",
+        "traj_1773091266845_jo3kx1",
+        "traj_1773091266845_ykmcnj",
+        "traj_1773091266845_vegjjt",
+        "traj_1773091266845_gof9q8",
+        "traj_1773091266845_ilo369",
+        "traj_1773091266845_qf90t5",
+        "traj_1773091266845_7hyet6",
+        "traj_1773091266845_aqu0lj",
+        "traj_1773091266845_xf0r5b",
+        "traj_1773091266845_nuxgrr",
+        "traj_1773091266845_cmbmlh",
+        "traj_1773091266845_s7mxzs",
+        "traj_1773091266845_1e22ha",
+        "traj_1773091266845_8gs7uo",
+        "traj_1773091266845_238sye",
+        "traj_1773091266845_tk8ig7",
+        "traj_1773091266845_gy8llk",
+        "traj_1773091266845_6c3v19",
+        "traj_1773091266846_68ffqy",
+        "traj_1773091266846_1gdrdk",
+        "traj_1773091266846_yhkglm",
+        "traj_1773091266846_5wviby",
+        "traj_1773091266846_fx5tjj",
+        "traj_1773091266846_zl6poc",
+        "traj_1773091266846_sfpu92",
+        "traj_1773091266846_fl8vgk",
+        "traj_1773091266846_hf8308",
+        "traj_1773091266846_g7ximm",
+        "traj_1773091268672_48s0fv",
+        "traj_1773091268672_v6yv8m",
+        "traj_1773091268672_uef1yp",
+        "traj_1773091268672_4swfd5",
+        "traj_1773091268672_cdsy65",
+        "traj_1773091268672_saqluy",
+        "traj_1773091268672_rlkjsp",
+        "traj_1773091268672_i2w44z",
+        "traj_1773091268672_cp11h4",
+        "traj_1773091268672_m1n8y6",
+        "traj_1773091268672_blxzfp",
+        "traj_1773091268672_xo950f",
+        "traj_1773091268672_ts2qyx",
+        "traj_1773091268672_qg4tv1",
+        "traj_1773091268672_si5qam",
+        "traj_1773091268672_zjb5b7",
+        "traj_1773091268672_g2034w",
+        "traj_1773091268672_gfdr8h",
+        "traj_1773091268672_o5wvif",
+        "traj_1773091268672_9ej7d8",
+        "traj_1773091268672_ea46t3",
+        "traj_1773091268672_vh4cpj",
+        "traj_1773091268672_54w9lb",
+        "traj_1773091268672_uez06g",
+        "traj_1773091268672_kg7bm5",
+        "traj_1773091268672_cib8uj",
+        "traj_1773091268672_nzx93k",
+        "traj_1773091268672_63sq1y",
+        "traj_1773091268672_gt636o",
+        "traj_1773091268672_iv04p6",
+        "traj_1773091268672_v2xe3x",
+        "traj_1773091268672_qubbva",
+        "traj_1773091268672_x2kr7f",
+        "traj_1773091268672_jo63bo",
+        "traj_1773091268672_w9aj75",
+        "traj_1773091268672_2ydddr",
+        "traj_1773091268672_mdvxvi",
+        "traj_1773091268672_m5tim4",
+        "traj_1773091268672_rspuxm",
+        "traj_1773091268672_ukmqq4",
+        "traj_1773091268672_36hfyb",
+        "traj_1773091268672_bkz0mg",
+        "traj_1773091268672_zh8wj6",
+        "traj_1773091268672_cfcd34",
+        "traj_1773091268672_uiwtlw",
+        "traj_1773091268672_fpy48x",
+        "traj_1773091268672_8teank",
+        "traj_1773091268672_kqvsox",
+        "traj_1773091268672_eb52jw"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 99 successful trajectories",
+    "examples": [
+      "traj_1773091266845_b6pj5n",
+      "traj_1773091266845_ac1c5m",
+      "traj_1773091266845_ij8ofg"
+    ]
+  },
+  {
+    "id": "principle_1773091268676_cwlkyf",
+    "content": "When performing general tasks, consistently observed across 9 successful evolutions: frequent theme: \"capabilities\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 9 successful evolutions: Frequent theme: \"capabilit",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "agent",
+        "reflection",
+        "testing",
+        "lesson",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.676Z",
+      "updatedAt": "2026-03-09T21:21:08.676Z",
+      "derivedFrom": [
+        "traj_1773091266845_b6pj5n",
+        "traj_1773091266845_ac1c5m",
+        "traj_1773091266845_ij8ofg",
+        "traj_1773091266845_6kgv8b",
+        "traj_1773091266845_5zcy3q",
+        "traj_1773091266845_k8mcgg",
+        "traj_1773091266845_xtlvo3",
+        "traj_1773091266845_lrpoxc",
+        "traj_1773091266845_4h39rg",
+        "traj_1773091266845_ynot9t",
+        "traj_1773091266845_cmoeor",
+        "traj_1773091266845_bcnx3m",
+        "traj_1773091266845_w3guiv",
+        "traj_1773091266845_4dsz02",
+        "traj_1773091266845_audwzb",
+        "traj_1773091266845_5hfd2p",
+        "traj_1773091266845_7pv3u1",
+        "traj_1773091266845_qy7m4f",
+        "traj_1773091266845_2s4nok",
+        "traj_1773091266845_i9yvt2",
+        "traj_1773091266845_eyoser",
+        "traj_1773091266845_q57uo3",
+        "traj_1773091266845_jo3kx1",
+        "traj_1773091266845_ykmcnj",
+        "traj_1773091266845_vegjjt",
+        "traj_1773091266845_gof9q8",
+        "traj_1773091266845_ilo369",
+        "traj_1773091266845_qf90t5",
+        "traj_1773091266845_7hyet6",
+        "traj_1773091266845_aqu0lj",
+        "traj_1773091266845_xf0r5b",
+        "traj_1773091266845_nuxgrr",
+        "traj_1773091266845_cmbmlh",
+        "traj_1773091266845_s7mxzs",
+        "traj_1773091266845_1e22ha",
+        "traj_1773091266845_8gs7uo",
+        "traj_1773091266845_238sye",
+        "traj_1773091266845_tk8ig7",
+        "traj_1773091266845_gy8llk",
+        "traj_1773091266845_6c3v19",
+        "traj_1773091266846_68ffqy",
+        "traj_1773091266846_1gdrdk",
+        "traj_1773091266846_yhkglm",
+        "traj_1773091266846_5wviby",
+        "traj_1773091266846_fx5tjj",
+        "traj_1773091266846_zl6poc",
+        "traj_1773091266846_sfpu92",
+        "traj_1773091266846_fl8vgk",
+        "traj_1773091266846_hf8308",
+        "traj_1773091266846_g7ximm",
+        "traj_1773091268672_48s0fv",
+        "traj_1773091268672_v6yv8m",
+        "traj_1773091268672_uef1yp",
+        "traj_1773091268672_4swfd5",
+        "traj_1773091268672_cdsy65",
+        "traj_1773091268672_saqluy",
+        "traj_1773091268672_rlkjsp",
+        "traj_1773091268672_i2w44z",
+        "traj_1773091268672_cp11h4",
+        "traj_1773091268672_m1n8y6",
+        "traj_1773091268672_blxzfp",
+        "traj_1773091268672_xo950f",
+        "traj_1773091268672_ts2qyx",
+        "traj_1773091268672_qg4tv1",
+        "traj_1773091268672_si5qam",
+        "traj_1773091268672_zjb5b7",
+        "traj_1773091268672_g2034w",
+        "traj_1773091268672_gfdr8h",
+        "traj_1773091268672_o5wvif",
+        "traj_1773091268672_9ej7d8",
+        "traj_1773091268672_ea46t3",
+        "traj_1773091268672_vh4cpj",
+        "traj_1773091268672_54w9lb",
+        "traj_1773091268672_uez06g",
+        "traj_1773091268672_kg7bm5",
+        "traj_1773091268672_cib8uj",
+        "traj_1773091268672_nzx93k",
+        "traj_1773091268672_63sq1y",
+        "traj_1773091268672_gt636o",
+        "traj_1773091268672_iv04p6",
+        "traj_1773091268672_v2xe3x",
+        "traj_1773091268672_qubbva",
+        "traj_1773091268672_x2kr7f",
+        "traj_1773091268672_jo63bo",
+        "traj_1773091268672_w9aj75",
+        "traj_1773091268672_2ydddr",
+        "traj_1773091268672_mdvxvi",
+        "traj_1773091268672_m5tim4",
+        "traj_1773091268672_rspuxm",
+        "traj_1773091268672_ukmqq4",
+        "traj_1773091268672_36hfyb",
+        "traj_1773091268672_bkz0mg",
+        "traj_1773091268672_zh8wj6",
+        "traj_1773091268672_cfcd34",
+        "traj_1773091268672_uiwtlw",
+        "traj_1773091268672_fpy48x",
+        "traj_1773091268672_8teank",
+        "traj_1773091268672_kqvsox",
+        "traj_1773091268672_eb52jw"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 99 successful trajectories",
+    "examples": [
+      "traj_1773091266845_b6pj5n",
+      "traj_1773091266845_ac1c5m",
+      "traj_1773091266845_ij8ofg"
+    ]
+  },
+  {
+    "id": "principle_1773091268677_aljl53",
+    "content": "When performing general tasks, consistently observed across 6 successful evolutions: frequent theme: \"backlog\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 6 successful evolutions: Frequent theme: \"backlog\".",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "agent",
+        "reflection",
+        "testing",
+        "lesson",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.677Z",
+      "updatedAt": "2026-03-09T21:21:08.677Z",
+      "derivedFrom": [
+        "traj_1773091266845_b6pj5n",
+        "traj_1773091266845_ac1c5m",
+        "traj_1773091266845_ij8ofg",
+        "traj_1773091266845_6kgv8b",
+        "traj_1773091266845_5zcy3q",
+        "traj_1773091266845_k8mcgg",
+        "traj_1773091266845_xtlvo3",
+        "traj_1773091266845_lrpoxc",
+        "traj_1773091266845_4h39rg",
+        "traj_1773091266845_ynot9t",
+        "traj_1773091266845_cmoeor",
+        "traj_1773091266845_bcnx3m",
+        "traj_1773091266845_w3guiv",
+        "traj_1773091266845_4dsz02",
+        "traj_1773091266845_audwzb",
+        "traj_1773091266845_5hfd2p",
+        "traj_1773091266845_7pv3u1",
+        "traj_1773091266845_qy7m4f",
+        "traj_1773091266845_2s4nok",
+        "traj_1773091266845_i9yvt2",
+        "traj_1773091266845_eyoser",
+        "traj_1773091266845_q57uo3",
+        "traj_1773091266845_jo3kx1",
+        "traj_1773091266845_ykmcnj",
+        "traj_1773091266845_vegjjt",
+        "traj_1773091266845_gof9q8",
+        "traj_1773091266845_ilo369",
+        "traj_1773091266845_qf90t5",
+        "traj_1773091266845_7hyet6",
+        "traj_1773091266845_aqu0lj",
+        "traj_1773091266845_xf0r5b",
+        "traj_1773091266845_nuxgrr",
+        "traj_1773091266845_cmbmlh",
+        "traj_1773091266845_s7mxzs",
+        "traj_1773091266845_1e22ha",
+        "traj_1773091266845_8gs7uo",
+        "traj_1773091266845_238sye",
+        "traj_1773091266845_tk8ig7",
+        "traj_1773091266845_gy8llk",
+        "traj_1773091266845_6c3v19",
+        "traj_1773091266846_68ffqy",
+        "traj_1773091266846_1gdrdk",
+        "traj_1773091266846_yhkglm",
+        "traj_1773091266846_5wviby",
+        "traj_1773091266846_fx5tjj",
+        "traj_1773091266846_zl6poc",
+        "traj_1773091266846_sfpu92",
+        "traj_1773091266846_fl8vgk",
+        "traj_1773091266846_hf8308",
+        "traj_1773091266846_g7ximm",
+        "traj_1773091268672_48s0fv",
+        "traj_1773091268672_v6yv8m",
+        "traj_1773091268672_uef1yp",
+        "traj_1773091268672_4swfd5",
+        "traj_1773091268672_cdsy65",
+        "traj_1773091268672_saqluy",
+        "traj_1773091268672_rlkjsp",
+        "traj_1773091268672_i2w44z",
+        "traj_1773091268672_cp11h4",
+        "traj_1773091268672_m1n8y6",
+        "traj_1773091268672_blxzfp",
+        "traj_1773091268672_xo950f",
+        "traj_1773091268672_ts2qyx",
+        "traj_1773091268672_qg4tv1",
+        "traj_1773091268672_si5qam",
+        "traj_1773091268672_zjb5b7",
+        "traj_1773091268672_g2034w",
+        "traj_1773091268672_gfdr8h",
+        "traj_1773091268672_o5wvif",
+        "traj_1773091268672_9ej7d8",
+        "traj_1773091268672_ea46t3",
+        "traj_1773091268672_vh4cpj",
+        "traj_1773091268672_54w9lb",
+        "traj_1773091268672_uez06g",
+        "traj_1773091268672_kg7bm5",
+        "traj_1773091268672_cib8uj",
+        "traj_1773091268672_nzx93k",
+        "traj_1773091268672_63sq1y",
+        "traj_1773091268672_gt636o",
+        "traj_1773091268672_iv04p6",
+        "traj_1773091268672_v2xe3x",
+        "traj_1773091268672_qubbva",
+        "traj_1773091268672_x2kr7f",
+        "traj_1773091268672_jo63bo",
+        "traj_1773091268672_w9aj75",
+        "traj_1773091268672_2ydddr",
+        "traj_1773091268672_mdvxvi",
+        "traj_1773091268672_m5tim4",
+        "traj_1773091268672_rspuxm",
+        "traj_1773091268672_ukmqq4",
+        "traj_1773091268672_36hfyb",
+        "traj_1773091268672_bkz0mg",
+        "traj_1773091268672_zh8wj6",
+        "traj_1773091268672_cfcd34",
+        "traj_1773091268672_uiwtlw",
+        "traj_1773091268672_fpy48x",
+        "traj_1773091268672_8teank",
+        "traj_1773091268672_kqvsox",
+        "traj_1773091268672_eb52jw"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 99 successful trajectories",
+    "examples": [
+      "traj_1773091266845_b6pj5n",
+      "traj_1773091266845_ac1c5m",
+      "traj_1773091266845_ij8ofg"
+    ]
+  },
+  {
+    "id": "principle_1773091268679_h23a47",
+    "content": "Avoid recurring failure mode seen in 28 evolutions: frequent theme: \"excel\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 28 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.679Z",
+      "updatedAt": "2026-03-09T21:21:08.679Z",
+      "derivedFrom": [
+        "traj_1773091266845_h7etid",
+        "traj_1773091266845_0h1rsb",
+        "traj_1773091266845_zns8ui",
+        "traj_1773091266845_whwmaz",
+        "traj_1773091266845_edeyef",
+        "traj_1773091266845_agvutx",
+        "traj_1773091266845_wxotsk",
+        "traj_1773091266845_51d3sy",
+        "traj_1773091266845_f7il5w",
+        "traj_1773091266845_u15vac",
+        "traj_1773091266845_g0xe13",
+        "traj_1773091266845_tdwc10",
+        "traj_1773091266845_juuoqy",
+        "traj_1773091266845_wq6hda",
+        "traj_1773091266846_hwl03l",
+        "traj_1773091266846_ufk1z0",
+        "traj_1773091266846_86wesc",
+        "traj_1773091266846_mpev3s",
+        "traj_1773091266846_kuwttm"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773091266845_h7etid",
+      "traj_1773091266845_0h1rsb",
+      "traj_1773091266845_zns8ui"
+    ]
+  },
+  {
+    "id": "principle_1773091268681_lzhvw0",
+    "content": "Avoid recurring failure mode seen in 12 evolutions: frequent theme: \"timed\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 12 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.681Z",
+      "updatedAt": "2026-03-09T21:21:08.681Z",
+      "derivedFrom": [
+        "traj_1773091266845_h7etid",
+        "traj_1773091266845_0h1rsb",
+        "traj_1773091266845_zns8ui",
+        "traj_1773091266845_whwmaz",
+        "traj_1773091266845_edeyef",
+        "traj_1773091266845_agvutx",
+        "traj_1773091266845_wxotsk",
+        "traj_1773091266845_51d3sy",
+        "traj_1773091266845_f7il5w",
+        "traj_1773091266845_u15vac",
+        "traj_1773091266845_g0xe13",
+        "traj_1773091266845_tdwc10",
+        "traj_1773091266845_juuoqy",
+        "traj_1773091266845_wq6hda",
+        "traj_1773091266846_hwl03l",
+        "traj_1773091266846_ufk1z0",
+        "traj_1773091266846_86wesc",
+        "traj_1773091266846_mpev3s",
+        "traj_1773091266846_kuwttm"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773091266845_h7etid",
+      "traj_1773091266845_0h1rsb",
+      "traj_1773091266845_zns8ui"
+    ]
+  },
+  {
+    "id": "principle_1773091268683_acsto2",
+    "content": "Avoid error encountered during execution when performing general tasks",
+    "summary": "general: Avoid Error encountered during execution",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.683Z",
+      "updatedAt": "2026-03-09T21:21:08.683Z",
+      "derivedFrom": [
+        "traj_1773091266845_h7etid",
+        "traj_1773091266845_0h1rsb",
+        "traj_1773091266845_zns8ui",
+        "traj_1773091266845_whwmaz",
+        "traj_1773091266845_edeyef",
+        "traj_1773091266845_agvutx",
+        "traj_1773091266845_wxotsk",
+        "traj_1773091266845_51d3sy",
+        "traj_1773091266845_f7il5w",
+        "traj_1773091266845_u15vac",
+        "traj_1773091266845_g0xe13",
+        "traj_1773091266845_tdwc10",
+        "traj_1773091266845_juuoqy",
+        "traj_1773091266845_wq6hda",
+        "traj_1773091266846_hwl03l",
+        "traj_1773091266846_ufk1z0",
+        "traj_1773091266846_86wesc",
+        "traj_1773091266846_mpev3s",
+        "traj_1773091266846_kuwttm"
+      ],
+      "confidence": 0.8,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773091266845_h7etid",
+      "traj_1773091266845_0h1rsb",
+      "traj_1773091266845_zns8ui"
+    ]
+  },
+  {
+    "id": "principle_1773091268687_axs5ir",
+    "content": "When performing testing tasks, testing was part of the workflow",
+    "summary": "testing: Testing was part of the workflow",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing",
+        "api",
+        "principle",
+        "reflection"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.687Z",
+      "updatedAt": "2026-03-09T21:21:08.687Z",
+      "derivedFrom": [
+        "traj_1773091266845_wk7xv6",
+        "traj_1773091266845_tzzhqj",
+        "traj_1773091266845_v113xc",
+        "traj_1773091266845_1pdg5h",
+        "traj_1773091266845_dmfues",
+        "traj_1773091266845_zfv25x"
+      ],
+      "confidence": 0.7,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 6 successful trajectories",
+    "examples": [
+      "traj_1773091266845_wk7xv6",
+      "traj_1773091266845_tzzhqj",
+      "traj_1773091266845_v113xc"
+    ]
+  },
+  {
+    "id": "principle_1773091268689_qvr2c4",
+    "content": "Avoid recurring failure mode seen in 28 evolutions: frequent theme: \"tests\". address this root cause to prevent future failures. when performing testing tasks",
+    "summary": "testing: Avoid Recurring failure mode seen in 28 evolutions: Frequent theme",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:21:08.689Z",
+      "updatedAt": "2026-03-09T21:21:08.689Z",
+      "derivedFrom": [
+        "traj_1773091266845_5rcgqx",
+        "traj_1773091266845_kwjy0m",
+        "traj_1773091266845_a2dlal",
+        "traj_1773091266845_929uu6",
+        "traj_1773091266845_f36ra0",
+        "traj_1773091266845_96bf47",
+        "traj_1773091266845_vel2ll",
+        "traj_1773091266845_hbzh9y",
+        "traj_1773091266845_dm0gx8",
+        "traj_1773091266845_6eexmb",
+        "traj_1773091266845_aa8cdq",
+        "traj_1773091266845_48rflb",
+        "traj_1773091266845_llsbvh",
+        "traj_1773091266845_46f2la",
+        "traj_1773091266845_bkaxw2",
+        "traj_1773091266845_4mypjk",
+        "traj_1773091266845_132olw",
+        "traj_1773091266845_i1ah7u",
+        "traj_1773091266845_s810f3",
+        "traj_1773091266845_ght1mr",
+        "traj_1773091266845_puvyb9",
+        "traj_1773091266845_wl9kij",
+        "traj_1773091266845_perggf",
+        "traj_1773091266845_eanfbl",
+        "traj_1773091266845_ske7c1",
+        "traj_1773091266845_uinn8q",
+        "traj_1773091266845_58p065",
+        "traj_1773091266845_b9wkmr",
+        "traj_1773091266846_rdj8ep"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 29 failed trajectories",
+    "examples": [
+      "traj_1773091266845_5rcgqx",
+      "traj_1773091266845_kwjy0m",
+      "traj_1773091266845_a2dlal"
+    ]
+  },
+  {
+    "id": "principle_1773091497552_4wuje9",
+    "content": "When performing general tasks, consistently observed across 10 successful evolutions: frequent theme: \"advanced\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 10 successful evolutions: Frequent theme: \"advanced",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "agent",
+        "reflection",
+        "testing",
+        "lesson",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.552Z",
+      "updatedAt": "2026-03-09T21:24:57.552Z",
+      "derivedFrom": [
+        "traj_1773091495728_wmtrkq",
+        "traj_1773091495728_5gc0wl",
+        "traj_1773091495728_eil5tb",
+        "traj_1773091495728_soq1gv",
+        "traj_1773091495728_1ipmwj",
+        "traj_1773091495728_1pokhg",
+        "traj_1773091495728_k5cn6t",
+        "traj_1773091495728_msn0a6",
+        "traj_1773091495728_nx4g18",
+        "traj_1773091495728_hy47xw",
+        "traj_1773091495728_yqoear",
+        "traj_1773091495728_gaua09",
+        "traj_1773091495728_wa3gcx",
+        "traj_1773091495728_m8kgf4",
+        "traj_1773091495728_qb030d",
+        "traj_1773091495728_lysf2a",
+        "traj_1773091495728_59e8g2",
+        "traj_1773091495728_qbclrq",
+        "traj_1773091495728_67taw7",
+        "traj_1773091495728_swee1w",
+        "traj_1773091495728_1jpmf2",
+        "traj_1773091495728_hsxelt",
+        "traj_1773091495728_fpb5y7",
+        "traj_1773091495728_93lein",
+        "traj_1773091495728_fpt1pf",
+        "traj_1773091495728_hx1dbz",
+        "traj_1773091495728_1dt9zj",
+        "traj_1773091495728_bnkl9l",
+        "traj_1773091495728_dsxoh5",
+        "traj_1773091495728_8d2jox",
+        "traj_1773091495728_f00hlc",
+        "traj_1773091495728_znx15p",
+        "traj_1773091495728_j0psck",
+        "traj_1773091495728_2x6vqo",
+        "traj_1773091495728_zuvwgq",
+        "traj_1773091495729_59n7u4",
+        "traj_1773091495729_p40mii",
+        "traj_1773091495729_9ra33e",
+        "traj_1773091495729_hongx2",
+        "traj_1773091495729_7skm46",
+        "traj_1773091495729_kg5xn7",
+        "traj_1773091495729_fk7y1p",
+        "traj_1773091495729_1891vk",
+        "traj_1773091495729_he971d",
+        "traj_1773091495729_v081yb",
+        "traj_1773091495729_e0sdm7",
+        "traj_1773091495729_27ihyr",
+        "traj_1773091495729_elq5h8",
+        "traj_1773091495729_ntbi4a",
+        "traj_1773091495729_szxqjw",
+        "traj_1773091495729_tkj3zv",
+        "traj_1773091497551_ohwxei",
+        "traj_1773091497551_pkf5to",
+        "traj_1773091497551_1nssf8",
+        "traj_1773091497551_lrzwf4",
+        "traj_1773091497551_l6jp1j",
+        "traj_1773091497551_tnfxvv",
+        "traj_1773091497551_0p9p6q",
+        "traj_1773091497551_bzss2q",
+        "traj_1773091497551_tazuth",
+        "traj_1773091497551_9amvwh",
+        "traj_1773091497551_pep32g",
+        "traj_1773091497551_nvkkc1",
+        "traj_1773091497551_uv09y2",
+        "traj_1773091497551_x9phnb",
+        "traj_1773091497551_zrrkpz",
+        "traj_1773091497551_dowars",
+        "traj_1773091497551_skrv95",
+        "traj_1773091497551_lfeqfh",
+        "traj_1773091497551_npsstj",
+        "traj_1773091497551_ov92ij",
+        "traj_1773091497551_1os39d",
+        "traj_1773091497551_ihrr84",
+        "traj_1773091497551_1ici58",
+        "traj_1773091497551_6hxlvl",
+        "traj_1773091497551_8sozqo",
+        "traj_1773091497551_svpp5h",
+        "traj_1773091497551_o1y9nm",
+        "traj_1773091497551_fssafe",
+        "traj_1773091497551_js2wc4",
+        "traj_1773091497551_ud615b",
+        "traj_1773091497551_lznbj2",
+        "traj_1773091497551_z767ef",
+        "traj_1773091497551_utrsj6",
+        "traj_1773091497551_jwzudy",
+        "traj_1773091497551_95dx3b",
+        "traj_1773091497551_l59dfd",
+        "traj_1773091497551_cqsdxn",
+        "traj_1773091497551_duwj74",
+        "traj_1773091497551_mjc9a0",
+        "traj_1773091497551_9ynzdi",
+        "traj_1773091497551_kh1719",
+        "traj_1773091497551_3v2fmz",
+        "traj_1773091497551_zfr3wa",
+        "traj_1773091497551_opbuex",
+        "traj_1773091497551_lczw7u",
+        "traj_1773091497551_tpnmxi",
+        "traj_1773091497551_522itf",
+        "traj_1773091497551_vqnn2e",
+        "traj_1773091497551_cglz2f"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 100 successful trajectories",
+    "examples": [
+      "traj_1773091495728_wmtrkq",
+      "traj_1773091495728_5gc0wl",
+      "traj_1773091495728_eil5tb"
+    ]
+  },
+  {
+    "id": "principle_1773091497554_fbqrob",
+    "content": "When performing general tasks, consistently observed across 9 successful evolutions: frequent theme: \"capabilities\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 9 successful evolutions: Frequent theme: \"capabilit",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "agent",
+        "reflection",
+        "testing",
+        "lesson",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.554Z",
+      "updatedAt": "2026-03-09T21:24:57.554Z",
+      "derivedFrom": [
+        "traj_1773091495728_wmtrkq",
+        "traj_1773091495728_5gc0wl",
+        "traj_1773091495728_eil5tb",
+        "traj_1773091495728_soq1gv",
+        "traj_1773091495728_1ipmwj",
+        "traj_1773091495728_1pokhg",
+        "traj_1773091495728_k5cn6t",
+        "traj_1773091495728_msn0a6",
+        "traj_1773091495728_nx4g18",
+        "traj_1773091495728_hy47xw",
+        "traj_1773091495728_yqoear",
+        "traj_1773091495728_gaua09",
+        "traj_1773091495728_wa3gcx",
+        "traj_1773091495728_m8kgf4",
+        "traj_1773091495728_qb030d",
+        "traj_1773091495728_lysf2a",
+        "traj_1773091495728_59e8g2",
+        "traj_1773091495728_qbclrq",
+        "traj_1773091495728_67taw7",
+        "traj_1773091495728_swee1w",
+        "traj_1773091495728_1jpmf2",
+        "traj_1773091495728_hsxelt",
+        "traj_1773091495728_fpb5y7",
+        "traj_1773091495728_93lein",
+        "traj_1773091495728_fpt1pf",
+        "traj_1773091495728_hx1dbz",
+        "traj_1773091495728_1dt9zj",
+        "traj_1773091495728_bnkl9l",
+        "traj_1773091495728_dsxoh5",
+        "traj_1773091495728_8d2jox",
+        "traj_1773091495728_f00hlc",
+        "traj_1773091495728_znx15p",
+        "traj_1773091495728_j0psck",
+        "traj_1773091495728_2x6vqo",
+        "traj_1773091495728_zuvwgq",
+        "traj_1773091495729_59n7u4",
+        "traj_1773091495729_p40mii",
+        "traj_1773091495729_9ra33e",
+        "traj_1773091495729_hongx2",
+        "traj_1773091495729_7skm46",
+        "traj_1773091495729_kg5xn7",
+        "traj_1773091495729_fk7y1p",
+        "traj_1773091495729_1891vk",
+        "traj_1773091495729_he971d",
+        "traj_1773091495729_v081yb",
+        "traj_1773091495729_e0sdm7",
+        "traj_1773091495729_27ihyr",
+        "traj_1773091495729_elq5h8",
+        "traj_1773091495729_ntbi4a",
+        "traj_1773091495729_szxqjw",
+        "traj_1773091495729_tkj3zv",
+        "traj_1773091497551_ohwxei",
+        "traj_1773091497551_pkf5to",
+        "traj_1773091497551_1nssf8",
+        "traj_1773091497551_lrzwf4",
+        "traj_1773091497551_l6jp1j",
+        "traj_1773091497551_tnfxvv",
+        "traj_1773091497551_0p9p6q",
+        "traj_1773091497551_bzss2q",
+        "traj_1773091497551_tazuth",
+        "traj_1773091497551_9amvwh",
+        "traj_1773091497551_pep32g",
+        "traj_1773091497551_nvkkc1",
+        "traj_1773091497551_uv09y2",
+        "traj_1773091497551_x9phnb",
+        "traj_1773091497551_zrrkpz",
+        "traj_1773091497551_dowars",
+        "traj_1773091497551_skrv95",
+        "traj_1773091497551_lfeqfh",
+        "traj_1773091497551_npsstj",
+        "traj_1773091497551_ov92ij",
+        "traj_1773091497551_1os39d",
+        "traj_1773091497551_ihrr84",
+        "traj_1773091497551_1ici58",
+        "traj_1773091497551_6hxlvl",
+        "traj_1773091497551_8sozqo",
+        "traj_1773091497551_svpp5h",
+        "traj_1773091497551_o1y9nm",
+        "traj_1773091497551_fssafe",
+        "traj_1773091497551_js2wc4",
+        "traj_1773091497551_ud615b",
+        "traj_1773091497551_lznbj2",
+        "traj_1773091497551_z767ef",
+        "traj_1773091497551_utrsj6",
+        "traj_1773091497551_jwzudy",
+        "traj_1773091497551_95dx3b",
+        "traj_1773091497551_l59dfd",
+        "traj_1773091497551_cqsdxn",
+        "traj_1773091497551_duwj74",
+        "traj_1773091497551_mjc9a0",
+        "traj_1773091497551_9ynzdi",
+        "traj_1773091497551_kh1719",
+        "traj_1773091497551_3v2fmz",
+        "traj_1773091497551_zfr3wa",
+        "traj_1773091497551_opbuex",
+        "traj_1773091497551_lczw7u",
+        "traj_1773091497551_tpnmxi",
+        "traj_1773091497551_522itf",
+        "traj_1773091497551_vqnn2e",
+        "traj_1773091497551_cglz2f"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 100 successful trajectories",
+    "examples": [
+      "traj_1773091495728_wmtrkq",
+      "traj_1773091495728_5gc0wl",
+      "traj_1773091495728_eil5tb"
+    ]
+  },
+  {
+    "id": "principle_1773091497556_rgc46u",
+    "content": "When performing general tasks, consistently observed across 6 successful evolutions: frequent theme: \"backlog\". applying this pattern reliably improves outcomes.",
+    "summary": "general: Consistently observed across 6 successful evolutions: Frequent theme: \"backlog\".",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "modules": [
+        "principle",
+        "telegram",
+        "consciousness",
+        "util",
+        "memory",
+        "agent",
+        "reflection",
+        "testing",
+        "lesson",
+        "failure_cause",
+        "general",
+        "warning",
+        "success_factor",
+        "data_management"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.556Z",
+      "updatedAt": "2026-03-09T21:24:57.556Z",
+      "derivedFrom": [
+        "traj_1773091495728_wmtrkq",
+        "traj_1773091495728_5gc0wl",
+        "traj_1773091495728_eil5tb",
+        "traj_1773091495728_soq1gv",
+        "traj_1773091495728_1ipmwj",
+        "traj_1773091495728_1pokhg",
+        "traj_1773091495728_k5cn6t",
+        "traj_1773091495728_msn0a6",
+        "traj_1773091495728_nx4g18",
+        "traj_1773091495728_hy47xw",
+        "traj_1773091495728_yqoear",
+        "traj_1773091495728_gaua09",
+        "traj_1773091495728_wa3gcx",
+        "traj_1773091495728_m8kgf4",
+        "traj_1773091495728_qb030d",
+        "traj_1773091495728_lysf2a",
+        "traj_1773091495728_59e8g2",
+        "traj_1773091495728_qbclrq",
+        "traj_1773091495728_67taw7",
+        "traj_1773091495728_swee1w",
+        "traj_1773091495728_1jpmf2",
+        "traj_1773091495728_hsxelt",
+        "traj_1773091495728_fpb5y7",
+        "traj_1773091495728_93lein",
+        "traj_1773091495728_fpt1pf",
+        "traj_1773091495728_hx1dbz",
+        "traj_1773091495728_1dt9zj",
+        "traj_1773091495728_bnkl9l",
+        "traj_1773091495728_dsxoh5",
+        "traj_1773091495728_8d2jox",
+        "traj_1773091495728_f00hlc",
+        "traj_1773091495728_znx15p",
+        "traj_1773091495728_j0psck",
+        "traj_1773091495728_2x6vqo",
+        "traj_1773091495728_zuvwgq",
+        "traj_1773091495729_59n7u4",
+        "traj_1773091495729_p40mii",
+        "traj_1773091495729_9ra33e",
+        "traj_1773091495729_hongx2",
+        "traj_1773091495729_7skm46",
+        "traj_1773091495729_kg5xn7",
+        "traj_1773091495729_fk7y1p",
+        "traj_1773091495729_1891vk",
+        "traj_1773091495729_he971d",
+        "traj_1773091495729_v081yb",
+        "traj_1773091495729_e0sdm7",
+        "traj_1773091495729_27ihyr",
+        "traj_1773091495729_elq5h8",
+        "traj_1773091495729_ntbi4a",
+        "traj_1773091495729_szxqjw",
+        "traj_1773091495729_tkj3zv",
+        "traj_1773091497551_ohwxei",
+        "traj_1773091497551_pkf5to",
+        "traj_1773091497551_1nssf8",
+        "traj_1773091497551_lrzwf4",
+        "traj_1773091497551_l6jp1j",
+        "traj_1773091497551_tnfxvv",
+        "traj_1773091497551_0p9p6q",
+        "traj_1773091497551_bzss2q",
+        "traj_1773091497551_tazuth",
+        "traj_1773091497551_9amvwh",
+        "traj_1773091497551_pep32g",
+        "traj_1773091497551_nvkkc1",
+        "traj_1773091497551_uv09y2",
+        "traj_1773091497551_x9phnb",
+        "traj_1773091497551_zrrkpz",
+        "traj_1773091497551_dowars",
+        "traj_1773091497551_skrv95",
+        "traj_1773091497551_lfeqfh",
+        "traj_1773091497551_npsstj",
+        "traj_1773091497551_ov92ij",
+        "traj_1773091497551_1os39d",
+        "traj_1773091497551_ihrr84",
+        "traj_1773091497551_1ici58",
+        "traj_1773091497551_6hxlvl",
+        "traj_1773091497551_8sozqo",
+        "traj_1773091497551_svpp5h",
+        "traj_1773091497551_o1y9nm",
+        "traj_1773091497551_fssafe",
+        "traj_1773091497551_js2wc4",
+        "traj_1773091497551_ud615b",
+        "traj_1773091497551_lznbj2",
+        "traj_1773091497551_z767ef",
+        "traj_1773091497551_utrsj6",
+        "traj_1773091497551_jwzudy",
+        "traj_1773091497551_95dx3b",
+        "traj_1773091497551_l59dfd",
+        "traj_1773091497551_cqsdxn",
+        "traj_1773091497551_duwj74",
+        "traj_1773091497551_mjc9a0",
+        "traj_1773091497551_9ynzdi",
+        "traj_1773091497551_kh1719",
+        "traj_1773091497551_3v2fmz",
+        "traj_1773091497551_zfr3wa",
+        "traj_1773091497551_opbuex",
+        "traj_1773091497551_lczw7u",
+        "traj_1773091497551_tpnmxi",
+        "traj_1773091497551_522itf",
+        "traj_1773091497551_vqnn2e",
+        "traj_1773091497551_cglz2f"
+      ],
+      "confidence": 0.9,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 100 successful trajectories",
+    "examples": [
+      "traj_1773091495728_wmtrkq",
+      "traj_1773091495728_5gc0wl",
+      "traj_1773091495728_eil5tb"
+    ]
+  },
+  {
+    "id": "principle_1773091497558_9ssra1",
+    "content": "Avoid recurring failure mode seen in 28 evolutions: frequent theme: \"excel\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 28 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.558Z",
+      "updatedAt": "2026-03-09T21:24:57.558Z",
+      "derivedFrom": [
+        "traj_1773091495728_apu9i5",
+        "traj_1773091495728_tk557c",
+        "traj_1773091495728_sck792",
+        "traj_1773091495728_188324",
+        "traj_1773091495728_yv1mnk",
+        "traj_1773091495728_2wvaoe",
+        "traj_1773091495728_9q11x5",
+        "traj_1773091495728_v97iv1",
+        "traj_1773091495728_lgf8vj",
+        "traj_1773091495728_jj3tic",
+        "traj_1773091495728_1mcrve",
+        "traj_1773091495728_lj13vb",
+        "traj_1773091495728_nq0oor",
+        "traj_1773091495728_wqlck2",
+        "traj_1773091495729_t81z6m",
+        "traj_1773091495729_5babgb",
+        "traj_1773091495729_zguy1e",
+        "traj_1773091495729_hp3b1w",
+        "traj_1773091495729_r9d8fz"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773091495728_apu9i5",
+      "traj_1773091495728_tk557c",
+      "traj_1773091495728_sck792"
+    ]
+  },
+  {
+    "id": "principle_1773091497563_4apsc9",
+    "content": "Avoid recurring failure mode seen in 12 evolutions: frequent theme: \"timed\". address this root cause to prevent future failures. when performing general tasks",
+    "summary": "general: Avoid Recurring failure mode seen in 12 evolutions: Frequent theme",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.563Z",
+      "updatedAt": "2026-03-09T21:24:57.563Z",
+      "derivedFrom": [
+        "traj_1773091495728_apu9i5",
+        "traj_1773091495728_tk557c",
+        "traj_1773091495728_sck792",
+        "traj_1773091495728_188324",
+        "traj_1773091495728_yv1mnk",
+        "traj_1773091495728_2wvaoe",
+        "traj_1773091495728_9q11x5",
+        "traj_1773091495728_v97iv1",
+        "traj_1773091495728_lgf8vj",
+        "traj_1773091495728_jj3tic",
+        "traj_1773091495728_1mcrve",
+        "traj_1773091495728_lj13vb",
+        "traj_1773091495728_nq0oor",
+        "traj_1773091495728_wqlck2",
+        "traj_1773091495729_t81z6m",
+        "traj_1773091495729_5babgb",
+        "traj_1773091495729_zguy1e",
+        "traj_1773091495729_hp3b1w",
+        "traj_1773091495729_r9d8fz"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773091495728_apu9i5",
+      "traj_1773091495728_tk557c",
+      "traj_1773091495728_sck792"
+    ]
+  },
+  {
+    "id": "principle_1773091497565_831537",
+    "content": "Avoid error encountered during execution when performing general tasks",
+    "summary": "general: Avoid Error encountered during execution",
+    "category": "general",
+    "conditions": {
+      "taskTypes": [
+        "general"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.565Z",
+      "updatedAt": "2026-03-09T21:24:57.565Z",
+      "derivedFrom": [
+        "traj_1773091495728_apu9i5",
+        "traj_1773091495728_tk557c",
+        "traj_1773091495728_sck792",
+        "traj_1773091495728_188324",
+        "traj_1773091495728_yv1mnk",
+        "traj_1773091495728_2wvaoe",
+        "traj_1773091495728_9q11x5",
+        "traj_1773091495728_v97iv1",
+        "traj_1773091495728_lgf8vj",
+        "traj_1773091495728_jj3tic",
+        "traj_1773091495728_1mcrve",
+        "traj_1773091495728_lj13vb",
+        "traj_1773091495728_nq0oor",
+        "traj_1773091495728_wqlck2",
+        "traj_1773091495729_t81z6m",
+        "traj_1773091495729_5babgb",
+        "traj_1773091495729_zguy1e",
+        "traj_1773091495729_hp3b1w",
+        "traj_1773091495729_r9d8fz"
+      ],
+      "confidence": 0.8,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 19 failed trajectories",
+    "examples": [
+      "traj_1773091495728_apu9i5",
+      "traj_1773091495728_tk557c",
+      "traj_1773091495728_sck792"
+    ]
+  },
+  {
+    "id": "principle_1773091497570_ig7mtq",
+    "content": "When performing testing tasks, testing was part of the workflow",
+    "summary": "testing: Testing was part of the workflow",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing",
+        "api",
+        "principle",
+        "reflection"
+      ],
+      "tags": [
+        "success-pattern"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.570Z",
+      "updatedAt": "2026-03-09T21:24:57.570Z",
+      "derivedFrom": [
+        "traj_1773091495728_elyd4s",
+        "traj_1773091495728_tomr3m",
+        "traj_1773091495728_6mk4k2",
+        "traj_1773091495728_vtfgks",
+        "traj_1773091495728_xjifm7",
+        "traj_1773091495729_vitak7"
+      ],
+      "confidence": 0.7,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Based on 6 successful trajectories",
+    "examples": [
+      "traj_1773091495728_elyd4s",
+      "traj_1773091495728_tomr3m",
+      "traj_1773091495728_6mk4k2"
+    ]
+  },
+  {
+    "id": "principle_1773091497572_864ets",
+    "content": "Avoid recurring failure mode seen in 28 evolutions: frequent theme: \"tests\". address this root cause to prevent future failures. when performing testing tasks",
+    "summary": "testing: Avoid Recurring failure mode seen in 28 evolutions: Frequent theme",
+    "category": "testing",
+    "conditions": {
+      "taskTypes": [
+        "testing"
+      ],
+      "modules": [
+        "testing"
+      ],
+      "tags": [
+        "failure-avoidance"
+      ]
+    },
+    "evidence": {
+      "successCases": [],
+      "failureCases": [],
+      "successRate": 0,
+      "totalApplications": 0
+    },
+    "voting": {
+      "helpful": 0,
+      "harmful": 0,
+      "totalVotes": 0,
+      "effectiveness": 0,
+      "voteHistory": []
+    },
+    "metadata": {
+      "createdAt": "2026-03-09T21:24:57.572Z",
+      "updatedAt": "2026-03-09T21:24:57.572Z",
+      "derivedFrom": [
+        "traj_1773091495728_choyqb",
+        "traj_1773091495728_bg41u3",
+        "traj_1773091495728_f95gsg",
+        "traj_1773091495728_sn2exk",
+        "traj_1773091495728_vwwamn",
+        "traj_1773091495728_93k5aa",
+        "traj_1773091495728_u8qwce",
+        "traj_1773091495728_k2eve3",
+        "traj_1773091495728_93kw7d",
+        "traj_1773091495728_4q418k",
+        "traj_1773091495728_jxlaib",
+        "traj_1773091495728_gq9nq1",
+        "traj_1773091495728_zal9gj",
+        "traj_1773091495728_0shg57",
+        "traj_1773091495728_27emux",
+        "traj_1773091495728_gdjq9a",
+        "traj_1773091495728_vdhpqm",
+        "traj_1773091495728_ieqpzc",
+        "traj_1773091495728_jk7f4j",
+        "traj_1773091495728_p55pn4",
+        "traj_1773091495728_91x1p5",
+        "traj_1773091495728_ikvl2v",
+        "traj_1773091495728_wg7hw8",
+        "traj_1773091495728_gwj4xf",
+        "traj_1773091495728_7bfrlw",
+        "traj_1773091495729_00jprc",
+        "traj_1773091495729_8i4h38",
+        "traj_1773091495729_oumpd2",
+        "traj_1773091495729_hlwmxe"
+      ],
+      "confidence": 0.85,
+      "stability": 0.5,
+      "reinforcementCount": 0,
+      "reviewCount": 0
+    },
+    "status": "experimental",
+    "rationale": "Learned from 29 failed trajectories",
+    "examples": [
+      "traj_1773091495728_choyqb",
+      "traj_1773091495728_bg41u3",
+      "traj_1773091495728_f95gsg"
     ]
   }
 ]

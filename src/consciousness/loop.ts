@@ -32,6 +32,8 @@ import {
   shouldTriggerReflection,
   runReflection,
   formatReflectionReport,
+  getInsightsForPrompt,
+  processHighPrioritySuggestions,
 } from "../memory/reflection.js";
 import {
   shouldTriggerMetacognitive,
@@ -85,6 +87,22 @@ import {
   type TaskProgress,
   type SubTask,
 } from "./task-decomposer.js";
+import {
+  runEvaluation,
+  shouldRunEvaluation,
+  formatEvaluationReport,
+  type EvaluationReport,
+} from "../evolution/evaluator.js";
+import {
+  generateImprovementTasks,
+  addTasksToBacklog,
+  formatGeneratedTasks,
+} from "../evolution/improvement-generator.js";
+import {
+  runFeedbackLoop,
+  formatFeedbackSummary,
+  generateFeedbackSummary,
+} from "../evolution/feedback-loop.js";
 
 // ── Timeout Warning Configuration ───────────────────────────────────
 
@@ -745,7 +763,7 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       recentHistory: recentHistory.map(h => `#${h.cycle} ${h.status}`).join(", ") || "none",
       totalCycles: stats.totalCycles,
       currentStreak: stats.currentStreak,
-    }) + "\n\n" + archivePromptContext + principlesContext + capsulesContext;
+    }) + "\n\n" + archivePromptContext + principlesContext + capsulesContext + getInsightsForPrompt(5);
     endSpan(promptSpan.id, "success");
 
     // ── Timeout Warning Check: Before prompt execution ──────────────
@@ -982,6 +1000,51 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       } catch (e) {
         endSpan(distillSpan.id, "error", { type: "DistillationError", message: (e as Error).message });
         log.error("Principle distillation failed", { error: (e as Error).message });
+      }
+    }
+
+    // ── Evaluation-driven Improvement ─────────────────────────────────────
+    // Check if we should run evaluation (every 5 successful cycles)
+    const evalCheck = shouldRunEvaluation(5);
+    if (evalCheck.shouldRun) {
+      const evalSpan = startSpan("evaluation", { traceId: trace.id });
+      try {
+        log.info("Running evaluation-driven improvement check", { cycle, reason: evalCheck.reason });
+        
+        // Run evaluation
+        const evaluationReport = runEvaluation();
+        addSpanEvent(evalSpan.id, "evaluation_complete", {
+          healthScore: evaluationReport.healthScore,
+          trend: evaluationReport.qualityTrend,
+          opportunities: evaluationReport.opportunities.length,
+        });
+        
+        // Generate improvement tasks if there are opportunities
+        if (evaluationReport.opportunities.length > 0) {
+          const taskReport = generateImprovementTasks({ maxTasks: 2, minSeverity: "medium" });
+          
+          if (taskReport.generated.length > 0) {
+            // Add tasks to backlog
+            const addedCount = addTasksToBacklog(taskReport.generated);
+            
+            if (addedCount > 0) {
+              const taskSummary = taskReport.generated.map(t => t.title).join(", ");
+              await notifyFn(`📊 Evaluation generated ${addedCount} improvement tasks:\n${taskSummary}`);
+            }
+          }
+        }
+        
+        // Log evaluation summary
+        log.info("Evaluation complete", {
+          healthScore: evaluationReport.healthScore,
+          trend: evaluationReport.qualityTrend,
+          opportunities: evaluationReport.opportunities.length,
+        });
+        
+        endSpan(evalSpan.id, "success");
+      } catch (e) {
+        endSpan(evalSpan.id, "error", { type: "EvaluationError", message: (e as Error).message });
+        log.error("Evaluation-driven improvement check failed", { error: (e as Error).message });
       }
     }
 

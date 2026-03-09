@@ -66,7 +66,7 @@ export interface CapabilityTaxonomy {
 }
 
 /**
- * Default desired capabilities from BORN.md "初始进化优先级"
+ * Default desired capabilities from CAPABILITIES.md "初始进化优先级"
  */
 const DEFAULT_DESIRED: string[] = [
   "pre-push-test-gate",       // Pre-push 测试门禁
@@ -444,6 +444,42 @@ export function getCapabilitySummary(): string {
   }
   
   return lines.join("\n");
+}
+
+/**
+ * Capability summary as an object (for programmatic use)
+ */
+export interface CapabilitySummaryObject {
+  expert: string[];
+  advanced: string[];
+  novice: string[];
+  gaps: string[];
+}
+
+/**
+ * Get capability summary as an object (for programmatic use)
+ */
+export function getCapabilitySummaryObject(): CapabilitySummaryObject {
+  const taxonomy = loadCapabilityTaxonomy();
+  const gaps = findCapabilityGaps();
+  
+  const byMaturity: Record<MaturityLevel, Capability[]> = {
+    expert: [],
+    advanced: [],
+    novice: [],
+    absent: [],
+  };
+  
+  for (const cap of taxonomy.capabilities) {
+    byMaturity[cap.maturity].push(cap);
+  }
+  
+  return {
+    expert: byMaturity.expert.map(c => c.name),
+    advanced: byMaturity.advanced.map(c => c.name),
+    novice: byMaturity.novice.map(c => c.name),
+    gaps: gaps.map(g => g.id),
+  };
 }
 
 /**

@@ -174,7 +174,7 @@ export function runEslintCheck(): EslintResult | null {
 
 export function runSecurityCheck(): SecurityResult | null {
   try {
-    const output = execSync("npm audit --json", {
+    const output = execSync("pnpm audit --json", {
       encoding: "utf-8",
       cwd: process.cwd(),
       timeout: 60000,

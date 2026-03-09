@@ -99,10 +99,21 @@ describe("state utilities", () => {
       expect(state.customField).toBe("custom value");
     });
 
-    it("should return default runtime values when state.json does not exist", () => {
+    it("should initialize state.json with defaults when it does not exist", () => {
+      // state.json should not exist before this test (cleaned up in beforeEach)
+      expect(existsSync(TEST_STATE_PATH)).toBe(false);
+      
       const state = readState();
 
-      expect(state.lastRestart).toBeNull();
+      // After readState(), state.json should be initialized
+      expect(existsSync(TEST_STATE_PATH)).toBe(true);
+      
+      // lastRestart should be initialized with current timestamp (not null)
+      expect(state.lastRestart).not.toBeNull();
+      expect(typeof state.lastRestart).toBe("string");
+      // Verify it's a valid ISO date string
+      expect(new Date(state.lastRestart as string).toISOString()).toBe(state.lastRestart);
+      
       expect(state.lastEvolution).toBeNull();
     });
 

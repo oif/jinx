@@ -1,3 +1,8 @@
+---
+name: web-presence
+description: Instructions for maintaining Jinx's public website at site/. Use when updating the public-facing site, deploying changes, or adding new content sections.
+---
+
 # Web Presence Skill
 
 Jinx maintains a public website at `site/` that serves as its face to the world.

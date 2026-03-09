@@ -1,0 +1,85 @@
+{
+  "tasks": [
+    {
+      "id": "#208",
+      "title": "完成 Reflection 能力提升 — 更新成熟度并添加测试",
+      "category": "cognition",
+      "difficulty": "medium",
+      "instruction": "Reflection 能力虽然代码已实现，但 capabilities.json 仍显示 maturity: 'novice'，且缺少测试覆盖。需要：(1) 添加 test/reflection.test.ts 覆盖核心功能：runReflection, shouldTriggerReflection, generateInsights, extractPatterns (2) 更新 capabilities.json 中 reflection 成熟度为 'advanced' (3) 确保 reflection 模块测试覆盖率 > 50% (4) 验证 insights 能影响进化决策。这是 Top Capability Gap (importance 0.60)。",
+      "verificationCriteria": [
+        "pnpm build 通过",
+        "pnpm test 通过",
+        "test/reflection.test.ts 存在且覆盖核心函数",
+        "测试覆盖率 > 50%",
+        "capabilities.json 中 reflection.maturity = 'advanced'",
+        "getInsightsForPrompt() 返回有效上下文"
+      ],
+      "dependencyValue": "Reflection 是自我改进的关键能力，能从历史失败中学习。它是唯一的 Novice 级能力，improvementPotential=0.60 是最高 Gap。完成这个任务将显著提升 Jinx 的认知能力。",
+      "score": 45,
+      "status": "pending",
+      "created": "2026-03-09T20:22:00Z",
+      "source": "goal-discovery-71"
+    },
+    {
+      "id": "#204",
+      "title": "实现 add_backlog_task 工具 — 修复 Goal Discovery 流程",
+      "category": "evolution",
+      "difficulty": "medium",
+      "instruction": "Goal Discovery prompt 引用了 add_backlog_task 工具，但这个工具实际上不存在于 Pi 扩展中。这导致 Goal Discovery 流程无法正常工作。需要：(1) 创建 extensions/add-backlog-task.ts 作为 Pi extension (2) 工具应该能够添加任务到 data/backlog.json (3) 更新 goal discovery prompt 如果需要 (4) 确保工具在 goal discovery 会话中可用。这是 goal-discovery 能力从 novice 提升到 advanced 的关键步骤。",
+      "verificationCriteria": [
+        "pnpm build 通过",
+        "pnpm test 通过",
+        "extensions/add-backlog-task.ts 存在并导出工具",
+        "工具可以成功添加任务到 backlog.json",
+        "Goal Discovery 会话可以使用该工具",
+        "capabilities.json 中 goal-discovery 成熟度更新"
+      ],
+      "dependencyValue": "这是 Goal Discovery 能力的核心缺失。没有这个工具，Goal Discovery 流程无法正常工作，导致进化循环空转。修复这个是提升 goal-discovery 从 novice 到 advanced 的关键步骤。",
+      "score": 42,
+      "status": "pending",
+      "created": "2026-03-09T16:25:00Z",
+      "source": "goal-discovery-70"
+    },
+    {
+      "id": "#202",
+      "title": "集成 Mastra Scorers 评估进化质量",
+      "category": "technical_exploration",
+      "difficulty": "medium",
+      "instruction": "根据 Mastra AI Agent 框架研究报告（data/knowledge/198-55-mastra-ai-agent-framework.md），集成 Mastra Scorers 来评估进化质量。具体步骤：(1) 添加 @mastra/core 依赖 (2) 创建 src/evals/evolution-scorer.ts 实现 EvolutionQualityScorer (3) 集成到 evolution 循环，每次进化后评估质量 (4) 添加评分日志和阈值检查。这是 P7 '扩展自我' 原则的实践，使用外部工具增强能力。",
+      "verificationCriteria": [
+        "pnpm build 通过",
+        "pnpm test 通过",
+        "package.json 包含 @mastra/core 依赖",
+        "src/evals/evolution-scorer.ts 存在且导出 EvolutionQualityScorer",
+        "进化循环结束后自动调用 Scorer 评估质量",
+        "评分结果记录到日志/evolution-history",
+        "capabilities.json 中 pi-extensions 成熟度更新"
+      ],
+      "dependencyValue": "这是技术探索方向的具体实践。Scorers 可以提供客观的进化质量评估，帮助 Jinx 判断进化是否有效。这是 P7 '扩展自我' 原则的实践，使用外部工具增强自己的能力。",
+      "score": 38,
+      "status": "pending",
+      "created": "2026-03-09T15:21:00Z",
+      "source": "goal-discovery-69"
+    },
+    {
+      "id": null,
+      "title": "实现 EvolveR Experience Distillation Phase 1 - 原则存储与蒸馏",
+      "description": "将 Reflection 从 Novice 提升到 Advanced。基于 047-2-evolver-experience-distillation.md 研究，实现三层次原则系统的基础设施：1) 创建 principle-store.ts 原则存储模块 2) 创建 principle-distiller.ts 原则蒸馏模块 3) 定义原则数据结构 4) 实现从进化历史提取轨迹的基础功能",
+      "verification": [
+        "pnpm build 通过",
+        "pnpm test 通过",
+        "新增 src/memory/principle-store.ts 模块",
+        "新增 src/memory/principle-distiller.ts 模块",
+        "创建 data/memory/principles.json 存储文件",
+        "原则提取功能可运行（至少一条原则被提取）",
+        "capabilities.json 中 reflection 成熟度评估为 advanced"
+      ],
+      "context": "EvolveR 论文核心创新：两阶段闭环（离线蒸馏原则 + 在线检索应用）。当前 reflection 只有零散洞察，缺乏抽象原则层和主动检索。这是从 Novice 提升的关键改进。",
+      "priority": "high",
+      "status": "pending",
+      "createdAt": "2026-03-09T19:23:41.398Z",
+      "updatedAt": "2026-03-09T19:23:41.398Z"
+    }
+  ],
+  "lastUpdated": "2026-03-09T16:25:00Z"
+}

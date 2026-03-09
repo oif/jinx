@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-03-09T21:06:33.933Z",
+  "periodStart": "2026-03-09T21:06:33.933Z",
+  "periodEnd": "2026-03-09T21:06:33.933Z",
+  "totalCycles": 0,
+  "successfulCycles": 0,
+  "failedCycles": 0,
+  "averageQuality": null,
+  "qualityTrend": "insufficient_data",
+  "opportunities": [
+    {
+      "id": "pattern-low-test-coverage-1773090393935",
+      "pattern": "low_test_coverage",
+      "severity": "medium",
+      "description": "No test coverage data available. Coverage report may not have been generated.",
+      "recommendation": "Run 'pnpm test:coverage' to generate coverage report and enable coverage tracking.",
+      "evidence": [
+        "Coverage report not found at coverage/coverage-summary.json"
+      ],
+      "score": 50,
+      "detectedAt": "2026-03-09T21:06:33.935Z",
+      "relatedCycles": []
+    }
+  ],
+  "recommendations": [
+    "[MEDIUM] Run 'pnpm test:coverage' to generate coverage report and enable coverage tracking."
+  ],
+  "healthScore": 65
+}

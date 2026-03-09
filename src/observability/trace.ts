@@ -19,7 +19,7 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { log } from "../util/log.js";
+import { log, setTraceId, clearTraceId } from "../util/log.js";
 import { DATA_DIR } from "../supervisor/paths.js";
 
 const TRACES_DIR = join(DATA_DIR, "traces");
