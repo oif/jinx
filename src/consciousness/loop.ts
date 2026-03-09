@@ -20,6 +20,13 @@ import {
   endSpan,
   addSpanEvent,
 } from "../observability/trace.js";
+import {
+  checkEndureConstraints,
+  checkExcelConstraints,
+  formatSafetyCheckResult,
+  type EndureResult,
+  type ExcelResult,
+} from "../evolution/safety-check.js";
 import { getEvolutionCyclePrompt, getGoalDiscoveryPrompt } from "../config/evolution-prompt.js";
 import { SessionPool, isConversationBusy } from "../agent/session.js";
 import {
@@ -64,7 +71,75 @@ import {
   recordSuccessfulEvolution,
   getRelevantCapsules,
   formatCapsulesForPrompt,
+  checkAndTriggerCapsuleDistillation,
 } from "../evolution/capsule-store.js";
+
+// ── Timeout Warning Configuration ───────────────────────────────────
+
+/**
+ * Default timeout for worker sessions (matches session.ts DEFAULT_WORKER_TIMEOUT_MS).
+ * We set warning threshold slightly below this to allow graceful termination.
+ */
+const DEFAULT_WORKER_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+
+/**
+ * Time buffer before actual timeout to trigger warning and save progress.
+ * If remaining time < this threshold, we should gracefully terminate.
+ */
+const TIMEOUT_WARNING_BUFFER_MS = 2 * 60 * 1000; // 2 minutes
+
+/**
+ * Warning threshold = actual timeout - buffer
+ * When elapsed time exceeds this, we trigger the warning.
+ */
+const TIMEOUT_WARNING_THRESHOLD_MS = DEFAULT_WORKER_TIMEOUT_MS - TIMEOUT_WARNING_BUFFER_MS; // 18 minutes
+
+/**
+ * Custom error for timeout warning - allows graceful termination with progress saved.
+ */
+export class TimeoutWarningError extends Error {
+  constructor(
+    public readonly elapsedMs: number,
+    public readonly remainingMs: number,
+    message: string = `Evolution approaching timeout: ${Math.floor(elapsedMs / 60000)}m elapsed, ${Math.floor(remainingMs / 60000)}m remaining`
+  ) {
+    super(message);
+    this.name = "TimeoutWarningError";
+  }
+}
+
+/**
+ * Check if we're approaching timeout and should trigger warning.
+ * @param startTimeMs - The start time in milliseconds (from Date.now())
+ * @returns Object with elapsed time, remaining time, and whether warning should be triggered
+ */
+export function checkTimeoutWarning(startTimeMs: number): {
+  elapsedMs: number;
+  remainingMs: number;
+  shouldWarn: boolean;
+} {
+  const elapsedMs = Date.now() - startTimeMs;
+  const remainingMs = Math.max(0, DEFAULT_WORKER_TIMEOUT_MS - elapsedMs);
+  const shouldWarn = elapsedMs >= TIMEOUT_WARNING_THRESHOLD_MS;
+
+  return { elapsedMs, remainingMs, shouldWarn };
+}
+
+/**
+ * Log a timeout warning with stage information.
+ */
+function logTimeoutWarning(elapsedMs: number, remainingMs: number, stage: string, taskId: string): void {
+  const elapsedMin = Math.floor(elapsedMs / 60000);
+  const remainingMin = Math.floor(remainingMs / 60000);
+  log.warn("Evolution approaching timeout - initiating graceful termination", {
+    taskId,
+    stage,
+    elapsedMin,
+    remainingMin,
+    elapsedMs,
+    remainingMs,
+  });
+}
 
 const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
 const GOALS_PATH = join(process.cwd(), "data", "goals.md");
@@ -88,7 +163,9 @@ function safeRead(path: string): string {
 
 /**
  * Parse the Pending section of backlog.md and return the first task.
- * Format: `- [ ] #001: Task title`
+ * Supports two formats:
+ * - Legacy: `- [ ] #001: Task title`
+ * - Self-Challenge: `### 挑战 #184: Task title (33分)`
  */
 export function loadNextTask(): Task | null {
   const content = safeRead(BACKLOG_PATH);
@@ -98,11 +175,17 @@ export function loadNextTask(): Task | null {
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed === "## Pending") { inPending = true; continue; }
-    if (trimmed.startsWith("## ")) { inPending = false; continue; }
+    if (trimmed.startsWith("## Done")) { inPending = false; continue; }
+    if (trimmed.startsWith("## 目标发现历史")) { inPending = false; continue; }
 
     if (inPending) {
-      const m = /^- \[ \] (#\d+): (.+)$/.exec(trimmed);
-      if (m) return { id: m[1], title: m[2].trim() };
+      // Legacy format: `- [ ] #001: Task title`
+      const legacyMatch = /^- \[ \] (#\d+): (.+)$/.exec(trimmed);
+      if (legacyMatch) return { id: legacyMatch[1], title: legacyMatch[2].trim() };
+
+      // Self-Challenge format: `### 挑战 #184: Task title (33分)`
+      const challengeMatch = /^### 挑战 (#\d+): (.+?)(?:\s*\(\d+分\))?$/.exec(trimmed);
+      if (challengeMatch) return { id: challengeMatch[1], title: challengeMatch[2].trim() };
     }
   }
 
@@ -111,23 +194,49 @@ export function loadNextTask(): Task | null {
 
 /**
  * Move a task from Pending to Done in backlog.md.
+ * Supports two formats:
+ * - Legacy: `- [ ] #001: Task title`
+ * - Self-Challenge: `### 挑战 #184: Task title (33分)` followed by multi-line block
  */
 export function markTaskDone(task: Task): void {
   try {
     const content = readFileSync(BACKLOG_PATH, "utf-8");
-    const taskLine = `- [ ] ${task.id}: ${task.title}`;
-    const doneLine = `- [x] ${task.id}: ${task.title} — ${new Date().toLocaleDateString("en-CA")}`;
-
     const lines = content.split("\n");
     const updated: string[] = [];
     let insertedDone = false;
+    let skipUntilNextSection = false;
 
-    for (const line of lines) {
-      if (line.trim() === taskLine.trim()) continue; // remove from pending
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // Handle legacy format: `- [ ] #001: Task title`
+      if (trimmed === `- [ ] ${task.id}: ${task.title}`) {
+        continue; // Skip this line (remove from pending)
+      }
+
+      // Handle Self-Challenge format: `### 挑战 #184: Task title (33分)`
+      const challengeMatch = /^### 挑战 (#\d+):/.exec(trimmed);
+      if (challengeMatch && challengeMatch[1] === task.id) {
+        skipUntilNextSection = true;
+        continue; // Start skipping this challenge block
+      }
+
+      // Skip lines within a Self-Challenge block until next section
+      if (skipUntilNextSection) {
+        if (trimmed.startsWith("### ") || trimmed.startsWith("## ")) {
+          skipUntilNextSection = false;
+          // Don't continue here - we want to keep this line
+        } else {
+          continue; // Still skipping
+        }
+      }
 
       updated.push(line);
 
-      if (!insertedDone && line.trim() === "## Done") {
+      // Insert done entry
+      if (!insertedDone && trimmed === "## Done") {
+        const doneLine = `- [x] ${task.id}: ${task.title} — ${new Date().toLocaleDateString("en-CA")}`;
         updated.push(doneLine);
         insertedDone = true;
       }
@@ -381,6 +490,55 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
   // Generate evolution ID for principle tracking (needed in both try and catch)
   const evolutionId = `evolution-${cycle}-${task.id.replace(/[^a-zA-Z0-9]/g, "")}`;
 
+  // ── SEA Law #1: Endure Check ────────────────────────────────────────
+  // Perform system health check before allowing evolution to proceed
+  const endureSpan = startSpan("endure-check", { traceId: trace.id });
+  let endureResult: EndureResult;
+  try {
+    endureResult = await checkEndureConstraints();
+    addSpanEvent(endureSpan.id, "endure_result", {
+      passed: endureResult.passed,
+      disk: endureResult.checks.disk.value,
+      memory: endureResult.checks.memory.value,
+      cpu: endureResult.checks.cpu.value,
+    });
+  } catch (e) {
+    const err = e as Error;
+    log.error("Endure check threw exception", { error: err.message });
+    endureResult = {
+      passed: false,
+      timestamp: new Date().toISOString(),
+      checks: {
+        disk: { passed: false, value: 0, threshold: 1, message: `Exception: ${err.message}` },
+        memory: { passed: false, value: 0, threshold: 100, message: `Exception: ${err.message}` },
+        cpu: { passed: false, value: 100, threshold: 90, message: `Exception: ${err.message}` },
+        circuitBreaker: { passed: true, value: 0, threshold: 0, message: "Not checked" },
+      },
+      reason: `Endure check failed with exception: ${err.message}`,
+    };
+    addSpanEvent(endureSpan.id, "endure_exception", { error: err.message });
+  }
+
+  if (!endureResult.passed) {
+    endSpan(endureSpan.id, "error", { type: "EndureCheckFailed", message: endureResult.reason || "Endure check failed" });
+    setEvolutionStage("failed", "Endure check failed - system not healthy");
+    recordEvolutionResult(cycle, state.version, "skipped", endureResult.reason || "Endure check failed", 0);
+    failEvolutionProgress(`Endure check failed: ${endureResult.reason}`);
+    endTrace(trace.id, "error");
+    log.warn(`Evolution cycle #${cycle} BLOCKED by Endure check`, {
+      reason: endureResult.reason,
+      checks: endureResult.checks,
+    });
+    await notifyFn(`🚫 Evolution #${cycle} BLOCKED by Endure check\n${endureResult.reason}\n\nSEA Law #1 (Endure) requires system health before evolution.`);
+    return; // Exit early - cannot proceed with evolution
+  }
+  endSpan(endureSpan.id, "success");
+  log.info(`Evolution cycle #${cycle} passed Endure check`, {
+    disk: `${endureResult.checks.disk.value}GB free`,
+    memory: `${endureResult.checks.memory.value}MB free`,
+    cpu: `${endureResult.checks.cpu.value}%`,
+  });
+
   try {
     const recentHistory = loadRecentHistory(3);
     const stats = calculateEvolutionStats();
@@ -415,6 +573,22 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     }) + "\n\n" + archivePromptContext + principlesContext + capsulesContext;
     endSpan(promptSpan.id, "success");
 
+    // ── Timeout Warning Check: Before prompt execution ──────────────
+    const beforePromptCheck = checkTimeoutWarning(startTime);
+    if (beforePromptCheck.shouldWarn) {
+      logTimeoutWarning(beforePromptCheck.elapsedMs, beforePromptCheck.remainingMs, "pre-prompt", task.id);
+      // We're already at 18+ minutes, don't even start the prompt
+      // Save progress and notify about the timeout warning
+      setEvolutionStage("failed", `Timeout warning: ${Math.floor(beforePromptCheck.elapsedMs / 60000)}m elapsed`);
+      recordEvolutionResult(cycle, state.version, "timeout-warning", 
+        `Evolution aborted due to timeout warning: ${Math.floor(beforePromptCheck.elapsedMs / 60000)}m elapsed, ${Math.floor(beforePromptCheck.remainingMs / 60000)}m remaining`,
+        beforePromptCheck.elapsedMs);
+      failEvolutionProgress(`Timeout warning before prompt execution`);
+      await notifyFn(`⏰ Evolution #${cycle} timeout warning\nTask ${task.id} aborted: ${Math.floor(beforePromptCheck.elapsedMs / 60000)}m elapsed, approaching 20m limit.\nProgress saved to avoid complete timeout.`);
+      endTrace(trace.id, "timeout-warning");
+      return; // Exit early, don't throw - we've handled it gracefully
+    }
+
     // Spawn worker and execute
     const sessionSpan = startSpan("session-spawn", { traceId: trace.id });
     const worker = await SessionPool.spawn({ label: `evolution-${cycle}`, thinkingLevel: "high" });
@@ -429,12 +603,77 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     }
     endSpan(execSpan.id, "success");
 
+    // ── Timeout Warning Check: After prompt execution ───────────────
+    const afterPromptCheck = checkTimeoutWarning(startTime);
+    if (afterPromptCheck.shouldWarn) {
+      logTimeoutWarning(afterPromptCheck.elapsedMs, afterPromptCheck.remainingMs, "post-prompt", task.id);
+      // We got a result but we're out of time - save what we have
+      setEvolutionStage("committing", "Saving partial results due to timeout warning");
+      
+      // Record partial result if we have something meaningful
+      if (result && result.trim().length >= 20) {
+        recordEvolutionKnowledge(task.id, cycle, task.title, result + "\n\n⚠️ **Partial result saved due to timeout warning**");
+        await notifyFn(`⏰ Evolution #${cycle} timeout warning (post-prompt)\nTask ${task.id} got a result but ran out of time.\nPartial result saved to knowledge base.`);
+      }
+      
+      recordEvolutionResult(cycle, state.version, "timeout-warning",
+        `Evolution completed prompt but hit timeout warning: ${Math.floor(afterPromptCheck.elapsedMs / 60000)}m elapsed`,
+        afterPromptCheck.elapsedMs);
+      failEvolutionProgress(`Timeout warning after prompt execution - partial result saved`);
+      endTrace(trace.id, "timeout-warning");
+      return;
+    }
+
     // Defensive: treat empty or trivially short results as failures to prevent
     // silent pass-throughs from infrastructure errors (e.g. auth/permission issues).
     if (!result || result.trim().length < 20) {
       endSpan(execSpan.id, "error", { type: "InvalidResult", message: `Suspiciously short result: "${result}"` });
       throw new Error(`Evolution worker returned suspiciously short result: "${result}"`);
     }
+
+    // ── SEA Law #2: Excel Check ────────────────────────────────────────
+    // Verify build and tests pass before committing evolution results
+    const excelSpan = startSpan("excel-check", { traceId: trace.id });
+    let excelResult: ExcelResult;
+    try {
+      excelResult = await checkExcelConstraints({ testTimeout: 120000 });
+      addSpanEvent(excelSpan.id, "excel_result", {
+        passed: excelResult.passed,
+        build: excelResult.checks.build.passed,
+        tests: excelResult.checks.tests.passed,
+      });
+    } catch (e) {
+      const err = e as Error;
+      log.error("Excel check threw exception", { error: err.message });
+      excelResult = {
+        passed: false,
+        timestamp: new Date().toISOString(),
+        checks: {
+          build: { passed: false, value: 1, threshold: 0, message: `Exception: ${err.message}` },
+          tests: { passed: false, value: 1, threshold: 0, message: `Exception: ${err.message}` },
+        },
+        reason: `Excel check failed with exception: ${err.message}`,
+      };
+      addSpanEvent(excelSpan.id, "excel_exception", { error: err.message });
+    }
+
+    if (!excelResult.passed) {
+      endSpan(excelSpan.id, "error", { type: "ExcelCheckFailed", message: excelResult.reason || "Excel check failed" });
+      setEvolutionStage("failed", "Excel check failed - tests or build failed");
+      const durationMs = Date.now() - startTime;
+      recordEvolutionResult(cycle, state.version, "failed", excelResult.reason || "Excel check failed", durationMs);
+      failEvolutionProgress(`Excel check failed: ${excelResult.reason}`);
+      endTrace(trace.id, "error");
+      log.error(`Evolution cycle #${cycle} BLOCKED by Excel check`, {
+        reason: excelResult.reason,
+        checks: excelResult.checks,
+      });
+      // Don't mark task as done - it should be retried after fixing the issue
+      await notifyFn(`🚫 Evolution #${cycle} BLOCKED by Excel check\n${excelResult.reason}\n\nSEA Law #2 (Excel) requires tests to pass before commit.\nTask ${task.id} not marked as done - fix issues and retry.`);
+      return; // Exit early - cannot proceed with commit
+    }
+    endSpan(excelSpan.id, "success");
+    log.info(`Evolution cycle #${cycle} passed Excel check`);
 
     const durationMs = Date.now() - startTime;
     setEvolutionStage("committing", "Saving results");
@@ -455,6 +694,11 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       result,
       durationMs,
       qualityScore: qualityBreakdown.total,
+    });
+
+    // AgentC2 Flywheel Step 3: asynchronously check if capsule threshold triggers distillation
+    checkAndTriggerCapsuleDistillation(notifyFn).catch(e => {
+      log.error("Async capsule distillation check failed", { error: (e as Error).message });
     });
 
     // Reset circuit breaker on success
@@ -551,12 +795,29 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     const durationMs = Date.now() - startTime;
 
     const errorSpan = startSpan("error-handler", { traceId: trace.id });
-    recordEvolutionResult(cycle, state.version, "failed", err.message, durationMs);
-    failEvolutionProgress(err.message);
+    
+    // ── Detect timeout from session.ts ──────────────────────────────
+    const isTimeout = err.message.includes("timed out after") || err.name === "TimeoutWarningError";
+    const status = isTimeout ? "timeout" : "failed";
+    const friendlyMessage = isTimeout 
+      ? `Evolution timed out after ${Math.floor(durationMs / 60000)} minutes`
+      : err.message;
 
-    // Track consecutive failures in circuit breaker
-    const circuitResult = recordCircuitFailure();
-    await notifyCircuitTripIfNeeded(circuitResult, notifyFn);
+    recordEvolutionResult(cycle, state.version, status, friendlyMessage, durationMs);
+    failEvolutionProgress(friendlyMessage);
+
+    // Track consecutive failures in circuit breaker (but not for timeouts - they're different)
+    if (!isTimeout) {
+      const circuitResult = recordCircuitFailure();
+      await notifyCircuitTripIfNeeded(circuitResult, notifyFn);
+    } else {
+      // For timeouts, just log a warning and continue - don't trip circuit breaker
+      log.warn("Evolution timed out - not incrementing circuit breaker counter", {
+        taskId: task.id,
+        cycle,
+        durationMin: Math.floor(durationMs / 60000),
+      });
+    }
 
     // Record performance metrics for failed evolution
     recordEvolutionCycle({
@@ -572,19 +833,25 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
       cycle,
       task.id,
       "failed",
-      [`Failed: ${err.message}`],
+      [`Failed: ${friendlyMessage}`],
       -0.1 // Negative fitness delta for failure
     );
-    endSpan(errorSpan.id, "error", { type: err.constructor.name, message: err.message });
+    endSpan(errorSpan.id, "error", { type: err.constructor.name, message: friendlyMessage });
 
-    log.error(`Evolution cycle #${cycle} failed`, { error: err.message, durationMs });
-    await notifyFn(`❌ Evolution #${cycle} failed [${task.id}]: ${err.message}`);
+    log.error(`Evolution cycle #${cycle} ${status}`, { error: friendlyMessage, durationMs });
+    
+    // Send more informative timeout message
+    if (isTimeout) {
+      await notifyFn(`⏰ Evolution #${cycle} timed out [${task.id}]\nDuration: ${Math.floor(durationMs / 60000)}m / 20m limit\nTask was: ${task.title}\n\nTo prevent this, consider:\n- Breaking down complex tasks\n- Adding timeout warning checkpoints`);
+    } else {
+      await notifyFn(`❌ Evolution #${cycle} failed [${task.id}]: ${friendlyMessage}`);
+    }
 
     // Record principle retrieval result as failure for Experience Distillation feedback
     recordRetrievalResult(evolutionId, "failure");
 
     // ── End Trace (Error) ───────────────────────────────────────────
-    endTrace(trace.id, "error");
+    endTrace(trace.id, status === "timeout" ? "timeout" : "error");
   }
 }
 
