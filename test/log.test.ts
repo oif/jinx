@@ -1,17 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Mock pino - must be self-contained factory
+// Mock pino - must be self-contained factory with all required methods
 vi.mock("pino", () => {
   const mockLogger = {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
+    level: "info",
   };
   const mockPino = vi.fn(() => mockLogger);
+  // Add static methods used by log.ts
   (mockPino as any).stdTimeFunctions = {
     isoTime: () => ',"time":"2024-01-01T00:00:00.000Z"',
   };
+  (mockPino as any).transport = vi.fn(() => ({ type: 'mock-transport' }));
+  (mockPino as any).multistream = vi.fn(() => ({ type: 'mock-multistream' }));
   return {
     default: mockPino,
   };
@@ -26,7 +30,18 @@ import {
   generateTraceId,
   setTraceId,
   getTraceId,
-  withTraceId
+  withTraceId,
+  getLogLevel,
+  setLogLevel,
+  withSpan,
+  withSpanAsync,
+  getCurrentSpan,
+  addSpanEvent,
+  startTimer,
+  time,
+  timeAsync,
+  warnSlowOperation,
+  trackPerformance
 } from "../src/util/log.js";
 
 const mockPino = pino as unknown as () => {
@@ -239,6 +254,263 @@ describe("util/log", () => {
       
       // Message should be second argument
       expect(call[1]).toBe("User logged in");
+    });
+  });
+
+  // ── Expert Features Tests ─────────────────────────────────────────────
+
+  describe("dynamic log level", () => {
+    it("should get current log level", () => {
+      const level = getLogLevel();
+      expect(level).toBe("info");
+    });
+
+    it("should set valid log level", () => {
+      const result = setLogLevel("debug");
+      expect(result).toBe(true);
+      expect(getLogLevel()).toBe("debug");
+    });
+
+    it("should reject invalid log level", () => {
+      const result = setLogLevel("invalid");
+      expect(result).toBe(false);
+      expect(mockLogger.warn).toHaveBeenCalled();
+    });
+
+    it("should accept all valid levels", () => {
+      const validLevels = ["trace", "debug", "info", "warn", "error", "fatal"];
+      for (const level of validLevels) {
+        const result = setLogLevel(level);
+        expect(result).toBe(true);
+        expect(getLogLevel()).toBe(level);
+      }
+    });
+  });
+
+  describe("span support", () => {
+    it("should run function within a span", () => {
+      const result = withSpan("test-span", () => {
+        return "success";
+      });
+
+      expect(result).toBe("success");
+      expect(mockLogger.debug).toHaveBeenCalledTimes(2); // start and end
+    });
+
+    it("should include span metadata in log entries", () => {
+      withSpan("test-span", () => {
+        // Span started
+      });
+
+      // Check start log
+      const startCall = mockLogger.debug.mock.calls.find(
+        (call) => call[1]?.includes?.("started")
+      );
+      expect(startCall).toBeDefined();
+      expect(startCall[0]).toHaveProperty("spanId");
+      expect(startCall[0]).toHaveProperty("spanName", "test-span");
+      expect(startCall[0]).toHaveProperty("spanOp", "start");
+    });
+
+    it("should include duration in span end log", () => {
+      withSpan("timed-span", () => {
+        // Some operation
+      });
+
+      // Check end log
+      const endCall = mockLogger.debug.mock.calls.find(
+        (call) => call[1]?.includes?.("ended")
+      );
+      expect(endCall).toBeDefined();
+      expect(endCall[0]).toHaveProperty("durationMs");
+    });
+
+    it("should log error and rethrow when span fails", () => {
+      expect(() => {
+        withSpan("failing-span", () => {
+          throw new Error("Test error");
+        });
+      }).toThrow("Test error");
+
+      const errorCall = mockLogger.error.mock.calls.find(
+        (call) => call[1]?.includes?.("failed")
+      );
+      expect(errorCall).toBeDefined();
+      expect(errorCall[0]).toHaveProperty("spanOp", "error");
+      expect(errorCall[0]).toHaveProperty("errorMessage", "Test error");
+    });
+
+    it("should support nested spans", () => {
+      withSpan("outer-span", () => {
+        withSpan("inner-span", () => {
+          // Nested operation
+        });
+      });
+
+      // Should have 4 debug calls: outer start, inner start, inner end, outer end
+      expect(mockLogger.debug).toHaveBeenCalledTimes(4);
+    });
+
+    it("should support async spans", async () => {
+      const result = await withSpanAsync("async-span", async () => {
+        return "async-result";
+      });
+
+      expect(result).toBe("async-result");
+      expect(mockLogger.debug).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("getCurrentSpan", () => {
+    it("should return undefined outside span context", () => {
+      expect(getCurrentSpan()).toBeUndefined();
+    });
+
+    it("should return span context inside withSpan", () => {
+      withSpan("my-span", () => {
+        const span = getCurrentSpan();
+        expect(span).toBeDefined();
+        expect(span?.spanName).toBe("my-span");
+        expect(span?.spanId).toBeDefined();
+      });
+    });
+  });
+
+  describe("addSpanEvent", () => {
+    it("should add event to current span", () => {
+      withSpan("span-with-events", () => {
+        addSpanEvent("checkpoint-1", { progress: 50 });
+      });
+
+      const eventCall = mockLogger.debug.mock.calls.find(
+        (call) => call[0]?.spanEvent === "checkpoint-1"
+      );
+      expect(eventCall).toBeDefined();
+      expect(eventCall[0]).toHaveProperty("spanElapsedMs");
+    });
+  });
+
+  describe("timing utilities", () => {
+    describe("startTimer", () => {
+      it("should return a function that logs duration", () => {
+        const endTimer = startTimer("my-operation");
+        const duration = endTimer();
+
+        expect(duration).toBeGreaterThanOrEqual(0);
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          expect.objectContaining({ durationMs: duration }),
+          "Timer: my-operation"
+        );
+      });
+
+      it("should include additional data in timer log", () => {
+        const endTimer = startTimer("operation", { userId: 123 });
+        endTimer();
+
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          expect.objectContaining({ durationMs: expect.any(Number), userId: 123 }),
+          "Timer: operation"
+        );
+      });
+    });
+
+    describe("time", () => {
+      it("should time a synchronous function", () => {
+        const result = time("sync-op", () => "done");
+
+        expect(result).toBe("done");
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          expect.objectContaining({ durationMs: expect.any(Number) }),
+          "Timer: sync-op"
+        );
+      });
+
+      it("should log error when timed function throws", () => {
+        expect(() => {
+          time("failing-op", () => {
+            throw new Error("Sync error");
+          });
+        }).toThrow("Sync error");
+
+        expect(mockLogger.error).toHaveBeenCalledWith(
+          expect.objectContaining({ 
+            durationMs: expect.any(Number),
+            error: "Sync error" 
+          }),
+          "Timer failed: failing-op"
+        );
+      });
+    });
+
+    describe("timeAsync", () => {
+      it("should time an async function", async () => {
+        const result = await timeAsync("async-op", async () => {
+          return "async-done";
+        });
+
+        expect(result).toBe("async-done");
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          expect.objectContaining({ durationMs: expect.any(Number) }),
+          "Timer: async-op"
+        );
+      });
+    });
+  });
+
+  describe("warnSlowOperation", () => {
+    it("should warn when duration exceeds threshold", () => {
+      warnSlowOperation("slow-op", 6000, 5000);
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ 
+          durationMs: 6000, 
+          thresholdMs: 5000,
+          operation: "slow-op"
+        }),
+        expect.stringContaining("Slow operation detected")
+      );
+    });
+
+    it("should not warn when duration is below threshold", () => {
+      warnSlowOperation("fast-op", 100, 5000);
+
+      expect(mockLogger.warn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("trackPerformance", () => {
+    it("should track async operation performance", async () => {
+      const { result, durationMs } = await trackPerformance("tracked-op", async () => {
+        return "tracked-result";
+      });
+
+      expect(result).toBe("tracked-result");
+      expect(durationMs).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should warn on slow operation", async () => {
+      await trackPerformance(
+        "slow-tracked-op",
+        async () => {
+          await new Promise((r) => setTimeout(r, 10));
+        },
+        { warnThresholdMs: 5 }
+      );
+
+      expect(mockLogger.warn).toHaveBeenCalled();
+    });
+
+    it("should include additional data in performance log", async () => {
+      await trackPerformance(
+        "data-op",
+        async () => "result",
+        { data: { requestId: "req-123" } }
+      );
+
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.objectContaining({ requestId: "req-123" }),
+        expect.stringContaining("Performance")
+      );
     });
   });
 });

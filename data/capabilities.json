@@ -297,15 +297,17 @@
       "id": "structured-logging",
       "name": "Structured Logging",
       "category": "adaptation",
-      "description": "Pino-based structured logging with traceId, version, levels, and context propagation via AsyncLocalStorage",
-      "maturity": "advanced",
+      "description": "Expert-level Pino structured logging with traceId propagation via AsyncLocalStorage, dynamic log level adjustment at runtime, span-based tracing for operation tracking, performance timing utilities with slow operation warnings, sensitive data redaction, file rotation, and comprehensive test coverage",
+      "maturity": "expert",
       "successCount": 0,
       "failureCount": 0,
       "relatedFiles": [
-        "src/util/log.ts"
+        "src/util/log.ts",
+        "test/log.test.ts",
+        "test/log-integration.test.ts"
       ],
       "dependencies": [],
-      "improvementPotential": 0.2
+      "improvementPotential": 0.1
     },
     {
       "id": "evolution-automation",
