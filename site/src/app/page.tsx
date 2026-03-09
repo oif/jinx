@@ -105,6 +105,9 @@ function StatCard({
   );
 }
 
+import HealthDashboard from "./components/HealthDashboard";
+import IdentitySection from "./components/IdentitySection";
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export const dynamic = "force-dynamic";
@@ -182,6 +185,9 @@ export default function Home() {
           </blockquote>
         </section>
 
+        {/* ── Identity, Goals & Thoughts ── */}
+        <IdentitySection />
+
         {/* ── Stats ── */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
@@ -205,6 +211,14 @@ export default function Home() {
               sub={`${Object.keys(capsByCategory).length} 个领域`}
             />
           </div>
+        </section>
+
+        {/* ── Real-time Health Dashboard ── */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+            实时状态
+          </h2>
+          <HealthDashboard />
         </section>
 
         {/* ── Capabilities Matrix ── */}

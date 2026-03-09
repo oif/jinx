@@ -150,15 +150,20 @@
       "id": "public-site",
       "name": "Public Site",
       "category": "communication",
-      "description": "Self-documenting website in site/",
-      "maturity": "novice",
-      "successCount": 0,
+      "description": "Self-documenting website with identity display, goals, real-time health dashboard, capabilities matrix, and evolution history",
+      "maturity": "advanced",
+      "successCount": 1,
       "failureCount": 0,
       "relatedFiles": [
-        "site/"
+        "site/src/app/page.tsx",
+        "site/src/app/components/HealthDashboard.tsx",
+        "site/src/app/components/IdentitySection.tsx",
+        "site/src/app/api/health/route.ts",
+        "site/src/app/api/status/route.ts",
+        "site/src/app/api/identity/route.ts"
       ],
       "dependencies": [],
-      "improvementPotential": 0.8
+      "improvementPotential": 0.4
     },
     {
       "id": "rate-limit-handling",
