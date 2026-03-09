@@ -82,7 +82,6 @@ import {
   hasPausedProgress,
   resumeTaskProgress,
   formatProgressSummary,
-  type TaskComplexity,
   type TaskProgress,
   type SubTask,
 } from "./task-decomposer.js";
@@ -280,55 +279,98 @@ function loadRecentDone(limit = 5): string {
 }
 
 /**
+ * Format a subtask for backlog insertion (self-challenge format)
+ */
+function formatSubtaskAsChallenge(subtask: SubTask): string[] {
+  return [
+    "",
+    `### 挑战 ${subtask.id}: ${subtask.title} (分解自 ${subtask.parentId})`,
+    "",
+    "**类别**: 自动分解",
+    "**难度**: small",
+    "",
+    `**步骤**: ${subtask.stepIndex + 1}/${subtask.totalSteps}`,
+  ];
+}
+
+/**
+ * Format a subtask for backlog insertion (legacy format)
+ */
+function formatSubtaskAsLegacy(subtask: SubTask): string {
+  return `- [ ] ${subtask.id}: ${subtask.title} (分解自 ${subtask.parentId})`;
+}
+
+/**
+ * Check if line is a self-challenge task header
+ */
+function isChallengeTaskHeader(line: string): boolean {
+  return line.trim().startsWith("### 挑战");
+}
+
+/**
+ * Check if line is a legacy task format
+ */
+function isLegacyTaskFormat(line: string): boolean {
+  return /^- \[ \] #\d+:/.test(line.trim());
+}
+
+/**
+ * Find the end of a challenge task block
+ */
+function findChallengeBlockEnd(lines: string[], startIndex: number): number {
+  let j = startIndex;
+  while (j < lines.length && !isChallengeTaskHeader(lines[j]) && !lines[j].trim().startsWith("## ")) {
+    j++;
+  }
+  return j;
+}
+
+/**
  * Add subtasks to the backlog after the current task.
  * This allows decomposed tasks to be processed in sequence.
  */
 function addSubtasksToBacklog(subtasks: SubTask[]): void {
+  if (subtasks.length === 0) return;
+  
   try {
     const content = readFileSync(BACKLOG_PATH, "utf-8");
     const lines = content.split("\n");
     const updated: string[] = [];
-    let insertedAfterCurrent = false;
+    let inserted = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       updated.push(line);
 
-      // Insert subtasks after the first pending task (which is the current one being decomposed)
-      if (!insertedAfterCurrent && line.trim().startsWith("### 挑战")) {
-        // Check if this is a pending section task
+      if (inserted) continue;
+
+      // Insert subtasks after the first pending task
+      if (isChallengeTaskHeader(line)) {
         const nextLine = lines[i + 1] || "";
-        if (nextLine.includes("类别") || nextLine.includes("**类别**")) {
-          // This is a self-challenge format task, find end of its block
-          // Insert subtasks after this task's block
-          let j = i + 1;
-          while (j < lines.length && !lines[j].trim().startsWith("### 挑战") && !lines[j].trim().startsWith("## ")) {
-            updated.push(lines[j]);
-            j++;
+        const isChallengeTask = nextLine.includes("类别") || nextLine.includes("**类别**");
+        
+        if (isChallengeTask) {
+          const blockEnd = findChallengeBlockEnd(lines, i + 1);
+          // Copy the rest of this task's block
+          for (let k = i + 1; k < blockEnd; k++) {
+            updated.push(lines[k]);
           }
-          // Now insert the subtasks
+          // Insert subtasks
           for (const subtask of subtasks) {
-            updated.push("");
-            updated.push(`### 挑战 ${subtask.id}: ${subtask.title} (分解自 ${subtask.parentId})`);
-            updated.push("");
-            updated.push(`**类别**: 自动分解`);
-            updated.push(`**难度**: small`);
-            updated.push("");
-            updated.push(`**步骤**: ${subtask.stepIndex + 1}/${subtask.totalSteps}`);
+            updated.push(...formatSubtaskAsChallenge(subtask));
           }
-          insertedAfterCurrent = true;
-          i = j - 1; // Continue from where we left off
+          inserted = true;
+          i = blockEnd - 1;
         }
-      } else if (!insertedAfterCurrent && line.trim().match(/^- \[ \] #\d+:/)) {
-        // Legacy format - insert subtasks right after this line
+      } else if (isLegacyTaskFormat(line)) {
         for (const subtask of subtasks) {
-          updated.push(`- [ ] ${subtask.id}: ${subtask.title} (分解自 ${subtask.parentId})`);
+          updated.push(formatSubtaskAsLegacy(subtask));
         }
-        insertedAfterCurrent = true;
+        inserted = true;
       }
     }
 
-    if (insertedAfterCurrent) {
+    if (inserted) {
       writeFileSync(BACKLOG_PATH, updated.join("\n"));
       log.info("Subtasks added to backlog", { count: subtasks.length });
     }
@@ -352,6 +394,10 @@ function getLoopIntervalMs(): number {
 // This prevents tight loops when discovery finds nothing or fails
 const GOAL_DISCOVERY_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
 let lastGoalDiscoveryAt = 0;
+
+// Track consecutive goal discovery failures (no tasks added)
+let consecutiveGoalDiscoveryFailures = 0;
+const MAX_GOAL_DISCOVERY_FAILURES = 3; // After this many failures, alert and force a default task
 
 // ── State helpers ──────────────────────────────────────────────────
 
@@ -566,7 +612,6 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
   }
 
   // Decompose large tasks into subtasks
-  let actualTask = task;
   let taskProgress: TaskProgress | null = null;
   
   if (taskComplexity === "large") {
@@ -583,9 +628,6 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
         addSubtasksToBacklog(decomposition.remainingSubtasks);
         await notifyFn(`📋 Large task ${task.id} decomposed into ${decomposition.subtasks.length} subtasks\nFirst subtask: ${decomposition.task.title}`);
       }
-      
-      // Execute first subtask
-      actualTask = decomposition.task;
       
       // Initialize progress tracking
       taskProgress = initOrUpdateTaskProgress(
@@ -1072,11 +1114,38 @@ async function runGoalDiscovery(notifyFn: NotifyFn): Promise<void> {
     // Check if new tasks were added
     const taskAfter = loadNextTask();
     if (taskAfter) {
+      consecutiveGoalDiscoveryFailures = 0; // Reset on success
       addSpanEvent(trace.rootSpanId, "task_added", { taskId: taskAfter.id, title: taskAfter.title });
       log.info("Goal discovery added tasks to backlog");
       await notifyFn(`🔍 Goal discovery complete. New task queued: ${taskAfter.id}: ${taskAfter.title}`);
     } else {
-      log.info("Goal discovery found nothing to add");
+      consecutiveGoalDiscoveryFailures++;
+      log.warn("Goal discovery found nothing to add", {
+        consecutiveFailures: consecutiveGoalDiscoveryFailures,
+        resultPreview: result.slice(0, 200),
+      });
+
+      // If too many consecutive failures, force a default recovery task
+      if (consecutiveGoalDiscoveryFailures >= MAX_GOAL_DISCOVERY_FAILURES) {
+        log.error("Goal discovery has failed to add tasks too many times", {
+          consecutiveFailures: consecutiveGoalDiscoveryFailures,
+        });
+        await notifyFn(
+          `⚠️ Goal discovery has failed to add tasks ${consecutiveGoalDiscoveryFailures} times in a row.\n` +
+          `The system may be stuck in a research loop.\n\n` +
+          `Suggested actions:\n` +
+          `1. Check if the AI is spending too much time researching\n` +
+          `2. Manually add tasks via Telegram\n` +
+          `3. Review the goal discovery prompt`
+        );
+        // Reset counter to avoid spamming alerts
+        consecutiveGoalDiscoveryFailures = 0;
+      } else {
+        await notifyFn(
+          `🔍 Goal discovery found nothing (attempt ${consecutiveGoalDiscoveryFailures}/${MAX_GOAL_DISCOVERY_FAILURES}).\n` +
+          `The AI may be stuck in research mode. Will retry in 30 minutes.`
+        );
+      }
     }
 
     // Also trigger reflection/metacognitive during idle time if due
