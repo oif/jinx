@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-03-05T21:34:44.213Z",
+  "lastUpdated": "2026-03-09T06:00:05.000Z",
   "capabilities": [
     {
       "id": "process-supervision",
@@ -67,8 +67,8 @@
       "category": "evolution",
       "description": "Consciousness loop with task execution and goal discovery",
       "maturity": "advanced",
-      "successCount": 0,
-      "failureCount": 0,
+      "successCount": 32,
+      "failureCount": 1,
       "relatedFiles": [
         "src/consciousness/loop.ts",
         "src/evolution/strategy.ts"
@@ -217,13 +217,112 @@
       ],
       "dependencies": [],
       "improvementPotential": 0.8
+    },
+    {
+      "id": "health-check",
+      "name": "Health Check",
+      "category": "survival",
+      "description": "System health monitoring with memory, CPU, disk checks and alerts",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/health/check.ts",
+        "src/health/history.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.2
+    },
+    {
+      "id": "safety-check",
+      "name": "Safety Check",
+      "category": "survival",
+      "description": "SEA three-law safety constraints: Endure check (disk, memory, CPU, circuit breaker) before evolution, Excel check (build, test) before commit",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/evolution/safety-check.ts",
+        "src/consciousness/circuit-breaker.ts"
+      ],
+      "dependencies": ["health-check"],
+      "improvementPotential": 0.2
+    },
+    {
+      "id": "pre-push-test-gate",
+      "name": "Pre-push Test Gate",
+      "category": "survival",
+      "description": "Git pre-push hook ensuring build and tests pass before pushing",
+      "maturity": "advanced",
+      "successCount": 1,
+      "failureCount": 0,
+      "relatedFiles": [
+        ".husky/pre-push"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.1
+    },
+    {
+      "id": "identity-initialization",
+      "name": "Identity Initialization",
+      "category": "identity",
+      "description": "Ensures identity.md and scratchpad.md exist on startup, creates defaults if missing",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/util/identity-init.ts",
+        "data/identity.md",
+        "data/scratchpad.md"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.1
+    },
+    {
+      "id": "structured-logging",
+      "name": "Structured Logging",
+      "category": "adaptation",
+      "description": "Pino-based structured logging with traceId, version, levels, and context propagation via AsyncLocalStorage",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/util/log.ts"
+      ],
+      "dependencies": [],
+      "improvementPotential": 0.2
+    },
+    {
+      "id": "evolution-automation",
+      "name": "Evolution Automation",
+      "category": "evolution",
+      "description": "Automatic evolution triggering with Endure safety check (disk, memory, CPU, circuit breaker), configurable intervals, and enable/disable switch",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/consciousness/auto-evolution.ts",
+        "src/consciousness/loop.ts",
+        "src/health/check.ts"
+      ],
+      "dependencies": ["health-check", "evolution-loop"],
+      "improvementPotential": 0.3
+    },
+    {
+      "id": "task-decomposer",
+      "name": "Task Decomposer",
+      "category": "evolution",
+      "description": "Timeout-aware task decomposition: estimates task complexity, breaks large tasks into subtasks, supports cross-cycle progress recovery with persistence",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/consciousness/task-decomposer.ts",
+        "data/task-progress.json"
+      ],
+      "dependencies": ["evolution-loop"],
+      "improvementPotential": 0.3
     }
   ],
-  "desiredCapabilities": [
-    "pre-push-test-gate",
-    "health-check",
-    "evolution-automation",
-    "structured-logging",
-    "identity-initialization"
-  ]
+  "desiredCapabilities": []
 }
