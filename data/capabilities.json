@@ -171,15 +171,17 @@
       "id": "rate-limit-handling",
       "name": "Rate Limit Handling",
       "category": "adaptation",
-      "description": "Graceful degradation when API limits hit",
-      "maturity": "novice",
+      "description": "Advanced rate limit handling with global state management, exponential backoff with jitter, API usage tracking and prediction, degradation strategy with fallback to built-in tools, and rate limit event monitoring and alerting",
+      "maturity": "advanced",
       "successCount": 0,
       "failureCount": 0,
       "relatedFiles": [
-        "src/agent/session.ts"
+        "src/adaptation/rate-limiter.ts",
+        "src/agent/tools.ts",
+        "test/rate-limiter.test.ts"
       ],
       "dependencies": [],
-      "improvementPotential": 0.6
+      "improvementPotential": 0.2
     },
     {
       "id": "cost-tracking",
