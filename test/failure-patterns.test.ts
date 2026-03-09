@@ -24,7 +24,7 @@ import {
   shouldRunFailurePatternDetection,
   FailurePatternType,
   DetectedFailurePattern,
-} from "../dist/memory/failure-patterns.js";
+} from "../src/memory/failure-patterns.js";
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 

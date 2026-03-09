@@ -355,12 +355,6 @@ export function addTasksToBacklog(tasks: ImprovementTask[]): number {
       if (inPending && !inserted && !trimmed.startsWith("##")) {
         for (const task of tasks) {
           const backlogId = `#${nextId.toString().padStart(3, "0")}`;
-          const _priorityEmoji = {
-            critical: "🔴",
-            high: "🟠",
-            medium: "🟡",
-            low: "🟢",
-          }[task.priority];
 
           // Use the challenge format
           const challengeLines = [
