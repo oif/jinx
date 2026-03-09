@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-03-09T06:00:05.000Z",
+  "lastUpdated": "2026-03-09T16:29:00.000Z",
   "capabilities": [
     {
       "id": "process-supervision",
@@ -82,15 +82,17 @@
       "id": "goal-discovery",
       "name": "Goal Discovery",
       "category": "evolution",
-      "description": "Alita-G inspired systematic goal generation",
-      "maturity": "novice",
+      "description": "Alita-G inspired systematic goal generation with add_backlog_task tool for task creation",
+      "maturity": "advanced",
       "successCount": 0,
       "failureCount": 0,
       "relatedFiles": [
-        "src/config/evolution-prompt.ts"
+        "src/config/evolution-prompt.ts",
+        "src/agent/tools.ts",
+        "extensions/jinx-tools.ts"
       ],
       "dependencies": [],
-      "improvementPotential": 0.8
+      "improvementPotential": 0.2
     },
     {
       "id": "evolution-history",
@@ -110,15 +112,16 @@
       "id": "metacognition",
       "name": "Metacognition",
       "category": "cognition",
-      "description": "Real-time self-assessment and confidence calibration",
-      "maturity": "novice",
+      "description": "Advanced metacognitive capabilities with confidence tracking, calibration assessment, overconfidence/underconfidence warnings, and comprehensive metacognitive reports for evolution cycles",
+      "maturity": "advanced",
       "successCount": 0,
       "failureCount": 0,
       "relatedFiles": [
-        "src/memory/metacognitive.ts"
+        "src/memory/metacognitive.ts",
+        "test/metacognitive.test.ts"
       ],
       "dependencies": [],
-      "improvementPotential": 0.7
+      "improvementPotential": 0.3
     },
     {
       "id": "reflection",

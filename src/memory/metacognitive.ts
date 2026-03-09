@@ -36,12 +36,161 @@ const MIN_HISTORY_FOR_METACOGNITIVE = 1; // Minimum history entries needed for h
 const FORCED_METACOGNITIVE_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours - fallback time-based trigger
 const MIN_MEMORY_NODES_FOR_METACOGNITIVE = 3; // Alternative trigger: minimum memory nodes
 
+// Confidence calibration thresholds
+const OVERCONFIDENCE_THRESHOLD = 0.2; // If calibration > this, consider overconfident
+const UNDERCONFIDENCE_THRESHOLD = -0.2; // If calibration < this, consider underconfident
+const MIN_DECISIONS_FOR_CALIBRATION = 5; // Minimum decisions before calibration is meaningful
+
 // ── Types ──────────────────────────────────────────────────────────
 
 /**
  * Confidence calibration level for a knowledge area or decision.
  */
 export type ConfidenceLevel = "high" | "medium" | "low" | "unknown";
+
+/**
+ * Outcome of a decision - used for confidence calibration.
+ */
+export type DecisionOutcome = "success" | "failure" | "partial" | "unknown";
+
+/**
+ * A tracked decision with confidence score and outcome.
+ * This is the core of confidence calibration - tracking whether
+ * our stated confidence matches actual outcomes.
+ */
+export interface ConfidenceTrack {
+  id: string;
+  timestamp: string;
+  
+  // Decision context
+  decisionContext: string; // What decision was made
+  decisionCategory: string; // e.g., "code-change", "architecture", "testing"
+  evolutionId?: string; // Link to evolution cycle if applicable
+  
+  // Confidence scores
+  statedConfidence: number; // 0-1: How confident I was when making the decision
+  confidenceLevel: ConfidenceLevel; // Categorical confidence
+  
+  // Outcome (filled in later)
+  outcome?: DecisionOutcome;
+  outcomeTimestamp?: string;
+  actualConfidence?: number; // 0-1: Derived from outcome (success=1.0, partial=0.5, failure=0.0)
+  
+  // Calibration (calculated after outcome is known)
+  calibrationError?: number; // stated - actual (positive = overconfident, negative = underconfident)
+  calibrationCategory?: "overconfident" | "underconfident" | "well-calibrated";
+  
+  // Notes
+  notes?: string;
+}
+
+/**
+ * Statistics on confidence calibration over time.
+ * Used to assess and improve decision-making accuracy.
+ */
+export interface ConfidenceCalibrationStats {
+  // Basic counts
+  totalDecisions: number;
+  decisionsWithOutcome: number;
+  
+  // Calibration accuracy
+  correctPredictions: number; // Decisions where confidence matched outcome
+  calibrationAccuracy: number; // 0-1: fraction of well-calibrated decisions
+  
+  // Overconfidence/underconfidence tracking
+  overconfidentDecisions: number;
+  underconfidentDecisions: number;
+  wellCalibratedDecisions: number;
+  
+  // Metrics
+  avgCalibrationError: number; // Mean calibration error (should be near 0)
+  avgAbsoluteCalibrationError: number; // Mean absolute error (should be low)
+  brierScore: number; // Proper scoring rule: (stated - actual)^2 averaged (lower is better)
+  
+  // By category
+  calibrationByCategory: Record<string, {
+    count: number;
+    avgCalibrationError: number;
+    overconfident: number;
+    underconfident: number;
+  }>;
+  
+  // Trend (recent vs historical)
+  recentCalibrationError?: number; // Last 10 decisions
+  calibrationTrend?: "improving" | "declining" | "stable";
+}
+
+/**
+ * A warning about confidence calibration issues.
+ */
+export interface ConfidenceWarning {
+  id: string;
+  timestamp: string;
+  type: "overconfidence" | "underconfidence" | "calibration-drift";
+  severity: "low" | "medium" | "high";
+  
+  // What triggered the warning
+  triggerReason: string;
+  relevantDecisions: string[]; // Decision IDs
+  
+  // Statistics
+  statsSnapshot: {
+    calibrationError: number;
+    overconfidentCount: number;
+    underconfidentCount: number;
+    recentTrend?: string;
+  };
+  
+  // Recommendations
+  recommendations: string[];
+  
+  // Status
+  acknowledged: boolean;
+  acknowledgedAt?: string;
+}
+
+/**
+ * A comprehensive metacognitive report for evolution cycles.
+ */
+export interface MetacognitiveReport {
+  id: string;
+  timestamp: string;
+  evolutionId?: string;
+  
+  // Confidence tracking summary
+  confidenceTracking: {
+    recentDecisions: ConfidenceTrack[];
+    calibrationStats: ConfidenceCalibrationStats;
+    activeWarnings: ConfidenceWarning[];
+  };
+  
+  // Self-assessment summary
+  selfAssessment: {
+    avgStatedConfidence: number;
+    avgCalibratedConfidence: number;
+    calibrationDrift: number; // Change in calibration over time
+    confidenceDistribution: {
+      high: number;
+      medium: number;
+      low: number;
+      unknown: number;
+    };
+  };
+  
+  // Blind spots and knowledge gaps
+  knowledgeState: {
+    unresolvedBlindSpots: number;
+    pendingFeedback: number;
+    criticalBlindSpots: KnowledgeBlindSpot[];
+  };
+  
+  // Recommendations for next evolution
+  recommendations: string[];
+  
+  // Overall metacognitive health
+  metacognitiveHealth: "excellent" | "good" | "fair" | "poor";
+  healthScore: number; // 0-1
+}
 
 /**
  * Assessment of the reasoning process itself.
@@ -193,6 +342,9 @@ interface MetacognitiveData {
   blindSpots: KnowledgeBlindSpot[];
   feedbackRequests: FeedbackRequest[];
   evaluations: SelfEvaluation[];
+  // NEW: Confidence tracking
+  confidenceTracks: ConfidenceTrack[];
+  confidenceWarnings: ConfidenceWarning[];
   stats: MetacognitiveStats;
 }
 
@@ -204,12 +356,30 @@ interface MetacognitiveStats {
   answeredFeedbackRequests: number;
   avgConfidenceCalibration: number;
   lastSessionAt?: string;
+  // NEW: Confidence tracking stats
+  totalDecisionsTracked: number;
+  decisionsWithOutcome: number;
+  overconfidentDecisions: number;
+  underconfidentDecisions: number;
+  wellCalibratedDecisions: number;
+  avgCalibrationError: number;
+  lastWarningAt?: string;
 }
 
 function loadMetacognitiveData(): MetacognitiveData {
   try {
     if (existsSync(METACOGNITIVE_PATH)) {
-      return JSON.parse(readFileSync(METACOGNITIVE_PATH, "utf-8"));
+      const data = JSON.parse(readFileSync(METACOGNITIVE_PATH, "utf-8"));
+      // Ensure new fields exist (for backward compatibility)
+      if (!data.confidenceTracks) data.confidenceTracks = [];
+      if (!data.confidenceWarnings) data.confidenceWarnings = [];
+      if (!data.stats.totalDecisionsTracked) data.stats.totalDecisionsTracked = 0;
+      if (!data.stats.decisionsWithOutcome) data.stats.decisionsWithOutcome = 0;
+      if (!data.stats.overconfidentDecisions) data.stats.overconfidentDecisions = 0;
+      if (!data.stats.underconfidentDecisions) data.stats.underconfidentDecisions = 0;
+      if (!data.stats.wellCalibratedDecisions) data.stats.wellCalibratedDecisions = 0;
+      if (!data.stats.avgCalibrationError) data.stats.avgCalibrationError = 0;
+      return data;
     }
   } catch (e) {
     log.warn("Failed to load metacognitive data", { error: (e as Error).message });
@@ -219,6 +389,8 @@ function loadMetacognitiveData(): MetacognitiveData {
     blindSpots: [],
     feedbackRequests: [],
     evaluations: [],
+    confidenceTracks: [],
+    confidenceWarnings: [],
     stats: {
       totalSessions: 0,
       totalBlindSpotsDetected: 0,
@@ -226,6 +398,12 @@ function loadMetacognitiveData(): MetacognitiveData {
       totalFeedbackRequests: 0,
       answeredFeedbackRequests: 0,
       avgConfidenceCalibration: 0,
+      totalDecisionsTracked: 0,
+      decisionsWithOutcome: 0,
+      overconfidentDecisions: 0,
+      underconfidentDecisions: 0,
+      wellCalibratedDecisions: 0,
+      avgCalibrationError: 0,
     },
   };
 }
@@ -708,6 +886,539 @@ export function runMetacognitiveSession(
   return session;
 }
 
+// ── Confidence Tracking Functions ───────────────────────────────────
+
+/**
+ * Track a decision with its confidence score.
+ * This should be called whenever a significant decision is made.
+ */
+export function trackDecision(params: {
+  decisionContext: string;
+  decisionCategory: string;
+  statedConfidence: number;
+  evolutionId?: string;
+  notes?: string;
+}): ConfidenceTrack {
+  const now = new Date().toISOString();
+  const id = generateId("dec");
+  
+  // Determine confidence level from score
+  const confidenceLevel: ConfidenceLevel = 
+    params.statedConfidence >= 0.8 ? "high" :
+    params.statedConfidence >= 0.5 ? "medium" :
+    params.statedConfidence >= 0.2 ? "low" : "unknown";
+  
+  const track: ConfidenceTrack = {
+    id,
+    timestamp: now,
+    decisionContext: params.decisionContext,
+    decisionCategory: params.decisionCategory,
+    evolutionId: params.evolutionId,
+    statedConfidence: params.statedConfidence,
+    confidenceLevel,
+    notes: params.notes,
+  };
+  
+  // Save to data store
+  const data = loadMetacognitiveData();
+  data.confidenceTracks.push(track);
+  data.stats.totalDecisionsTracked++;
+  saveMetacognitiveData(data);
+  
+  log.info("Tracked decision", {
+    id,
+    category: params.decisionCategory,
+    confidence: params.statedConfidence.toFixed(2),
+    level: confidenceLevel,
+  });
+  
+  return track;
+}
+
+/**
+ * Record the outcome of a previously tracked decision.
+ * This enables confidence calibration.
+ */
+export function recordDecisionOutcome(
+  decisionId: string,
+  outcome: DecisionOutcome,
+  notes?: string
+): boolean {
+  const data = loadMetacognitiveData();
+  const track = data.confidenceTracks.find(t => t.id === decisionId);
+  
+  if (!track) {
+    log.warn("Cannot record outcome: decision not found", { decisionId });
+    return false;
+  }
+  
+  const now = new Date().toISOString();
+  
+  // Calculate actual confidence from outcome
+  const actualConfidence = 
+    outcome === "success" ? 1.0 :
+    outcome === "partial" ? 0.5 :
+    outcome === "failure" ? 0.0 : 0.5;
+  
+  // Calculate calibration error (positive = overconfident, negative = underconfident)
+  const calibrationError = track.statedConfidence - actualConfidence;
+  
+  // Determine calibration category
+  let calibrationCategory: "overconfident" | "underconfident" | "well-calibrated";
+  if (calibrationError > OVERCONFIDENCE_THRESHOLD) {
+    calibrationCategory = "overconfident";
+  } else if (calibrationError < UNDERCONFIDENCE_THRESHOLD) {
+    calibrationCategory = "underconfident";
+  } else {
+    calibrationCategory = "well-calibrated";
+  }
+  
+  // Update the track
+  track.outcome = outcome;
+  track.outcomeTimestamp = now;
+  track.actualConfidence = actualConfidence;
+  track.calibrationError = calibrationError;
+  track.calibrationCategory = calibrationCategory;
+  if (notes) track.notes = notes;
+  
+  // Update stats
+  data.stats.decisionsWithOutcome++;
+  if (calibrationCategory === "overconfident") {
+    data.stats.overconfidentDecisions++;
+  } else if (calibrationCategory === "underconfident") {
+    data.stats.underconfidentDecisions++;
+  } else {
+    data.stats.wellCalibratedDecisions++;
+  }
+  
+  // Recalculate average calibration error
+  const withOutcome = data.confidenceTracks.filter(t => t.calibrationError !== undefined);
+  data.stats.avgCalibrationError = 
+    withOutcome.reduce((sum, t) => sum + (t.calibrationError ?? 0), 0) / withOutcome.length;
+  
+  saveMetacognitiveData(data);
+  
+  log.info("Recorded decision outcome", {
+    decisionId,
+    outcome,
+    statedConfidence: track.statedConfidence.toFixed(2),
+    actualConfidence: actualConfidence.toFixed(2),
+    calibrationError: calibrationError.toFixed(2),
+    calibrationCategory,
+  });
+  
+  return true;
+}
+
+/**
+ * Calculate comprehensive confidence calibration statistics.
+ */
+export function calculateCalibrationStats(): ConfidenceCalibrationStats {
+  const data = loadMetacognitiveData();
+  const tracks = data.confidenceTracks;
+  const withOutcome = tracks.filter(t => t.outcome !== undefined);
+  
+  // Initialize stats
+  const stats: ConfidenceCalibrationStats = {
+    totalDecisions: tracks.length,
+    decisionsWithOutcome: withOutcome.length,
+    correctPredictions: 0,
+    calibrationAccuracy: 0,
+    overconfidentDecisions: 0,
+    underconfidentDecisions: 0,
+    wellCalibratedDecisions: 0,
+    avgCalibrationError: 0,
+    avgAbsoluteCalibrationError: 0,
+    brierScore: 0,
+    calibrationByCategory: {},
+  };
+  
+  if (withOutcome.length === 0) {
+    return stats;
+  }
+  
+  // Calculate calibration metrics
+  let totalCalibrationError = 0;
+  let totalAbsoluteError = 0;
+  let brierSum = 0;
+  let correctCount = 0;
+  
+  for (const track of withOutcome) {
+    const error = track.calibrationError ?? 0;
+    totalCalibrationError += error;
+    totalAbsoluteError += Math.abs(error);
+    
+    // Brier score: (predicted - actual)^2
+    brierSum += Math.pow(track.statedConfidence - (track.actualConfidence ?? 0.5), 2);
+    
+    // Count calibration categories
+    if (track.calibrationCategory === "overconfident") {
+      stats.overconfidentDecisions++;
+    } else if (track.calibrationCategory === "underconfident") {
+      stats.underconfidentDecisions++;
+    } else {
+      stats.wellCalibratedDecisions++;
+      correctCount++;
+    }
+    
+    // Aggregate by category
+    const cat = track.decisionCategory;
+    if (!stats.calibrationByCategory[cat]) {
+      stats.calibrationByCategory[cat] = {
+        count: 0,
+        avgCalibrationError: 0,
+        overconfident: 0,
+        underconfident: 0,
+      };
+    }
+    stats.calibrationByCategory[cat].count++;
+    stats.calibrationByCategory[cat].avgCalibrationError += error;
+    if (track.calibrationCategory === "overconfident") {
+      stats.calibrationByCategory[cat].overconfident++;
+    } else if (track.calibrationCategory === "underconfident") {
+      stats.calibrationByCategory[cat].underconfident++;
+    }
+  }
+  
+  // Finalize averages
+  stats.avgCalibrationError = totalCalibrationError / withOutcome.length;
+  stats.avgAbsoluteCalibrationError = totalAbsoluteError / withOutcome.length;
+  stats.brierScore = brierSum / withOutcome.length;
+  stats.correctPredictions = correctCount;
+  stats.calibrationAccuracy = correctCount / withOutcome.length;
+  
+  // Finalize category averages
+  for (const cat of Object.keys(stats.calibrationByCategory)) {
+    const catStats = stats.calibrationByCategory[cat];
+    catStats.avgCalibrationError /= catStats.count;
+  }
+  
+  // Calculate trend (recent vs historical)
+  if (withOutcome.length >= 10) {
+    const recent = withOutcome.slice(-10);
+    const historical = withOutcome.slice(0, -10);
+    
+    const recentError = recent.reduce((sum, t) => sum + (t.calibrationError ?? 0), 0) / recent.length;
+    const historicalError = historical.reduce((sum, t) => sum + (t.calibrationError ?? 0), 0) / historical.length;
+    
+    stats.recentCalibrationError = recentError;
+    
+    const improvement = historicalError - recentError; // Lower error is better
+    if (improvement > 0.05) {
+      stats.calibrationTrend = "improving";
+    } else if (improvement < -0.05) {
+      stats.calibrationTrend = "declining";
+    } else {
+      stats.calibrationTrend = "stable";
+    }
+  }
+  
+  return stats;
+}
+
+/**
+ * Check for calibration issues and generate warnings.
+ */
+export function checkCalibrationWarnings(): ConfidenceWarning[] {
+  const data = loadMetacognitiveData();
+  const stats = calculateCalibrationStats();
+  const warnings: ConfidenceWarning[] = [];
+  const now = new Date().toISOString();
+  
+  // Don't generate warnings if we don't have enough data
+  if (stats.decisionsWithOutcome < MIN_DECISIONS_FOR_CALIBRATION) {
+    return warnings;
+  }
+  
+  // Check for overall overconfidence
+  if (stats.avgCalibrationError > OVERCONFIDENCE_THRESHOLD) {
+    const warning: ConfidenceWarning = {
+      id: generateId("warn"),
+      timestamp: now,
+      type: "overconfidence",
+      severity: stats.avgCalibrationError > 0.4 ? "high" : stats.avgCalibrationError > 0.3 ? "medium" : "low",
+      triggerReason: `Average calibration error of ${stats.avgCalibrationError.toFixed(2)} indicates systematic overconfidence`,
+      relevantDecisions: data.confidenceTracks
+        .filter(t => t.calibrationCategory === "overconfident")
+        .slice(-5)
+        .map(t => t.id),
+      statsSnapshot: {
+        calibrationError: stats.avgCalibrationError,
+        overconfidentCount: stats.overconfidentDecisions,
+        underconfidentCount: stats.underconfidentDecisions,
+        recentTrend: stats.calibrationTrend,
+      },
+      recommendations: [
+        "Lower confidence estimates for uncertain decisions",
+        "Consider more alternative approaches before committing",
+        "Review past overconfident decisions to identify patterns",
+      ],
+      acknowledged: false,
+    };
+    warnings.push(warning);
+  }
+  
+  // Check for overall underconfidence
+  if (stats.avgCalibrationError < UNDERCONFIDENCE_THRESHOLD) {
+    const warning: ConfidenceWarning = {
+      id: generateId("warn"),
+      timestamp: now,
+      type: "underconfidence",
+      severity: stats.avgCalibrationError < -0.4 ? "high" : stats.avgCalibrationError < -0.3 ? "medium" : "low",
+      triggerReason: `Average calibration error of ${stats.avgCalibrationError.toFixed(2)} indicates systematic underconfidence`,
+      relevantDecisions: data.confidenceTracks
+        .filter(t => t.calibrationCategory === "underconfident")
+        .slice(-5)
+        .map(t => t.id),
+      statsSnapshot: {
+        calibrationError: stats.avgCalibrationError,
+        overconfidentCount: stats.overconfidentDecisions,
+        underconfidentCount: stats.underconfidentDecisions,
+        recentTrend: stats.calibrationTrend,
+      },
+      recommendations: [
+        "Increase confidence for decisions where you have strong evidence",
+        "Trust your reasoning process more when well-grounded",
+        "Review successful decisions to build confidence in strengths",
+      ],
+      acknowledged: false,
+    };
+    warnings.push(warning);
+  }
+  
+  // Check for calibration drift (declining trend)
+  if (stats.calibrationTrend === "declining") {
+    const warning: ConfidenceWarning = {
+      id: generateId("warn"),
+      timestamp: now,
+      type: "calibration-drift",
+      severity: "medium",
+      triggerReason: "Calibration has been declining in recent decisions",
+      relevantDecisions: data.confidenceTracks.slice(-10).map(t => t.id),
+      statsSnapshot: {
+        calibrationError: stats.avgCalibrationError,
+        overconfidentCount: stats.overconfidentDecisions,
+        underconfidentCount: stats.underconfidentDecisions,
+        recentTrend: stats.calibrationTrend,
+      },
+      recommendations: [
+        "Review recent decisions for systematic errors",
+        "Reassess the decision-making process",
+        "Consider taking a step back before major decisions",
+      ],
+      acknowledged: false,
+    };
+    warnings.push(warning);
+  }
+  
+  // Save new warnings to data
+  for (const warning of warnings) {
+    data.confidenceWarnings.push(warning);
+    data.stats.lastWarningAt = now;
+  }
+  if (warnings.length > 0) {
+    saveMetacognitiveData(data);
+  }
+  
+  return warnings;
+}
+
+/**
+ * Get active (unacknowledged) warnings.
+ */
+export function getActiveWarnings(): ConfidenceWarning[] {
+  const data = loadMetacognitiveData();
+  return data.confidenceWarnings.filter(w => !w.acknowledged);
+}
+
+/**
+ * Acknowledge a warning.
+ */
+export function acknowledgeWarning(warningId: string): boolean {
+  const data = loadMetacognitiveData();
+  const warning = data.confidenceWarnings.find(w => w.id === warningId);
+  
+  if (warning) {
+    warning.acknowledged = true;
+    warning.acknowledgedAt = new Date().toISOString();
+    saveMetacognitiveData(data);
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Get recent decisions.
+ */
+export function getRecentDecisions(limit: number = 10): ConfidenceTrack[] {
+  const data = loadMetacognitiveData();
+  return data.confidenceTracks.slice(-limit);
+}
+
+/**
+ * Generate a comprehensive metacognitive report for evolution cycles.
+ */
+export function generateMetacognitiveReport(evolutionId?: string): MetacognitiveReport {
+  const data = loadMetacognitiveData();
+  const now = new Date().toISOString();
+  const id = generateId("metarpt");
+  
+  // Get recent decisions and calibration stats
+  const recentDecisions = data.confidenceTracks.slice(-10);
+  const calibrationStats = calculateCalibrationStats();
+  const activeWarnings = checkCalibrationWarnings();
+  
+  // Calculate self-assessment metrics
+  const decisionsWithOutcome = data.confidenceTracks.filter(t => t.outcome !== undefined);
+  const avgStatedConfidence = decisionsWithOutcome.length > 0
+    ? decisionsWithOutcome.reduce((sum, t) => sum + t.statedConfidence, 0) / decisionsWithOutcome.length
+    : 0.5;
+  
+  const avgCalibratedConfidence = decisionsWithOutcome.length > 0
+    ? decisionsWithOutcome.reduce((sum, t) => sum + (t.actualConfidence ?? 0.5), 0) / decisionsWithOutcome.length
+    : 0.5;
+  
+  // Calculate calibration drift
+  let calibrationDrift = 0;
+  if (decisionsWithOutcome.length >= 10) {
+    const recent = decisionsWithOutcome.slice(-5);
+    const older = decisionsWithOutcome.slice(-10, -5);
+    const recentAvg = recent.reduce((sum, t) => sum + (t.calibrationError ?? 0), 0) / recent.length;
+    const olderAvg = older.reduce((sum, t) => sum + (t.calibrationError ?? 0), 0) / older.length;
+    calibrationDrift = recentAvg - olderAvg;
+  }
+  
+  // Confidence distribution
+  const distribution = { high: 0, medium: 0, low: 0, unknown: 0 };
+  for (const track of data.confidenceTracks) {
+    distribution[track.confidenceLevel]++;
+  }
+  
+  // Get unresolved blind spots
+  const unresolvedBlindSpots = data.blindSpots.filter(bs => !bs.resolved);
+  const pendingFeedback = data.feedbackRequests.filter(fr => fr.status === "pending");
+  
+  // Determine critical blind spots
+  const criticalBlindSpots = unresolvedBlindSpots.filter(bs => bs.severity === "critical");
+  
+  // Generate recommendations
+  const recommendations: string[] = [];
+  
+  if (calibrationStats.avgCalibrationError > OVERCONFIDENCE_THRESHOLD) {
+    recommendations.push("Reduce confidence estimates - systematic overconfidence detected");
+  } else if (calibrationStats.avgCalibrationError < UNDERCONFIDENCE_THRESHOLD) {
+    recommendations.push("Increase confidence estimates - systematic underconfidence detected");
+  }
+  
+  if (criticalBlindSpots.length > 0) {
+    recommendations.push(`Address ${criticalBlindSpots.length} critical knowledge gap(s) before proceeding`);
+  }
+  
+  if (activeWarnings.length > 0) {
+    recommendations.push("Review and acknowledge active calibration warnings");
+  }
+  
+  if (calibrationStats.calibrationTrend === "declining") {
+    recommendations.push("Calibration is declining - review recent decision patterns");
+  }
+  
+  if (recommendations.length === 0) {
+    recommendations.push("Metacognitive state is healthy - continue with current approach");
+  }
+  
+  // Calculate metacognitive health
+  let healthScore = 0.5; // Base score
+  healthScore += (1 - Math.abs(calibrationStats.avgCalibrationError)) * 0.3; // Calibration accuracy
+  healthScore += (1 - Math.min(1, unresolvedBlindSpots.length / 10)) * 0.1; // Blind spots
+  healthScore += (1 - Math.min(1, activeWarnings.length / 5)) * 0.1; // Warnings
+  
+  let metacognitiveHealth: "excellent" | "good" | "fair" | "poor";
+  if (healthScore >= 0.8) {
+    metacognitiveHealth = "excellent";
+  } else if (healthScore >= 0.6) {
+    metacognitiveHealth = "good";
+  } else if (healthScore >= 0.4) {
+    metacognitiveHealth = "fair";
+  } else {
+    metacognitiveHealth = "poor";
+  }
+  
+  const report: MetacognitiveReport = {
+    id,
+    timestamp: now,
+    evolutionId,
+    confidenceTracking: {
+      recentDecisions,
+      calibrationStats,
+      activeWarnings,
+    },
+    selfAssessment: {
+      avgStatedConfidence,
+      avgCalibratedConfidence,
+      calibrationDrift,
+      confidenceDistribution: distribution,
+    },
+    knowledgeState: {
+      unresolvedBlindSpots: unresolvedBlindSpots.length,
+      pendingFeedback: pendingFeedback.length,
+      criticalBlindSpots,
+    },
+    recommendations,
+    metacognitiveHealth,
+    healthScore,
+  };
+  
+  log.info("Generated metacognitive report", {
+    id,
+    health: metacognitiveHealth,
+    score: healthScore.toFixed(2),
+    warnings: activeWarnings.length,
+    recommendations: recommendations.length,
+  });
+  
+  return report;
+}
+
+/**
+ * Format a metacognitive report for display.
+ */
+export function formatMetacognitiveReportSummary(report: MetacognitiveReport): string {
+  const lines: string[] = [
+    `🧠 Metacognitive Report: ${report.id}`,
+    `📅 ${new Date(report.timestamp).toLocaleString()}`,
+    report.evolutionId ? `🔄 Evolution: ${report.evolutionId}` : "",
+    "",
+    `📊 Metacognitive Health: ${report.metacognitiveHealth.toUpperCase()} (${(report.healthScore * 100).toFixed(0)}%)`,
+    "",
+    "📈 Confidence Tracking:",
+    `  Total Decisions: ${report.confidenceTracking.calibrationStats.totalDecisions}`,
+    `  With Outcome: ${report.confidenceTracking.calibrationStats.decisionsWithOutcome}`,
+    `  Calibration Accuracy: ${(report.confidenceTracking.calibrationStats.calibrationAccuracy * 100).toFixed(0)}%`,
+    `  Avg Calibration Error: ${report.confidenceTracking.calibrationStats.avgCalibrationError.toFixed(3)}`,
+    `  Brier Score: ${report.confidenceTracking.calibrationStats.brierScore.toFixed(3)}`,
+    "",
+    "📉 Calibration Breakdown:",
+    `  Overconfident: ${report.confidenceTracking.calibrationStats.overconfidentDecisions}`,
+    `  Underconfident: ${report.confidenceTracking.calibrationStats.underconfidentDecisions}`,
+    `  Well-calibrated: ${report.confidenceTracking.calibrationStats.wellCalibratedDecisions}`,
+    "",
+    `⚠️ Active Warnings: ${report.confidenceTracking.activeWarnings.length}`,
+  ];
+  
+  for (const warning of report.confidenceTracking.activeWarnings.slice(0, 3)) {
+    lines.push(`  [${warning.severity}] ${warning.type}: ${warning.triggerReason.slice(0, 60)}...`);
+  }
+  
+  lines.push("");
+  lines.push("🎯 Recommendations:");
+  for (const rec of report.recommendations) {
+    lines.push(`  - ${rec}`);
+  }
+  
+  return lines.filter(l => l !== "").join("\n");
+}
+
 // ── Helper Functions ───────────────────────────────────────────────
 
 function analyzeClarity(steps: string[]): number {
@@ -796,15 +1507,24 @@ function analyzeConsistency(steps: string[]): number {
 function inferBlindSpotCategory(text: string): string {
   const lower = text.toLowerCase();
   
-  if (lower.includes("test") || lower.includes("assert")) return "testing";
-  if (lower.includes("api") || lower.includes("endpoint")) return "api";
-  if (lower.includes("database") || lower.includes("query")) return "database";
-  if (lower.includes("auth") || lower.includes("security")) return "security";
-  if (lower.includes("performance") || lower.includes("slow")) return "performance";
-  if (lower.includes("config") || lower.includes("setting")) return "configuration";
-  if (lower.includes("type") || lower.includes("typescript")) return "typescript";
-  if (lower.includes("import") || lower.includes("module")) return "modules";
-  if (lower.includes("async") || lower.includes("promise")) return "async";
+  // Category patterns: [patterns..., category]
+  const categories: Array<{ patterns: string[]; category: string }> = [
+    { patterns: ["test", "assert"], category: "testing" },
+    { patterns: ["api", "endpoint"], category: "api" },
+    { patterns: ["database", "query"], category: "database" },
+    { patterns: ["auth", "security"], category: "security" },
+    { patterns: ["performance", "slow"], category: "performance" },
+    { patterns: ["config", "setting"], category: "configuration" },
+    { patterns: ["type", "typescript"], category: "typescript" },
+    { patterns: ["import", "module"], category: "modules" },
+    { patterns: ["async", "promise"], category: "async" },
+  ];
+  
+  for (const { patterns, category } of categories) {
+    if (patterns.some(p => lower.includes(p))) {
+      return category;
+    }
+  }
   
   return "domain-knowledge";
 }
