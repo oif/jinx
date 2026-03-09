@@ -45,7 +45,7 @@ export interface Span {
   startTime: number;
   endTime?: number;
   durationMs?: number;
-  status: "running" | "success" | "error" | "cancelled";
+  status: "running" | "success" | "error" | "cancelled" | "timeout" | "timeout-warning";
   attributes: Record<string, unknown>;
   events: SpanEvent[];
   error?: {
@@ -61,7 +61,7 @@ export interface Trace {
   startTime: number;
   endTime?: number;
   durationMs?: number;
-  status: "running" | "success" | "error" | "cancelled";
+  status: "running" | "success" | "error" | "cancelled" | "timeout" | "timeout-warning";
   metadata: {
     evolutionCycle?: number;
     taskId?: string;
@@ -413,6 +413,11 @@ export function addSpanEvent(
 
   return true;
 }
+
+/**
+ * Alias for addSpanEvent - matches the required API.
+ */
+export const addEvent = addSpanEvent;
 
 /**
  * Set an attribute on a span.
