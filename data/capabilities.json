@@ -127,15 +127,16 @@
       "id": "reflection",
       "name": "Reflection",
       "category": "cognition",
-      "description": "MARS-inspired periodic reflection sessions",
-      "maturity": "novice",
+      "description": "MARS-inspired periodic reflection sessions with pattern extraction from evolution history, insight generation for success/failure patterns, improvement suggestions with priority ranking, and feedback loop integration for automatic backlog task creation",
+      "maturity": "advanced",
       "successCount": 0,
       "failureCount": 0,
       "relatedFiles": [
-        "src/memory/reflection.ts"
+        "src/memory/reflection.ts",
+        "test/reflection.test.ts"
       ],
-      "dependencies": [],
-      "improvementPotential": 0.6
+      "dependencies": ["evolution-history", "memory-graph"],
+      "improvementPotential": 0.3
     },
     {
       "id": "telegram-integration",
