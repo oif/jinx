@@ -51,15 +51,17 @@
       "id": "memory-graph",
       "name": "Memory Graph",
       "category": "identity",
-      "description": "Graph-based memory storage and retrieval",
-      "maturity": "novice",
+      "description": "Graph-based memory storage with Ebbinghaus forgetting curve, memory hierarchy (working/short-term/long-term), spaced repetition review scheduling, automatic consolidation and pruning, multimodal content support, and semantic search",
+      "maturity": "advanced",
       "successCount": 0,
       "failureCount": 0,
       "relatedFiles": [
-        "src/memory/graph.ts"
+        "src/memory/graph.ts",
+        "src/agent/tools.ts",
+        "test/memory-graph.test.ts"
       ],
       "dependencies": [],
-      "improvementPotential": 0.7
+      "improvementPotential": 0.3
     },
     {
       "id": "evolution-loop",
