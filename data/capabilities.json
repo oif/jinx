@@ -219,16 +219,18 @@
       "id": "pi-extensions",
       "name": "Pi Extensions",
       "category": "extension",
-      "description": "Custom tools and extensions via Pi framework",
-      "maturity": "novice",
+      "description": "Advanced Pi extension with dangerous operation protection (rm -rf, sudo, dd, etc.), custom commands (/jinx-status, /health, /tool-log), session start hooks showing Jinx status, and comprehensive tool call logging for debugging",
+      "maturity": "advanced",
       "successCount": 0,
       "failureCount": 0,
       "relatedFiles": [
-        "extensions/",
-        "skills/"
+        "extensions/jinx-tools.ts",
+        "src/agent/tools.ts",
+        "src/health/check.ts",
+        "src/consciousness/history.ts"
       ],
       "dependencies": [],
-      "improvementPotential": 0.8
+      "improvementPotential": 0.2
     },
     {
       "id": "health-check",
