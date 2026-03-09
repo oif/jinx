@@ -23,6 +23,99 @@ const defaultContext = {
   service: "jinx",
 };
 
+/**
+ * Sensitive field patterns for redaction
+ * Matches common secret/key field names
+ */
+const sensitivePatterns = [
+  "password",
+  "passwd",
+  "secret",
+  "apiKey",
+  "api_key",
+  "apikey",
+  "token",
+  "accessToken",
+  "access_token",
+  "refreshToken",
+  "refresh_token",
+  "privateKey",
+  "private_key",
+  "authorization",
+  "auth",
+  "credentials",
+  "sessionKey",
+  "session_key",
+];
+
+/**
+ * Redact sensitive values in an object
+ * Recursively traverses objects and redacts sensitive field values
+ */
+function redactSensitive<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (typeof obj !== "object") {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => redactSensitive(item)) as T;
+  }
+
+  if (obj instanceof Error) {
+    // Don't redact Error objects - they need special handling
+    return obj;
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    const lowerKey = key.toLowerCase();
+    const isSensitive = sensitivePatterns.some((pattern) =>
+      lowerKey.includes(pattern.toLowerCase())
+    );
+
+    if (isSensitive && typeof value === "string" && value.length > 0) {
+      result[key] = "[REDACTED]";
+    } else if (typeof value === "object" && value !== null) {
+      result[key] = redactSensitive(value);
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result as T;
+}
+
+/**
+ * Extract error information for structured logging
+ * Converts Error objects to loggable format with stack trace
+ */
+function extractErrorInfo(error: unknown): Record<string, unknown> | undefined {
+  if (!(error instanceof Error)) {
+    return undefined;
+  }
+
+  const errorInfo: Record<string, unknown> = {
+    errorName: error.name,
+    errorMessage: error.message,
+  };
+
+  // Include stack trace in non-production environments
+  if (process.env.NODE_ENV !== "production" && error.stack) {
+    errorInfo.stack = error.stack;
+  }
+
+  // Include cause if present (for nested errors)
+  if (error.cause instanceof Error) {
+    errorInfo.cause = extractErrorInfo(error.cause);
+  }
+
+  return errorInfo;
+}
+
 // Create the base pino logger
 const pinoLogger = pino({
   level: process.env.LOG_LEVEL || "info",
@@ -67,6 +160,14 @@ export function setTraceId(traceId: string): void {
 }
 
 /**
+ * Clear the trace ID from the current async context
+ */
+export function clearTraceId(): void {
+  // Enter with undefined to clear the trace ID
+  traceStorage.enterWith(undefined as unknown as string);
+}
+
+/**
  * Get the current trace ID from async context
  */
 export function getTraceId(): string | undefined {
@@ -97,6 +198,8 @@ export interface Logger {
   info(msg: string, data?: LogContext): void;
   warn(msg: string, data?: LogContext): void;
   error(msg: string, data?: LogContext): void;
+  /** Log an error with automatic stack trace extraction */
+  logError(msg: string, error: Error, data?: LogContext): void;
   child(context: LogContext): Logger;
 }
 
@@ -110,11 +213,23 @@ function createLogger(baseContext: LogContext = {}): Logger {
     data?: LogContext
   ): void => {
     // Merge base context, trace ID, and additional data
-    const mergedData: Record<string, unknown> = {
+    let mergedData: Record<string, unknown> = {
       ...baseContext,
       traceId: getTraceId(),
       ...data,
     };
+
+    // Extract error info if an Error object is provided
+    if (data?.error instanceof Error) {
+      mergedData = {
+        ...mergedData,
+        ...extractErrorInfo(data.error),
+      };
+      delete mergedData.error;
+    }
+
+    // Redact sensitive data
+    mergedData = redactSensitive(mergedData);
 
     // Remove undefined traceId
     if (!mergedData.traceId) {
@@ -140,6 +255,9 @@ function createLogger(baseContext: LogContext = {}): Logger {
     },
     error(msg: string, data?: LogContext): void {
       logWithContext("error", msg, data);
+    },
+    logError(msg: string, error: Error, data?: LogContext): void {
+      logWithContext("error", msg, { ...data, error });
     },
     child(context: LogContext): Logger {
       return createLogger({ ...baseContext, ...context });
@@ -168,3 +286,9 @@ export function createLoggerWithContext(context: LogContext): Logger {
 export function createModuleLogger(moduleName: string, additionalContext?: LogContext): Logger {
   return log.child({ module: moduleName, ...additionalContext });
 }
+
+/**
+ * Export redactSensitive for external use
+ * Useful for sanitizing data before logging manually
+ */
+export { redactSensitive };
