@@ -423,6 +423,148 @@ export function computeReflectionStats(records: EvolutionRecord[]): ReflectionSt
 
 // ── Insight Generation ──────────────────────────────────────────────
 
+/** Helper to create a reflection insight with common defaults */
+function createInsight(
+  type: ReflectionInsight["type"],
+  category: string,
+  title: string,
+  description: string,
+  evidence: string[],
+  confidence: number,
+  now: string,
+  actionSuggestion?: string,
+): ReflectionInsight {
+  return {
+    id: generateInsightId(),
+    type,
+    category,
+    title,
+    description,
+    evidence,
+    confidence,
+    createdAt: now,
+    reinforcementCount: 0,
+    actionable: true,
+    actionSuggestion,
+  };
+}
+
+/** Generate insights from success patterns */
+function generateSuccessPatternInsights(
+  patterns: ExtractedPattern[],
+  now: string,
+): ReflectionInsight[] {
+  return patterns
+    .filter((p) => p.type === "success" && p.frequency >= 2)
+    .map((pattern) =>
+      createInsight(
+        "success_factor",
+        pattern.relatedCategories[0] || "general",
+        `Success Pattern: ${pattern.description}`,
+        `Consistently observed across ${pattern.frequency} successful evolutions: ${pattern.description}. Applying this pattern reliably improves outcomes.`,
+        pattern.examples,
+        Math.min(0.5 + pattern.frequency * 0.1, 0.95),
+        now,
+        "Continue applying this pattern. Consider documenting it as a best practice.",
+      ),
+    );
+}
+
+/** Generate insights from failure patterns */
+function generateFailurePatternInsights(
+  patterns: ExtractedPattern[],
+  now: string,
+): ReflectionInsight[] {
+  return patterns
+    .filter((p) => p.type === "failure" && p.frequency >= 2)
+    .map((pattern) =>
+      createInsight(
+        "failure_cause",
+        pattern.relatedCategories[0] || "general",
+        `Failure Pattern: ${pattern.description}`,
+        `Recurring failure mode seen in ${pattern.frequency} evolutions: ${pattern.description}. Address this root cause to prevent future failures.`,
+        pattern.examples,
+        Math.min(0.5 + pattern.frequency * 0.1, 0.95),
+        now,
+        "Investigate root cause and implement preventive measures.",
+      ),
+    );
+}
+
+/** Generate warning insights from stats and records */
+function generateWarningInsights(
+  stats: ReflectionStats,
+  records: EvolutionRecord[],
+  now: string,
+): ReflectionInsight[] {
+  const insights: ReflectionInsight[] = [];
+
+  // Low success rate warning
+  if (stats.successRate < 0.7 && records.length >= 5) {
+    const failureCount = records.filter((r) => r.status === "failed").length;
+    insights.push(
+      createInsight(
+        "warning",
+        "process",
+        `Low Success Rate: ${(stats.successRate * 100).toFixed(1)}%`,
+        "Recent success rate is below 70%. This may indicate systemic issues that need attention.",
+        [`${failureCount} failures in last ${records.length} cycles`],
+        0.8,
+        now,
+        "Review failed evolutions and identify common root causes. Consider slowing down evolution pace.",
+      ),
+    );
+  }
+
+  // Long duration warning
+  if (stats.avgDurationMs > 300000) {
+    insights.push(
+      createInsight(
+        "pattern",
+        "performance",
+        "Long Average Evolution Duration",
+        `Average evolution takes ${Math.round(stats.avgDurationMs / 60000)} minutes. This may indicate complex tasks or inefficiencies.`,
+        [`Average: ${Math.round(stats.avgDurationMs / 1000)}s`],
+        0.6,
+        now,
+        "Consider breaking large tasks into smaller, focused iterations.",
+      ),
+    );
+  }
+
+  return insights;
+}
+
+/** Generate category-specific insights */
+function generateCategoryInsights(
+  stats: ReflectionStats,
+  now: string,
+): ReflectionInsight[] {
+  const insights: ReflectionInsight[] = [];
+
+  for (const [category, perf] of Object.entries(stats.categoryPerformance)) {
+    const total = perf.success + perf.failure;
+    const rate = total > 0 ? perf.success / total : 0;
+
+    if (total >= 3 && rate < 0.5) {
+      insights.push(
+        createInsight(
+          "warning",
+          category,
+          `Struggling in ${category}`,
+          `Success rate of ${(rate * 100).toFixed(0)}% in ${category} (${perf.success}/${total} successful)`,
+          [`${perf.failure} failures out of ${total} attempts`],
+          0.7,
+          now,
+          `Focus improvement efforts on ${category}. Consider adding specialized tools or knowledge.`,
+        ),
+      );
+    }
+  }
+
+  return insights;
+}
+
 /**
  * Generate insights from patterns and stats.
  */
@@ -431,104 +573,14 @@ export function generateInsights(
   stats: ReflectionStats,
   records: EvolutionRecord[],
 ): ReflectionInsight[] {
-  const insights: ReflectionInsight[] = [];
   const now = new Date().toISOString();
 
-  // Generate insights from success patterns
-  for (const pattern of patterns.filter((p) => p.type === "success")) {
-    if (pattern.frequency >= 2) {
-      insights.push({
-        id: generateInsightId(),
-        type: "success_factor",
-        category: pattern.relatedCategories[0] || "general",
-        title: `Success Pattern: ${pattern.description}`,
-        description: `Consistently observed across ${pattern.frequency} successful evolutions: ${pattern.description}. Applying this pattern reliably improves outcomes.`,
-        evidence: pattern.examples,
-        confidence: Math.min(0.5 + pattern.frequency * 0.1, 0.95),
-        createdAt: now,
-        reinforcementCount: 0,
-        actionable: true,
-        actionSuggestion: `Continue applying this pattern. Consider documenting it as a best practice.`,
-      });
-    }
-  }
-
-  // Generate insights from failure patterns
-  for (const pattern of patterns.filter((p) => p.type === "failure")) {
-    if (pattern.frequency >= 2) {
-      insights.push({
-        id: generateInsightId(),
-        type: "failure_cause",
-        category: pattern.relatedCategories[0] || "general",
-        title: `Failure Pattern: ${pattern.description}`,
-        description: `Recurring failure mode seen in ${pattern.frequency} evolutions: ${pattern.description}. Address this root cause to prevent future failures.`,
-        evidence: pattern.examples,
-        confidence: Math.min(0.5 + pattern.frequency * 0.1, 0.95),
-        createdAt: now,
-        reinforcementCount: 0,
-        actionable: true,
-        actionSuggestion: `Investigate root cause and implement preventive measures.`,
-      });
-    }
-  }
-
-  // Generate warning insights from low success rate
-  if (stats.successRate < 0.7 && records.length >= 5) {
-    insights.push({
-      id: generateInsightId(),
-      type: "warning",
-      category: "process",
-      title: `Low Success Rate: ${(stats.successRate * 100).toFixed(1)}%`,
-      description: `Recent success rate is below 70%. This may indicate systemic issues that need attention.`,
-      evidence: [
-        `${records.filter((r) => r.status === "failed").length} failures in last ${records.length} cycles`,
-      ],
-      confidence: 0.8,
-      createdAt: now,
-      reinforcementCount: 0,
-      actionable: true,
-      actionSuggestion: `Review failed evolutions and identify common root causes. Consider slowing down evolution pace.`,
-    });
-  }
-
-  // Generate performance insights from long durations
-  if (stats.avgDurationMs > 300000) { // > 5 minutes
-    insights.push({
-      id: generateInsightId(),
-      type: "pattern",
-      category: "performance",
-      title: "Long Average Evolution Duration",
-      description: `Average evolution takes ${Math.round(stats.avgDurationMs / 60000)} minutes. This may indicate complex tasks or inefficiencies.`,
-      evidence: [`Average: ${Math.round(stats.avgDurationMs / 1000)}s`],
-      confidence: 0.6,
-      createdAt: now,
-      reinforcementCount: 0,
-      actionable: true,
-      actionSuggestion: `Consider breaking large tasks into smaller, focused iterations.`,
-    });
-  }
-
-  // Generate category-specific insights
-  for (const [category, perf] of Object.entries(stats.categoryPerformance)) {
-    const total = perf.success + perf.failure;
-    const rate = total > 0 ? perf.success / total : 0;
-
-    if (total >= 3 && rate < 0.5) {
-      insights.push({
-        id: generateInsightId(),
-        type: "warning",
-        category,
-        title: `Struggling in ${category}`,
-        description: `Success rate of ${(rate * 100).toFixed(0)}% in ${category} (${perf.success}/${total} successful)`,
-        evidence: [`${perf.failure} failures out of ${total} attempts`],
-        confidence: 0.7,
-        createdAt: now,
-        reinforcementCount: 0,
-        actionable: true,
-        actionSuggestion: `Focus improvement efforts on ${category}. Consider adding specialized tools or knowledge.`,
-      });
-    }
-  }
+  const insights: ReflectionInsight[] = [
+    ...generateSuccessPatternInsights(patterns, now),
+    ...generateFailurePatternInsights(patterns, now),
+    ...generateWarningInsights(stats, records, now),
+    ...generateCategoryInsights(stats, now),
+  ];
 
   return insights.filter((i) => i.confidence >= INSIGHT_CONFIDENCE_THRESHOLD);
 }
