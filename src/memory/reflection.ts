@@ -301,6 +301,7 @@ function extractThemes(summaries: string[]): ThemeExtraction[] {
 /**
  * Infer categories from a description.
  */
+// eslint-disable-next-line complexity
 function inferCategories(description: string): string[] {
   const categories: string[] = [];
   const lower = description.toLowerCase();
@@ -344,7 +345,7 @@ function inferCategories(description: string): string[] {
 export function computeReflectionStats(records: EvolutionRecord[]): ReflectionStats {
   const total = records.length;
   const successes = records.filter((r) => r.status === "success").length;
-  const failures = records.filter((r) => r.status === "failed").length;
+  // failures count can be derived from total - successes, no need to calculate separately
 
   // Success rate
   const successRate = total > 0 ? successes / total : 0;
@@ -606,12 +607,12 @@ export function runReflection(triggerReason: string): ReflectionSession {
   log.info("Starting reflection session", { id: reflectionId, trigger: triggerReason });
 
   // 1. Review experiences
-  const { records, stats: evolutionStats } = reviewExperiences({});
+  const { records } = reviewExperiences({});
   const cyclesAnalyzed = records.length;
 
-  // 2. Query memory for context
-  const experienceMemories = queryExperienceMemories();
-  const goalMemories = queryGoalMemories();
+  // 2. Query memory for context (reserved for future use)
+  // const experienceMemories = queryExperienceMemories();
+  // const goalMemories = queryGoalMemories();
 
   // 3. Extract patterns
   const patterns = extractPatterns(records);

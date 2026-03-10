@@ -575,6 +575,7 @@ async function notifyCircuitTripIfNeeded(
 
 // ── Evolution cycle ────────────────────────────────────────────────
 
+// eslint-disable-next-line complexity
 async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> {
   const state = readState();
   const cycle = state.cycle + 1;

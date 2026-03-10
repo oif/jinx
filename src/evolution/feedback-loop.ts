@@ -208,7 +208,7 @@ export function completeTracking(
   const effective = improvement >= config.effectivenessThreshold;
   
   // Generate analysis
-  let analysis = "";
+  let analysis: string;
   if (effective) {
     analysis = `Task was effective. Health: ${beforeMetrics.healthScore}→${afterMetrics.healthScore}, ` +
       `Quality: ${beforeMetrics.qualityAvg?.toFixed(1) ?? "N/A"}→${afterMetrics.qualityAvg?.toFixed(1) ?? "N/A"}, ` +

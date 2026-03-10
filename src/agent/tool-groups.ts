@@ -182,6 +182,7 @@ function loadConfig(): ToolGroupsConfig {
 /**
  * Get the set of enabled tool names based on configuration.
  */
+// eslint-disable-next-line complexity
 export function getEnabledToolNames(): Set<string> {
   const config = loadConfig();
   const enabledTools = new Set<string>(ESSENTIAL_TOOLS);

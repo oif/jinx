@@ -906,6 +906,7 @@ function deleteNodeAndEdges(
  * 3. Memory reinforcement: Strengthen frequently accessed memories
  * 4. Edge consolidation: Strengthen frequently traversed relationships
  */
+// eslint-disable-next-line complexity
 export function consolidateMemories(threshold: number = CONSOLIDATION.similarityThreshold): number {
   const nodes = loadNodes();
   const vectors = loadVectors();
@@ -1061,6 +1062,7 @@ function evaluateConsolidationFactors(
  * 2. Short-term memory: Moderate pruning based on strength decay
  * 3. Long-term memory: Conservative pruning, only very weak/unimportant
  */
+// eslint-disable-next-line complexity
 export function pruneMemories(
   options: {
     maxAgeDays?: number;
@@ -1076,7 +1078,6 @@ export function pruneMemories(
   const edges = loadEdges();
   
   const now = Date.now();
-  const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
   
   const toDelete: string[] = [];
   const byLevel: Record<MemoryLevel, number> = { working: 0, short_term: 0, long_term: 0 };

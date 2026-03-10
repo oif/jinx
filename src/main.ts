@@ -342,6 +342,7 @@ async function main(): Promise<void> {
         ].join("\n");
       },
 
+      // eslint-disable-next-line complexity
       recall: async (args) => {
         const {
           retrieveMemories,

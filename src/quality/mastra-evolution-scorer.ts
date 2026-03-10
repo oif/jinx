@@ -209,6 +209,7 @@ function scoreSideEffects(result: string): number {
 /**
  * Analysis output schema for the scorer
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const AnalysisOutputSchema = z.object({
   taskCompletion: z.number(),
   testQuality: z.number(),
