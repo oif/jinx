@@ -8,6 +8,9 @@
  * - Display coverage on site
  */
 
+/* eslint-disable no-console */
+// This is a CLI tool that outputs to stdout - console.log is intentional
+
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../util/log.js";
