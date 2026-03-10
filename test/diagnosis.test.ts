@@ -3,6 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import type { HealthHistoryEntry } from "../src/health/history.js";
+import type { PerformanceMetrics } from "../src/observability/metrics.js";
 import {
   runSelfDiagnosis,
   formatDiagnosisReport,
@@ -11,10 +15,10 @@ import {
   type RepairRecommendation,
   type DiagnosisReport,
 } from "../src/diagnosis/engine.js";
-import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
-import { join } from "node:path";
-import type { HealthHistoryEntry } from "../src/health/history.js";
-import type { PerformanceMetrics } from "../src/observability/metrics.js";
+
+// Use vi.hoisted to define TEST_DATA_DIR so it's available in mocked modules
+// Note: Cannot use imported 'join' in hoisted callback, use string concatenation instead
+const TEST_DATA_DIR = vi.hoisted(() => `${process.cwd()}/test-temp-diagnosis`);
 
 // Mock the log module
 vi.mock("../src/util/log.js", () => ({
@@ -25,8 +29,10 @@ vi.mock("../src/util/log.js", () => ({
   },
 }));
 
-// Create a temp data directory for testing
-const TEST_DATA_DIR = join(process.cwd(), "test-temp-diagnosis");
+// Mock the paths module to use TEST_DATA_DIR
+vi.mock("../src/supervisor/paths.js", () => ({
+  DATA_DIR: TEST_DATA_DIR,
+}));
 
 // Helper to create health history entries
 function createHealthEntry(overrides: Partial<HealthHistoryEntry> = {}): HealthHistoryEntry {
@@ -54,10 +60,12 @@ function createPerformanceMetrics(overrides: Partial<PerformanceMetrics> = {}): 
 
 describe("Self-Diagnosis Engine", () => {
   beforeEach(() => {
-    // Create temp directory
-    if (!existsSync(TEST_DATA_DIR)) {
-      mkdirSync(TEST_DATA_DIR, { recursive: true });
+    // Clean up any existing temp directory first (from failed tests)
+    if (existsSync(TEST_DATA_DIR)) {
+      rmSync(TEST_DATA_DIR, { recursive: true, force: true });
     }
+    // Create fresh temp directory
+    mkdirSync(TEST_DATA_DIR, { recursive: true });
     vi.clearAllMocks();
   });
 
@@ -87,8 +95,11 @@ describe("Self-Diagnosis Engine", () => {
       ];
       writeFileSync(join(TEST_DATA_DIR, "health-history.json"), JSON.stringify(history));
       
-      // We need to mock the paths - this test verifies the logic path
-      // In practice, the function reads from DATA_DIR
+      const report = runSelfDiagnosis();
+      
+      expect(report.overallHealth).toBe("critical");
+      expect(report.patternsFound).toBeGreaterThan(0);
+      expect(report.patterns.some(p => p.id === "HEALTH-001")).toBe(true);
     });
   });
 
