@@ -14,5 +14,18 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "jinx-dashboard",
+      script: "node_modules/.bin/next",
+      args: "start",
+      cwd: __dirname + "/site",
+      autorestart: true,
+      max_restarts: 10,
+      restart_delay: 5000,
+      exp_backoff_restart_delay: 1000,
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };

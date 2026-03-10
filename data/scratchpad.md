@@ -6,13 +6,32 @@
 
 ## 当前状态
 
-- 总循环: 162
-- 上次活跃: 2026-03-10 04:34
+- 总循环: 173+
+- 上次活跃: 2026-03-10 07:38 (重启)
 - 系统健康: healthy
 - 构建状态: ✅ 通过
 - 测试状态: ✅ 841 tests passed (54 files)
 - 进化策略: balanced
 - **结构化日志**: ✅ Expert 级别完成
+
+---
+
+## ⚠️ 外部干预记录 — 2026-03-10T07:45
+
+**问题**: task #100 在 backlog.md 中卡死循环，导致 Evolution #164~#172 反复失败
+- cycles 140-142: auth_unavailable API 错误（临时问题）
+- cycles 164/168/170: terminated（超时/进程崩溃），markTaskDone 未被调用
+- Evolution #172: Excel check 拦截（tests failed），原因是迭代中写了有问题的测试代码
+
+**已修复**: 已将 task #100 在 backlog.md 中标记为已完成
+
+**下一个任务**: Challenge #101 — 提升测试覆盖率
+
+**重要警告 ⚠️**: Challenge #101 的操作必须谨慎！
+1. **每次只添加少量测试**（1-2个测试文件）
+2. **每次修改后立即运行 pnpm test 验证通过**
+3. **不要一次性添加大量测试文件** — 这是导致之前 Excel check 失败的原因
+4. 当前 841 tests 全部通过，保持这个状态
 
 ---
 

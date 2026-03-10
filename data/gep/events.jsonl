@@ -1312,3 +1312,877 @@
 {"timestamp":"2026-03-09T21:31:41.910Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
 {"timestamp":"2026-03-09T21:31:41.911Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
 {"timestamp":"2026-03-09T21:31:41.912Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:33:07.080Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:33:07.080Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:33:07.081Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:33:07.082Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:33:22.101Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:35:24.586Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:35:24.587Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:35:24.587Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:35:24.589Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:35:50.869Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:35:50.869Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:35:50.870Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:35:50.871Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:36:16.236Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:36:16.237Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:36:16.237Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:36:16.239Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:42:47.506Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:42:47.506Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:42:47.507Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:42:47.508Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:44:02.192Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:44:02.193Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:44:02.193Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:44:02.194Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:44:48.344Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:44:48.344Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:44:48.345Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:44:48.346Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:45:02.490Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:45:37.371Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:45:37.372Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:45:37.372Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:45:37.374Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:47:54.199Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:47:54.200Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:47:54.200Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:47:54.201Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:48:08.484Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:49:09.352Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:49:09.353Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:49:09.353Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:49:09.355Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:51:46.242Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:51:46.242Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:51:46.243Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:51:46.244Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:53:29.555Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:53:29.555Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:53:29.555Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:53:29.557Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:54:30.166Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:54:30.167Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:54:30.167Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:54:30.168Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:55:01.798Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:55:01.798Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:55:01.799Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:55:01.800Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:57:09.782Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:57:09.783Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:57:09.783Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:57:09.785Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:57:56.467Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T21:57:56.467Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T21:57:56.468Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T21:57:56.469Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T21:58:12.087Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:02:39.271Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:02:39.272Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:02:39.272Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:02:39.274Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:02:54.475Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:03:49.079Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:03:49.080Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:03:49.080Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:03:49.082Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:07:15.511Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:07:15.511Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:07:15.512Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:07:15.513Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:08:40.010Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:08:40.011Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:08:40.011Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:08:40.013Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:08:54.201Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:09:58.168Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:09:58.169Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:09:58.169Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:09:58.171Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:13:31.808Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:13:31.808Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:13:31.809Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:13:31.810Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:13:46.409Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:14:47.646Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:14:47.647Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:14:47.647Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:14:47.649Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:16:11.899Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:16:11.899Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:16:11.899Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:16:11.901Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:18:09.888Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:18:09.889Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:18:09.889Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:18:09.890Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:18:24.847Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:19:24.730Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:19:24.730Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:19:24.731Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:19:24.732Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:21:21.498Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:21:21.498Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:21:21.499Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:21:21.500Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:22:53.132Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:22:53.133Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:22:53.133Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:22:53.134Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:23:08.279Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:24:08.713Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:24:08.713Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:24:08.714Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:24:08.715Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:26:45.148Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:26:45.148Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:26:45.148Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:26:45.150Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:27:00.092Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:28:04.716Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:28:04.716Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:28:04.717Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:28:04.718Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:30:24.415Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:30:24.415Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:30:24.415Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:30:24.417Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:32:28.134Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:32:28.134Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:32:28.135Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:32:28.136Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:33:52.521Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:33:52.521Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:33:52.522Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:33:52.523Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:34:48.363Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:34:48.363Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:34:48.364Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:34:48.365Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:35:03.494Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:36:24.818Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:36:24.818Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:36:24.818Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:36:24.820Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:44:04.573Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:44:04.574Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:44:04.574Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:44:04.576Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:45:38.927Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:45:38.928Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:45:38.928Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:45:38.930Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:46:21.715Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:46:21.715Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:46:21.716Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:46:21.717Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:48:46.879Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:48:46.879Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:48:46.880Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:48:46.881Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:50:25.612Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:50:25.613Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:50:25.613Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:50:25.615Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:51:32.564Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:51:32.565Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:51:32.565Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:51:32.566Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T22:51:47.472Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:52:37.062Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T22:52:37.062Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T22:52:37.063Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T22:52:37.064Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:02:04.341Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:02:04.341Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:02:04.342Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:02:04.343Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:03:16.057Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:03:16.057Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:03:16.058Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:03:16.059Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:04:08.345Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:04:08.346Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:04:08.346Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:04:08.347Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:04:22.964Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:06:22.345Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:06:22.346Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:06:22.346Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:06:22.348Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:09:11.183Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:09:11.184Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:09:11.184Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:09:11.186Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:11:44.189Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:11:44.189Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:11:44.189Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:11:44.191Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:13:59.870Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:13:59.871Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:13:59.871Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:13:59.873Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:14:15.051Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:15:24.184Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":35,"retrieved":3}}
+{"timestamp":"2026-03-09T23:15:24.185Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":35,"retrieved":2}}
+{"timestamp":"2026-03-09T23:15:24.185Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":35,"retrieved":5}}
+{"timestamp":"2026-03-09T23:15:24.186Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":35,"retrieved":0}}
+{"timestamp":"2026-03-09T23:15:33.080Z","type":"capsule_added","cycle":119,"meta":{"taskId":"#100","taskType":"other","qualityScore":7,"durationMs":78497,"filesCount":9}}
+{"timestamp":"2026-03-09T23:15:48.806Z","type":"capsule_read","meta":{"taskTitle":"Critical improvement needed (自动生成)","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:17:01.116Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:17:01.117Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:17:01.117Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:17:01.120Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:17:40.845Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:17:40.845Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:17:40.846Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:17:40.847Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:19:58.485Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:19:58.486Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:19:58.486Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:19:58.488Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:22:00.377Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:22:00.377Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:22:00.378Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:22:00.379Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:23:11.349Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:23:11.349Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:23:11.350Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:23:11.351Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:23:26.059Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:25:06.515Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:25:06.516Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:25:06.516Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:25:06.518Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:26:51.900Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:26:51.900Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:26:51.901Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:26:51.902Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:27:50.043Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:27:50.043Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:27:50.044Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:27:50.045Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:28:05.255Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:28:48.388Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:28:48.388Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:28:48.388Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:28:48.390Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:30:15.618Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:30:15.618Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:30:15.619Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:30:15.620Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:30:31.092Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:31:49.358Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:31:49.358Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:31:49.358Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:31:49.360Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:33:03.411Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:33:03.412Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:33:03.412Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:33:03.414Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:33:18.729Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:34:22.257Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:34:22.257Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:34:22.257Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:34:22.259Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:36:33.605Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:36:33.605Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:36:33.605Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:36:33.607Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:36:49.141Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:37:39.765Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:37:39.765Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:37:39.766Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:37:39.767Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:39:23.769Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:39:23.769Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:39:23.769Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:39:23.771Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:40:31.819Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:40:31.820Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:40:31.820Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:40:31.822Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:40:47.203Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:41:32.103Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:41:32.103Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:41:32.103Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:41:32.105Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:45:17.212Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:45:17.213Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:45:17.213Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:45:17.215Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:47:04.718Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:47:04.719Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:47:04.719Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:47:04.721Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:48:09.232Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:48:09.233Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:48:09.233Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:48:09.235Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:48:24.554Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:49:34.462Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:49:34.463Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:49:34.463Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:49:34.465Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:50:36.181Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:50:36.181Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:50:36.182Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:50:36.183Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:51:48.669Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:51:48.670Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:51:48.670Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:51:48.672Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-09T23:53:18.159Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-09T23:53:18.160Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-09T23:53:18.160Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-09T23:53:18.162Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:01:34.059Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:01:34.060Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:01:34.060Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:01:34.062Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:03:03.221Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:03:03.221Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:03:03.222Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:03:03.224Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:04:17.013Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:04:17.013Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:04:17.013Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:04:17.015Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:04:32.345Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:05:37.950Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:05:37.950Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:05:37.950Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:05:37.952Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:06:48.709Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:06:48.710Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:06:48.710Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:06:48.712Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:08:26.609Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:08:26.609Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:08:26.609Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:08:26.611Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:09:12.614Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:09:12.615Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:09:12.615Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:09:12.617Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:09:28.260Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:10:05.706Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:10:05.707Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:10:05.707Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:10:05.708Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:11:58.111Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:11:58.112Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:11:58.112Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:11:58.113Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:13:09.667Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:13:09.667Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:13:09.668Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:13:09.669Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:13:24.957Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:14:20.514Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:14:20.514Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:14:20.515Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:14:20.516Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:16:49.542Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:16:49.542Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:16:49.543Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:16:49.544Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:17:05.017Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:18:04.699Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:18:04.700Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:18:04.700Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:18:04.702Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:22:02.216Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:22:02.217Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:22:02.217Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:22:02.219Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:22:18.119Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:23:21.671Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:23:21.672Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:23:21.672Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:23:21.674Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:24:51.249Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:24:51.249Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:24:51.249Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:24:51.251Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:25:57.939Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:25:57.939Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:25:57.939Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:25:57.941Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:27:02.241Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:27:02.241Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:27:02.242Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:27:02.243Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:27:17.810Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:28:38.816Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:28:38.816Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:28:38.817Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:28:38.818Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:31:56.635Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:31:56.635Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:31:56.636Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:31:56.637Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:32:12.202Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:35:02.368Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:35:02.368Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:35:02.369Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:35:02.370Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:36:51.780Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:36:51.781Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:36:51.781Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:36:51.783Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:37:37.735Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:37:37.735Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:37:37.735Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:37:37.737Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:37:53.234Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:39:09.122Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:39:09.123Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:39:09.123Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:39:09.125Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:40:35.269Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:40:35.270Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:40:35.270Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:40:35.272Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:40:50.763Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:46:56.276Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:46:56.277Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:46:56.277Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:46:56.278Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:47:26.421Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:47:26.421Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:47:26.421Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:47:26.423Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:47:41.996Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:48:24.968Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:48:24.969Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:48:24.969Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:48:24.971Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:50:07.545Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:50:07.546Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:50:07.546Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:50:07.548Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:50:23.372Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:51:35.982Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:51:35.983Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:51:35.983Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:51:35.985Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:52:58.544Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:52:58.544Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:52:58.544Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:52:58.546Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:53:14.297Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:53:57.951Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:53:57.951Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:53:57.952Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:53:57.953Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:55:33.347Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:55:33.348Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:55:33.348Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:55:33.352Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T00:56:14.608Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T00:56:14.609Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T00:56:14.609Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T00:56:14.613Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T01:01:22.099Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T01:01:22.100Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T01:01:22.100Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T01:01:22.102Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T01:02:02.219Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T01:02:02.219Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T01:02:02.220Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T01:02:02.222Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T01:03:14.427Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T01:03:14.427Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T01:03:14.427Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T01:03:14.429Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T01:03:29.902Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T01:08:36.318Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T01:08:44.132Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:08:48.790Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:09:56.657Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:09:56.657Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:09:56.658Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:09:56.659Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:12:03.740Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:12:03.740Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:12:03.741Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:12:03.742Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:12:58.722Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:12:58.722Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:12:58.723Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:12:58.724Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:13:14.943Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:15:14.409Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:15:14.409Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:15:14.410Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:15:14.411Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:17:09.318Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:17:09.319Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:17:09.320Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:17:09.322Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:17:25.141Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:18:55.764Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:18:55.764Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:18:55.765Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:18:55.767Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:20:56.802Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:20:56.802Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:20:56.802Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:20:56.804Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:21:48.502Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:21:48.503Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:21:48.503Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:21:48.505Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:22:04.364Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:23:18.360Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:23:18.361Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:23:18.361Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:23:18.363Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:23:45.962Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:23:45.963Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:23:45.963Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:23:45.964Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:24:21.584Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:24:21.585Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:24:21.585Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:24:21.587Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:25:29.938Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:25:29.939Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:25:29.939Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:25:29.941Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:25:45.668Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:26:33.932Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:26:33.933Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:26:33.933Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:26:33.935Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:30:17.682Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:30:17.682Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:30:17.683Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:30:17.687Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:31:33.954Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:31:33.955Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:31:33.955Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:31:33.958Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:33:01.174Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:33:01.175Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:33:01.175Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:33:01.177Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:35:51.896Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:35:51.896Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:35:51.897Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:35:51.898Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:37:20.705Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:37:20.706Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:37:20.706Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:37:20.708Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:38:15.216Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:38:15.216Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:38:15.217Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:38:15.218Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:38:31.391Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:40:10.274Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:40:10.275Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:40:10.275Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:40:10.277Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:43:52.035Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:43:52.036Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:43:52.036Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:43:52.038Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:44:07.796Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:44:52.945Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:44:52.945Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:44:52.946Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:44:52.947Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:46:19.757Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:46:19.758Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:46:19.758Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:46:19.760Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:46:35.645Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:47:25.370Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:47:25.371Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:47:25.371Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:47:25.373Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:48:10.033Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:48:10.033Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:48:10.033Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:48:10.035Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:50:06.095Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:50:06.096Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:50:06.096Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:50:06.098Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:52:08.418Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:52:08.419Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:52:08.419Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:52:08.420Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:53:28.742Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:53:28.743Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:53:28.744Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:53:28.746Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:53:44.607Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:55:35.572Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:55:35.573Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:55:35.573Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:55:35.575Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:57:02.627Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:57:02.628Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:57:02.629Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:57:02.632Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:58:23.451Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:58:23.452Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:58:23.452Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:58:23.454Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T03:58:39.419Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:59:50.202Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T03:59:50.202Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T03:59:50.203Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T03:59:50.204Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:01:57.294Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:01:57.295Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:01:57.295Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:01:57.297Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:03:04.796Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:03:04.797Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:03:04.797Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:03:04.799Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:03:21.124Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:04:23.708Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:04:23.709Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:04:23.709Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:04:23.711Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:05:08.198Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:05:08.199Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:05:08.199Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:05:08.202Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:05:24.478Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:06:56.065Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:06:56.066Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:06:56.066Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:06:56.068Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:08:22.698Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:08:22.699Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:08:22.699Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:08:22.701Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:09:22.159Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:09:22.159Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:09:22.160Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:09:22.161Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:10:16.244Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:10:16.245Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:10:16.245Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:10:16.247Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:10:32.564Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:11:35.347Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:11:35.348Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:11:35.348Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:11:35.350Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:13:49.874Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:13:49.875Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:13:49.875Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:13:49.877Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:14:06.306Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:15:16.444Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:15:16.444Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:15:16.445Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:15:16.447Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:16:44.974Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:16:44.975Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:16:44.975Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:16:44.977Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:17:01.288Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:18:15.084Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:18:15.084Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:18:15.085Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:18:15.086Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:20:07.455Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:20:07.456Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:20:07.456Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:20:07.457Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:20:23.627Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:21:09.613Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:21:09.614Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:21:09.614Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:21:09.616Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:23:13.222Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:23:13.223Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:23:13.223Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:23:13.225Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:23:29.279Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:24:23.382Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:24:23.382Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:24:23.382Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:24:23.384Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:26:33.780Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:26:33.781Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:26:33.781Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:26:33.783Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:26:49.946Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:27:47.740Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:27:47.740Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:27:47.740Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:27:47.742Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:30:11.247Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:30:11.247Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:30:11.248Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:30:11.249Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:30:27.556Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:31:44.531Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:31:44.531Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:31:44.532Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:31:44.533Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:33:22.358Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:33:22.358Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:33:22.359Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:33:22.360Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:33:39.010Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:34:49.078Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:34:49.079Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:34:49.079Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:34:49.081Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:37:23.880Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:37:23.880Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:37:23.880Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:37:23.882Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:38:33.786Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:38:33.787Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:38:33.787Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:38:33.788Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:38:49.935Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:42:49.272Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:42:49.272Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:42:49.272Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:42:49.274Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:44:29.441Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:44:29.441Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:44:29.442Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:44:29.443Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:45:16.671Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:45:16.671Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:45:16.671Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:45:16.673Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:45:32.751Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:46:17.580Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:46:17.580Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:46:17.581Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:46:17.582Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:51:55.879Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:53:03.163Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:53:03.163Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:53:03.164Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:53:03.165Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:55:51.928Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:55:51.928Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:55:51.928Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:55:51.930Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:57:03.256Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:57:03.256Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:57:03.257Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:57:03.258Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T04:57:19.987Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:58:24.716Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T04:58:24.716Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T04:58:24.717Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T04:58:24.718Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:04:33.103Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:04:33.104Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:04:33.104Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:04:33.106Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:04:49.298Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:06:23.002Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:06:23.002Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:06:23.003Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:06:23.005Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:07:54.609Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:07:54.610Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:07:54.610Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:07:54.612Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:08:11.164Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:08:47.783Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:08:47.784Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:08:47.784Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:08:47.786Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:09:29.272Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:10:35.413Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:10:35.413Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:10:35.413Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:10:35.415Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:14:37.102Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:14:37.103Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:14:37.103Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:14:37.105Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:14:52.955Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:15:55.856Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:15:55.857Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:15:55.857Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:15:55.858Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T05:17:39.390Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T05:17:39.390Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T05:17:39.390Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T05:17:39.392Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:21:43.355Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:23:07.596Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:23:07.597Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:23:07.598Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:23:07.600Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:25:38.753Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:25:38.753Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:25:38.754Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:25:38.756Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:25:54.742Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:27:29.459Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:27:29.459Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:27:29.460Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:27:29.461Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:29:29.939Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:29:29.939Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:29:29.940Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:29:29.943Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:30:45.032Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:30:45.032Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:30:45.033Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:30:45.035Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:31:52.492Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:31:52.492Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:31:52.493Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:31:52.496Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:36:50.991Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:36:50.992Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:36:50.993Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:36:50.995Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:37:07.242Z","type":"capsule_read","meta":{"taskTitle":"Existing task","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:38:33.749Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:38:33.750Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:38:33.750Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:38:33.752Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:42:17.039Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:42:17.039Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:42:17.039Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:42:17.041Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T07:57:53.647Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T07:57:53.648Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T07:57:53.648Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T07:57:53.650Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T08:00:51.189Z","type":"capsule_read","meta":{"taskTitle":"实现 evolution-automation — 让 Jinx 定时自我改进 (score: 34)","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T08:05:06.000Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T08:05:06.000Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T08:05:06.001Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T08:05:06.002Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T08:05:38.741Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T08:05:38.741Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T08:05:38.742Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T08:05:38.743Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T08:07:34.629Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T08:07:34.630Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T08:07:34.630Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T08:07:34.632Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T08:08:48.262Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T08:08:48.262Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T08:08:48.263Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T08:08:48.264Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}
+{"timestamp":"2026-03-10T08:39:09.537Z","type":"capsule_read","meta":{"taskTitle":"some task title","targetType":"other","totalCapsules":36,"retrieved":3}}
+{"timestamp":"2026-03-10T08:39:09.538Z","type":"capsule_read","meta":{"taskTitle":"implement new feature","targetType":"feature","totalCapsules":36,"retrieved":2}}
+{"timestamp":"2026-03-10T08:39:09.538Z","type":"capsule_read","meta":{"taskTitle":"test coverage improvement","targetType":"testing","totalCapsules":36,"retrieved":5}}
+{"timestamp":"2026-03-10T08:39:09.542Z","type":"capsule_read","meta":{"taskTitle":"anything","targetType":"other","totalCapsules":36,"retrieved":0}}

@@ -1,6 +1,26 @@
 {
   "tasks": [
     {
+      "id": "#209",
+      "title": "实现 evolution-automation — 让 Jinx 定时自我改进",
+      "category": "evolution",
+      "difficulty": "medium",
+      "instruction": "实现自动进化循环，让 Jinx 在无人值守时能够定时自我改进。这是 CAPABILITIES.md 初始进化优先级 #3。具体步骤：(1) 检查 src/consciousness/loop.ts 的 runEvolutionCycle 实现 (2) 创建 src/consciousness/auto-evolution.ts - 定时触发进化 (3) 添加进化间隔配置（建议初始值：1小时）(4) 集成现有 circuit-breaker 防止无限循环 (5) 添加自动进化的启用/禁用开关 (6) 实现 Endure 检查（进化前系统健康检查）。",
+      "verificationCriteria": [
+        "pnpm build 通过",
+        "pnpm test 通过",
+        "新增 auto-evolution.ts 模块",
+        "进化可以在后台自动触发",
+        "circuit-breaker 正常工作",
+        "capabilities.json 中 evolution-automation 成熟度更新"
+      ],
+      "dependencyValue": "这是 Jinx 作为有主动性智能体的核心能力。没有自动进化，Jinx 只是一个响应式的工具。实现这个能力后，Jinx 可以在无人值守时持续自我改进。这是 CAPABILITIES.md 初始优先级 #3，依赖价值评分 9/10。",
+      "score": 34,
+      "status": "pending",
+      "created": "2026-03-10T08:00:00Z",
+      "source": "goal-discovery-15"
+    },
+    {
       "id": "#208",
       "title": "完成 Reflection 能力提升 — 更新成熟度并添加测试",
       "category": "cognition",
@@ -79,7 +99,25 @@
       "status": "pending",
       "createdAt": "2026-03-09T19:23:41.398Z",
       "updatedAt": "2026-03-09T19:23:41.398Z"
+    },
+    {
+      "id": "#210",
+      "title": "修复测试隔离问题 — strategy-hysteresis.test.ts 应使用临时目录",
+      "category": "minimalism",
+      "difficulty": "easy",
+      "instruction": "test/strategy-hysteresis.test.ts 使用真实的 DATA_DIR 创建 health-history.json 和 performance-metrics.json，导致与其他测试（如 diagnosis.test.ts）产生测试隔离问题。具体问题：当 strategy-hysteresis 测试运行时，它创建 degraded 状态的健康历史，然后 diagnosis.test.ts 运行时可能读到这些数据，导致失败。解决方案：(1) 修改 strategy-hysteresis.test.ts 使用临时目录或 mock (2) 确保所有测试清理自己创建的文件 (3) 验证测试可以并行运行而不互相影响。",
+      "verificationCriteria": [
+        "pnpm test 全部通过（包括并行运行）",
+        "strategy-hysteresis.test.ts 不使用真实 DATA_DIR",
+        "diagnosis.test.ts 单独运行和与其他测试一起运行结果一致",
+        "没有测试创建的文件残留在 data/ 目录"
+      ],
+      "dependencyValue": "测试隔离是代码质量的基础。没有良好的测试隔离，测试结果不可靠，可能导致假阳性或假阴性，影响进化决策的准确性。这是 P6 极简原则的实践。",
+      "score": 35,
+      "status": "pending",
+      "created": "2026-03-10T08:42:00Z",
+      "source": "goal-discovery-cycle-100"
     }
   ],
-  "lastUpdated": "2026-03-09T16:25:00Z"
+  "lastUpdated": "2026-03-10T08:42:00Z"
 }

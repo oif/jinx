@@ -15,7 +15,7 @@ import { cleanupOldSessions } from "./supervisor/cleanup.js";
 import { checkCrashLoopAndRecover } from "./supervisor/recovery.js";
 import { formatProgress, isEvolutionActive } from "./consciousness/evolution-progress.js";
 import { ensureIdentityFiles } from "./util/identity-init.js";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 async function main(): Promise<void> {
@@ -498,6 +498,103 @@ async function main(): Promise<void> {
         }
       },
 
+      // ── Intervention commands ────────────────────────────────────
+      task: async (args) => {
+        const title = args.trim();
+        if (!title) {
+          return [
+            "📋 Usage: /task <description>",
+            "",
+            "Injects a task at the *front* of the evolution queue.",
+            "Jinx will execute it in the next available cycle (after the current one finishes).",
+            "",
+            "Examples:",
+            "  /task Add dark mode toggle to the website",
+            "  /task Research Mastra AI and write a summary",
+            "  /task Fix the broken /recent command output",
+            "",
+            "To trigger immediately (if Jinx is idle): use /now instead.",
+          ].join("\n");
+        }
+
+        const taskId = getNextTaskId();
+        injectTaskToFront(taskId, title);
+
+        const nextTask = loadNextTask();
+        return [
+          `✅ Task injected: ${taskId}: ${title}`,
+          ``,
+          `It's now first in the queue.`,
+          `Next evolution will execute: ${nextTask?.id}: ${nextTask?.title}`,
+        ].join("\n");
+      },
+
+      now: async (args) => {
+        const title = args.trim();
+        if (!title) {
+          return [
+            "⚡ Usage: /now <description>",
+            "",
+            "Injects a task to the front of the queue AND triggers evolution immediately.",
+            "If an evolution is currently running, your task will start right after it.",
+            "",
+            "Examples:",
+            "  /now Fix the authentication bug urgently",
+            "  /now Add /stats command to Telegram",
+            "",
+            "To queue without triggering: use /task instead.",
+          ].join("\n");
+        }
+
+        const taskId = getNextTaskId();
+        injectTaskToFront(taskId, title);
+
+        const isRunning = isEvolutionActive();
+        if (consciousness.handle) {
+          consciousness.handle.triggerNow();
+        }
+
+        const statusLine = isRunning
+          ? `⏳ Evolution in progress — your task will start right after it completes.`
+          : `🧬 Triggering evolution now...`;
+
+        return [
+          `⚡ Task injected: ${taskId}: ${title}`,
+          ``,
+          statusLine,
+        ].join("\n");
+      },
+
+      abort: async () => {
+        const wasRunning = isEvolutionActive();
+
+        // Kill all worker sessions (stops the running evolution).
+        // The conversation session stays alive so we can keep chatting.
+        try {
+          const { SessionPool } = await import("./agent/session.js");
+          SessionPool.disposeAll();
+        } catch {
+          // Fallback: full abort
+          await abortAgent();
+          await startAgent();
+        }
+
+        if (consciousness.handle) {
+          consciousness.handle.triggerNow();
+        }
+
+        return wasRunning
+          ? [
+              `🛑 Running evolution aborted.`,
+              ``,
+              `The current task has been interrupted (it stays in the backlog and will be retried).`,
+              `Next evolution will start shortly.`,
+              ``,
+              `Tip: use /now <task> to inject your task and it'll run next.`,
+            ].join("\n")
+          : `ℹ️ No evolution was running. Consciousness loop is still active.`;
+      },
+
       help: async () => {
         return [
           "📋 Available Commands:",
@@ -505,6 +602,9 @@ async function main(): Promise<void> {
           "/start - Check if Jinx is alive",
           "/status - Show system status (version, health, next task)",
           "/backlog - Show pending tasks",
+          "/task <desc> - Inject a task to the front of the queue",
+          "/now <desc> - Inject a task and trigger immediately",
+          "/abort - Abort the current running evolution",
           "/evolve - Trigger evolution immediately (if tasks pending)",
           "/evolution - Show evolution history report",
           "/recent - Show recent 5 evolutions summary",
@@ -585,6 +685,68 @@ async function main(): Promise<void> {
   } catch {
     // TG might not be ready yet — not fatal
   }
+}
+
+// ── Task Injection Helpers ─────────────────────────────────────────
+
+/**
+ * Scan backlog.md and backlog.json to find the highest existing task ID,
+ * then return the next available ID as "#NNN".
+ */
+function getNextTaskId(): string {
+  let max = 0;
+
+  const backlogMdPath = join(process.cwd(), "data", "backlog.md");
+  if (existsSync(backlogMdPath)) {
+    const content = readFileSync(backlogMdPath, "utf-8");
+    for (const m of content.matchAll(/#(\d+)/g)) {
+      const n = parseInt(m[1], 10);
+      if (n > max) max = n;
+    }
+  }
+
+  const backlogJsonPath = join(process.cwd(), "data", "backlog.json");
+  if (existsSync(backlogJsonPath)) {
+    try {
+      const data = JSON.parse(readFileSync(backlogJsonPath, "utf-8")) as {
+        tasks?: Array<{ id?: string; taskId?: string }>;
+      };
+      for (const t of data.tasks ?? []) {
+        const id = t.id ?? t.taskId ?? "";
+        const m = /#(\d+)/.exec(id);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (n > max) max = n;
+        }
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
+  return `#${String(max + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Insert a new task at the very TOP of the "## Pending" section in backlog.md,
+ * so loadNextTask() picks it up before any existing pending tasks.
+ */
+function injectTaskToFront(taskId: string, title: string): void {
+  const backlogPath = join(process.cwd(), "data", "backlog.md");
+  let content = "# Backlog\n\n## Pending\n\n## Completed\n";
+  if (existsSync(backlogPath)) {
+    content = readFileSync(backlogPath, "utf-8");
+  }
+
+  const marker = "\n## Pending\n";
+  const idx = content.indexOf(marker);
+  if (idx === -1) {
+    content += `\n## Pending\n- [ ] ${taskId}: ${title}\n`;
+  } else {
+    const insertAt = idx + marker.length;
+    content = content.slice(0, insertAt) + `- [ ] ${taskId}: ${title}\n` + content.slice(insertAt);
+  }
+
+  writeFileSync(backlogPath, content);
+  log.info("Task injected to front of backlog", { taskId, title });
 }
 
 // ── Diagnostics ────────────────────────────────────────────────────

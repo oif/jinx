@@ -1,0 +1,7 @@
+{
+  "taskId": "#101",
+  "failureCount": 3,
+  "lastFailedAt": "2026-03-10T08:05:26.243Z",
+  "reason": "Tests failed",
+  "testOutput": "FAIL src/foo.ts\n  expect(1).toBe(2)"
+}

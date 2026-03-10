@@ -77,6 +77,7 @@ import {
   estimateTaskComplexity,
   decomposeTask,
   getEstimatedMinutes,
+  getTaskProgress,
   initOrUpdateTaskProgress,
   completeStep,
   pauseTaskProgress,
@@ -94,6 +95,14 @@ import {
   generateImprovementTasks,
   addTasksToBacklog,
 } from "../evolution/improvement-generator.js";
+import {
+  reconcileBacklogState,
+  detectStuckTask,
+  saveExcelFailureContext,
+  loadExcelFailureRecord,
+  formatExcelFailureContext,
+  clearExcelFailureContext,
+} from "./self-rescue.js";
 
 // ── Timeout Warning Configuration ───────────────────────────────────
 
@@ -515,6 +524,37 @@ export function startConsciousness(
           return;
         }
 
+        // ── Mode A (inline): pre-cycle state divergence guard ──────
+        // If task-progress already marks this task completed but it's
+        // still in backlog (reconciliation missed it or race condition),
+        // fix it now and skip this tick.
+        const existingProgress = getTaskProgress(task.id);
+        if (existingProgress?.status === "completed") {
+          log.warn("Pre-cycle guard: task already completed in progress, fixing backlog", {
+            taskId: task.id,
+          });
+          markTaskDone(task);
+          return; // reschedule will pick next task
+        }
+
+        // ── Mode B: consecutive failure (stuck) detection ──────────
+        const archive = getArchive();
+        const stuckInfo = detectStuckTask(task.id, archive);
+        if (stuckInfo.isStuck) {
+          log.warn("Stuck task detected — force-abandoning", {
+            taskId: task.id,
+            reason: stuckInfo.reason,
+            failureCount: stuckInfo.failureCount,
+          });
+          markTaskDone(task);
+          await notifyFn(
+            `⚠️ 自救: 卡死任务被强制跳过 [${task.id}]\n` +
+            `${stuckInfo.reason}\n\n` +
+            `已将任务标记为完成并跳过，继续执行下一个任务。`
+          ).catch(() => {});
+          return;
+        }
+
         await runEvolutionCycle(task, notifyFn);
       } else {
         // Backlog empty: run goal discovery if cooldown has elapsed
@@ -536,6 +576,19 @@ export function startConsciousness(
   function scheduleNext(): void {
     if (timer) clearTimeout(timer);
     timer = setTimeout(tick, getLoopIntervalMs());
+  }
+
+  // ── Mode A: Boot-time state reconciliation ──────────────────────
+  // Fix any tasks that are completed in task-progress.json but still
+  // pending in backlog.md (caused by crash/kill before markTaskDone ran).
+  const fixedTasks = reconcileBacklogState(BACKLOG_PATH, (taskId, title) => {
+    markTaskDone({ id: taskId, title });
+  });
+  if (fixedTasks.length > 0) {
+    notifyFn(
+      `🔧 Boot reconciliation: fixed ${fixedTasks.length} stuck task(s): ${fixedTasks.join(", ")}\n` +
+      `These tasks were completed in progress tracking but still pending in backlog.`
+    ).catch(() => {});
   }
 
   scheduleNext();
@@ -751,11 +804,19 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     });
     endSpan(capsuleSpan.id, "success");
 
+    // ── Mode C: inject previous Excel failure context ──────────────
+    // If the last attempt broke tests, tell the agent exactly what failed
+    // so it can repair rather than repeat the same mistake.
+    const excelFailureRecord = loadExcelFailureRecord(task.id);
+    const excelFailureContext = excelFailureRecord
+      ? formatExcelFailureContext(excelFailureRecord)
+      : "";
+
     const prompt = getEvolutionCyclePrompt(cycle, task.id, task.title, {
       recentHistory: recentHistory.map(h => `#${h.cycle} ${h.status}`).join(", ") || "none",
       totalCycles: stats.totalCycles,
       currentStreak: stats.currentStreak,
-    }) + "\n\n" + archivePromptContext + principlesContext + capsulesContext + getInsightsForPrompt(5);
+    }) + "\n\n" + archivePromptContext + principlesContext + capsulesContext + getInsightsForPrompt(5) + excelFailureContext;
     endSpan(promptSpan.id, "success");
 
     // ── Timeout Warning Check: Before prompt execution ──────────────
@@ -865,8 +926,34 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
         reason: excelResult.reason,
         checks: excelResult.checks,
       });
-      // Don't mark task as done - it should be retried after fixing the issue
-      await notifyFn(`🚫 Evolution #${cycle} BLOCKED by Excel check\n${excelResult.reason}\n\nSEA Law #2 (Excel) requires tests to pass before commit.\nTask ${task.id} not marked as done - fix issues and retry.`);
+
+      // ── Mode C: save failure context for next attempt ─────────────
+      // Capture the test output so the next cycle knows exactly what broke.
+      const testOutput = excelResult.checks.tests.message ?? "";
+      const failureRecord = saveExcelFailureContext(
+        task.id,
+        excelResult.reason || "Tests failed",
+        testOutput,
+      );
+
+      // ── Mode B: record Excel block in archive so stuck detection works ─
+      // Excel failures don't go through the normal error path, so we
+      // explicitly write them to the archive here.
+      recordEvolutionToArchive(
+        archive,
+        cycle,
+        task.id,
+        "failed",
+        [`Failed: Excel check blocked - ${excelResult.reason}`],
+        -0.1,
+      );
+
+      await notifyFn(
+        `🚫 Evolution #${cycle} BLOCKED by Excel check (attempt ${failureRecord.failureCount})\n` +
+        `${excelResult.reason}\n\n` +
+        `SEA Law #2 (Excel) requires tests to pass before commit.\n` +
+        `Task ${task.id} not marked as done - next attempt will receive failure context.`
+      );
       return; // Exit early - cannot proceed with commit
     }
     endSpan(excelSpan.id, "success");
@@ -878,6 +965,8 @@ async function runEvolutionCycle(task: Task, notifyFn: NotifyFn): Promise<void> 
     // Record results
     const recordSpan = startSpan("result-recording", { traceId: trace.id });
     markTaskDone(task);
+    // ── Mode C: clear failure context on success ───────────────────
+    clearExcelFailureContext(task.id);
     
     // Complete task progress tracking
     if (taskProgress && taskProgress.remainingSteps.length > 0) {
