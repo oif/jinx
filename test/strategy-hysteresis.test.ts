@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   loadStrategyConfig,
   saveStrategyConfig,
@@ -9,13 +9,42 @@ import {
   type StrategyConfig,
   type EvolutionStrategy,
 } from "../src/evolution/strategy.js";
-import { existsSync, unlinkSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, unlinkSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
-const DATA_DIR = join(process.cwd(), "data");
-const STRATEGY_PATH = join(DATA_DIR, "evolution-strategy.json");
-const METRICS_PATH = join(DATA_DIR, "performance-metrics.json");
-const HEALTH_PATH = join(DATA_DIR, "health-history.json");
+// Use vi.hoisted to define TEST_DATA_DIR so it's available in mocked modules
+// Note: Cannot use imported 'join' in hoisted callback, use string concatenation instead
+const TEST_DATA_DIR = vi.hoisted(() => `${process.cwd()}/test-temp-strategy-hysteresis`);
+
+// Mock the log module
+vi.mock("../src/util/log.js", () => ({
+  log: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
+// Mock the paths module to use TEST_DATA_DIR
+vi.mock("../src/supervisor/paths.js", () => ({
+  DATA_DIR: TEST_DATA_DIR,
+  PROJECT_ROOT: process.cwd(),
+  STATE_PATH: `${TEST_DATA_DIR}/state.json`,
+  SESSIONS_DIR: `${TEST_DATA_DIR}/sessions`,
+  PACKAGE_PATH: `${process.cwd()}/package.json`,
+  BORN_PATH: `${process.cwd()}/BORN.md`,
+  BACKLOG_PATH: `${TEST_DATA_DIR}/backlog.md`,
+  PROGRESS_PATH: `${TEST_DATA_DIR}/evolution-progress.json`,
+  RESTART_MARKER: `${TEST_DATA_DIR}/.restart_requested`,
+  RESTART_MARKER_TMP: `${TEST_DATA_DIR}/.restart_requested.tmp`,
+  RESTART_MARKER_PROCESSING: `${TEST_DATA_DIR}/.restart_requested.processing`,
+}));
+
+// Paths inside the test temp directory
+const STRATEGY_PATH = join(TEST_DATA_DIR, "evolution-strategy.json");
+const METRICS_PATH = join(TEST_DATA_DIR, "performance-metrics.json");
+const HEALTH_PATH = join(TEST_DATA_DIR, "health-history.json");
 
 // Helper to create a mock strategy config
 function createMockConfig(overrides: Partial<StrategyConfig> = {}): StrategyConfig {
@@ -51,7 +80,7 @@ function createMockMetrics(failureRate: number = 0): void {
     cycles.push({ status: "failed" });
   }
   
-  mkdirSync(DATA_DIR, { recursive: true });
+  mkdirSync(TEST_DATA_DIR, { recursive: true });
   writeFileSync(METRICS_PATH, JSON.stringify({
     agentPrompts: [],
     evolutionCycles: cycles,
@@ -60,7 +89,7 @@ function createMockMetrics(failureRate: number = 0): void {
 
 // Helper to create mock health history
 function createMockHealthHistory(status: "healthy" | "degraded" | "critical" = "healthy"): void {
-  mkdirSync(DATA_DIR, { recursive: true });
+  mkdirSync(TEST_DATA_DIR, { recursive: true });
   const entries = [];
   for (let i = 0; i < 5; i++) {
     entries.push({
@@ -76,10 +105,13 @@ function createMockHealthHistory(status: "healthy" | "degraded" | "critical" = "
 
 describe("Strategy Hysteresis", () => {
   beforeEach(() => {
-    // Clean up any existing files
-    if (existsSync(STRATEGY_PATH)) unlinkSync(STRATEGY_PATH);
-    if (existsSync(METRICS_PATH)) unlinkSync(METRICS_PATH);
-    if (existsSync(HEALTH_PATH)) unlinkSync(HEALTH_PATH);
+    // Clean up any existing temp directory first (from failed tests)
+    if (existsSync(TEST_DATA_DIR)) {
+      rmSync(TEST_DATA_DIR, { recursive: true, force: true });
+    }
+    // Create fresh temp directory
+    mkdirSync(TEST_DATA_DIR, { recursive: true });
+    vi.clearAllMocks();
     
     // Create healthy mock data
     createMockMetrics(0);
@@ -87,10 +119,10 @@ describe("Strategy Hysteresis", () => {
   });
 
   afterEach(() => {
-    // Clean up
-    if (existsSync(STRATEGY_PATH)) unlinkSync(STRATEGY_PATH);
-    if (existsSync(METRICS_PATH)) unlinkSync(METRICS_PATH);
-    if (existsSync(HEALTH_PATH)) unlinkSync(HEALTH_PATH);
+    // Clean up temp directory
+    if (existsSync(TEST_DATA_DIR)) {
+      rmSync(TEST_DATA_DIR, { recursive: true, force: true });
+    }
   });
 
   it("should not switch strategy on first different recommendation", () => {
@@ -148,7 +180,7 @@ describe("Strategy Hysteresis", () => {
     // - consecutiveSuccesses < 3 (by having last cycle as failed)
     // - healthStatus === "healthy"
     // - low failure rate
-    mkdirSync(DATA_DIR, { recursive: true });
+    mkdirSync(TEST_DATA_DIR, { recursive: true });
     writeFileSync(METRICS_PATH, JSON.stringify({
       agentPrompts: [],
       evolutionCycles: [
