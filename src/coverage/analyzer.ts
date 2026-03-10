@@ -281,17 +281,61 @@ export function formatCoverageSummary(summary: CoverageSummary): string {
 
 // ── CLI ────────────────────────────────────────────────────────────
 
+/**
+ * Output mode for CLI
+ */
+type OutputMode = "text" | "json";
+
+/**
+ * Parse CLI arguments
+ */
+function parseArgs(): { command: string; mode: OutputMode } {
+  const args = process.argv.slice(2);
+  let command = "";
+  let mode: OutputMode = "text";
+
+  for (const arg of args) {
+    if (arg === "--json" || arg === "-j") {
+      mode = "json";
+    } else if (!arg.startsWith("-")) {
+      command = arg;
+    }
+  }
+
+  return { command, mode };
+}
+
+/**
+ * Output coverage data in JSON format for structured logging/machine parsing
+ */
+function outputJson(data: Record<string, unknown>): void {
+  log.info("Coverage analysis completed", data);
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const command = process.argv[2];
+  const { command, mode } = parseArgs();
   
   switch (command) {
     case "report": {
       const summary = readCoverageReport();
       if (summary) {
-        console.log(formatCoverageReport(summary));
+        if (mode === "json") {
+          outputJson({
+            overall: summary.overall,
+            fileCount: summary.files.length,
+            untestedCount: summary.untestedFiles.length,
+            lowCoverageCount: summary.lowCoverageFiles.length,
+          });
+        } else {
+          console.log(formatCoverageReport(summary));
+        }
         recordCoverage(summary);
       } else {
-        console.log("No coverage report found. Run 'npm run test:coverage' first.");
+        if (mode === "json") {
+          log.error("No coverage report found");
+        } else {
+          console.log("No coverage report found. Run 'npm run test:coverage' first.");
+        }
         process.exit(1);
       }
       break;
@@ -299,21 +343,41 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     case "summary": {
       const summary = readCoverageReport();
       if (summary) {
-        console.log(formatCoverageSummary(summary));
+        if (mode === "json") {
+          outputJson({
+            lines: summary.overall.lines.pct,
+            files: summary.files.length,
+            untested: summary.untestedFiles.length,
+          });
+        } else {
+          console.log(formatCoverageSummary(summary));
+        }
         recordCoverage(summary);
       } else {
-        console.log("No coverage data");
+        if (mode === "json") {
+          log.error("No coverage data available");
+        } else {
+          console.log("No coverage data");
+        }
         process.exit(1);
       }
       break;
     }
     case "trend": {
       const trend = getCoverageTrend(30);
-      console.log("📈 Coverage Trend (30 days):");
-      trend.forEach(t => console.log(`  ${t.date}: ${t.lineCoverage.toFixed(1)}%`));
+      if (mode === "json") {
+        outputJson({ trendDays: 30, dataPoints: trend.length, trend });
+      } else {
+        console.log("📈 Coverage Trend (30 days):");
+        trend.forEach(t => console.log(`  ${t.date}: ${t.lineCoverage.toFixed(1)}%`));
+      }
       break;
     }
     default:
-      console.log("Usage: npx tsx src/coverage/analyzer.ts [report|summary|trend]");
+      if (mode === "json") {
+        log.error("Invalid command", { usage: "analyzer [report|summary|trend] [--json]" });
+      } else {
+        console.log("Usage: npx tsx src/coverage/analyzer.ts [report|summary|trend] [--json]");
+      }
   }
 }
