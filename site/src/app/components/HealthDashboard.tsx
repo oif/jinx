@@ -57,6 +57,25 @@ interface StatusResponse {
   }>;
 }
 
+interface LogStatsResponse {
+  totalEntries: number;
+  byLevel: Record<string, number>;
+  uniqueTraceIds: number;
+  errors: number;
+  warnings: number;
+  oldestEntry: string | null;
+  newestEntry: string | null;
+  recentErrors: Array<{
+    time: string;
+    msg: string;
+    errorName?: string;
+    errorMessage?: string;
+    traceId?: string;
+  }>;
+  fileSize: number;
+  timestamp: string;
+}
+
 // Helpers
 function formatBytes(bytes: number): string {
   const gb = bytes / (1024 * 1024 * 1024);
@@ -89,6 +108,16 @@ const STATUS_COLORS = {
   healthy: { dot: "bg-emerald-400", text: "text-emerald-400", label: "健康" },
   warning: { dot: "bg-yellow-400", text: "text-yellow-400", label: "警告" },
   critical: { dot: "bg-red-400", text: "text-red-400", label: "危急" },
+};
+
+// Level priority for sorting (higher = more severe)
+const LEVEL_PRIORITY: Record<string, number> = {
+  fatal: 60,
+  error: 50,
+  warn: 40,
+  info: 30,
+  debug: 20,
+  trace: 10,
 };
 
 const STAGE_LABELS: Record<string, string> = {
@@ -126,15 +155,17 @@ function StatRow({ label, value, unit, color }: { label: string; value: number; 
 export default function HealthDashboard() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [logStats, setLogStats] = useState<LogStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [healthRes, statusRes] = await Promise.all([
+        const [healthRes, statusRes, logsRes] = await Promise.all([
           fetch("/api/health"),
           fetch("/api/status"),
+          fetch("/api/logs"),
         ]);
         
         if (healthRes.ok) {
@@ -142,6 +173,9 @@ export default function HealthDashboard() {
         }
         if (statusRes.ok) {
           setStatus(await statusRes.json());
+        }
+        if (logsRes.ok) {
+          setLogStats(await logsRes.json());
         }
         setError(null);
       } catch (e) {
@@ -344,6 +378,79 @@ export default function HealthDashboard() {
           <p className="mt-2 text-xs text-zinc-500">
             最近 {status.healthHistory.length} 次检查
           </p>
+        </div>
+      )}
+
+      {/* Log Statistics */}
+      {logStats && (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+              日志统计
+            </h3>
+            <span className="font-mono text-xs text-zinc-500">
+              {logStats.totalEntries.toLocaleString()} 条
+            </span>
+          </div>
+          
+          <div className="mb-4 grid gap-4 sm:grid-cols-4">
+            <div className="text-center">
+              <div className="font-mono text-xl text-red-400">{logStats.errors}</div>
+              <div className="text-xs text-zinc-500">错误</div>
+            </div>
+            <div className="text-center">
+              <div className="font-mono text-xl text-yellow-400">{logStats.warnings}</div>
+              <div className="text-xs text-zinc-500">警告</div>
+            </div>
+            <div className="text-center">
+              <div className="font-mono text-xl text-blue-400">{logStats.uniqueTraceIds}</div>
+              <div className="text-xs text-zinc-500">追踪</div>
+            </div>
+            <div className="text-center">
+              <div className="font-mono text-xl text-zinc-400">{(logStats.fileSize / 1024).toFixed(1)}KB</div>
+              <div className="text-xs text-zinc-500">大小</div>
+            </div>
+          </div>
+          
+          {/* Log level breakdown */}
+          <div className="mb-4 space-y-1">
+            {Object.entries(logStats.byLevel)
+              .sort((a, b) => (LEVEL_PRIORITY[b[0]] || 0) - (LEVEL_PRIORITY[a[0]] || 0))
+              .map(([level, count]) => (
+                <div key={level} className="flex items-center justify-between text-xs">
+                  <span className="text-zinc-500">{level}</span>
+                  <span className={`font-mono ${
+                    level === "error" || level === "fatal" ? "text-red-400" :
+                    level === "warn" ? "text-yellow-400" :
+                    "text-zinc-400"
+                  }`}>
+                    {count.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+          </div>
+          
+          {/* Recent errors */}
+          {logStats.recentErrors.length > 0 && (
+            <div className="mt-4 border-t border-white/5 pt-4">
+              <h4 className="mb-2 text-xs font-medium text-zinc-400">最近错误</h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {logStats.recentErrors.map((err, i) => (
+                  <div key={i} className="rounded bg-white/5 p-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs text-zinc-300 line-clamp-2">{err.msg}</p>
+                      <span className="shrink-0 text-[10px] text-zinc-500">
+                        {new Date(err.time).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    {err.errorMessage && (
+                      <p className="mt-1 text-[10px] text-red-400/70 line-clamp-1">{err.errorMessage}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
