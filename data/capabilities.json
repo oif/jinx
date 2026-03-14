@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-03-09T16:29:00.000Z",
+  "lastUpdated": "2026-03-14T09:15:00.000Z",
   "capabilities": [
     {
       "id": "process-supervision",
@@ -338,6 +338,22 @@
         "data/task-progress.json"
       ],
       "dependencies": ["evolution-loop"],
+      "improvementPotential": 0.3
+    },
+    {
+      "id": "tool-evolution",
+      "name": "Tool Evolution",
+      "category": "extension",
+      "description": "Advanced tool evolution capability enabling Jinx to automatically create new tools, skills, and extensions to expand its own capabilities. Includes tool need analyzer, tool generator with templates, and dynamic registration. Tools: analyze_tool_needs, generate_tool, create_custom_tool, get_tool_evolution_status, list_tool_templates, run_tool_evolution",
+      "maturity": "advanced",
+      "successCount": 0,
+      "failureCount": 0,
+      "relatedFiles": [
+        "src/evolution/tool-evolution.ts",
+        "src/agent/tools.ts",
+        "test/tool-evolution.test.ts"
+      ],
+      "dependencies": ["pi-extensions"],
       "improvementPotential": 0.3
     }
   ],

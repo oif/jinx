@@ -12,6 +12,8 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { formatPerformanceReport } from "../observability/metrics.js";
 import { log } from "../util/log.js";
+import { getTaskStore } from "../tasks/store.js";
+import { setNextWakeup } from "../consciousness/loop.js";
 import { recordClaudeUsage } from "../costs/tracker.js";
 import { runSwarmTool } from "../swarm/tool.js";
 import { runQualityCheck, formatQualityReport } from "../quality/code-quality.js";
@@ -64,6 +66,16 @@ import {
   formatPRAnalysis,
   formatRepoStats,
 } from "../github/enhanced.js";
+import {
+  analyzeToolNeeds,
+  generateTool,
+  runToolEvolution,
+  formatToolEvolutionStatus,
+  formatToolTemplates,
+  formatToolNeeds,
+  createCustomTool,
+  type CreateToolRequest,
+} from "../evolution/tool-evolution.js";
 // ── Types ──────────────────────────────────────────────────────────
 
 /**
@@ -134,10 +146,6 @@ const createPrParams = Type.Object({
   body: Type.String({ description: "PR body/description" }),
   head: Type.Optional(Type.String({ description: "Branch to merge from (default: dev)" })),
   base: Type.Optional(Type.String({ description: "Branch to merge into (default: main)" })),
-});
-
-const addBacklogTaskParams = Type.Object({
-  title: Type.String({ description: "Concise, actionable task title (e.g. 'Add rate limiting to Telegram bot')" }),
 });
 
 const getPerformanceReportParams = Type.Object({}); // No parameters needed
@@ -662,9 +670,36 @@ export const checkCodeQualityTool: ToolDefinition = {
 
 // ── Backlog helpers ────────────────────────────────────────────────
 
-const BACKLOG_PATH = join(process.cwd(), "data", "backlog.md");
+const BACKLOG_MD_PATH = join(process.cwd(), "data", "backlog.md");
+const BACKLOG_JSON_PATH = join(process.cwd(), "data", "backlog.json");
 
-function getNextBacklogId(content: string): string {
+// Types for backlog.json format
+interface BacklogTask {
+  id: string | null;
+  title: string;
+  description?: string;
+  category?: string;
+  difficulty?: "easy" | "medium" | "hard";
+  instruction?: string;
+  verification?: string[];
+  verificationCriteria?: string[];
+  context?: string;
+  dependencyValue?: string;
+  score?: number;
+  priority?: "critical" | "high" | "normal" | "low";
+  status: "pending" | "running" | "done" | "failed";
+  created?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  source?: string;
+}
+
+interface BacklogJson {
+  tasks: BacklogTask[];
+  lastUpdated?: string;
+}
+
+function getNextBacklogIdFromMd(content: string): string {
   const matches = [...content.matchAll(/#(\d+)/g)];
   const maxId = matches.reduce((max, m) => {
     const n = parseInt(m[1], 10);
@@ -673,18 +708,60 @@ function getNextBacklogId(content: string): string {
   return `#${String(maxId + 1).padStart(3, "0")}`;
 }
 
+function getNextBacklogIdFromJson(backlog: BacklogJson): string {
+  let max = 0;
+  for (const task of backlog.tasks) {
+    const idStr = task.id ?? "";
+    const m = /#?(\d+)/.exec(idStr);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n > max) max = n;
+    }
+  }
+  return `#${String(max + 1).padStart(3, "0")}`;
+}
+
+function loadBacklogJson(): BacklogJson {
+  if (existsSync(BACKLOG_JSON_PATH)) {
+    try {
+      const raw = readFileSync(BACKLOG_JSON_PATH, "utf-8");
+      return JSON.parse(raw) as BacklogJson;
+    } catch {
+      return { tasks: [] };
+    }
+  }
+  return { tasks: [] };
+}
+
+function saveBacklogJson(backlog: BacklogJson): void {
+  backlog.lastUpdated = new Date().toISOString();
+  ensureDataDir();
+  writeFileSync(BACKLOG_JSON_PATH, JSON.stringify(backlog, null, 2));
+}
+
 /**
- * Add a task to the backlog's Pending section.
+ * Add a task to the backlog.
+ * Writes to both backlog.json (rich format) and backlog.md (simple format for compatibility).
  * Automatically assigns the next sequential ID.
  */
 export const addBacklogTaskTool: ToolDefinition = {
   name: "add_backlog_task",
   label: "Add Backlog Task",
   description:
-    "Add a new task to data/backlog.md for future execution. " +
+    "Add a new task to data/backlog.json for future execution. " +
     "Use during goal discovery to queue discovered improvements. " +
+    "Supports rich metadata: category, difficulty, instruction, verification criteria, etc. " +
     "The task will be assigned a sequential ID automatically.",
-  parameters: addBacklogTaskParams,
+  parameters: Type.Object({
+    title: Type.String({ description: "Concise, actionable task title" }),
+    category: Type.Optional(Type.String({ description: "Task category: evolution, cognition, technical_exploration, minimalism, infrastructure" })),
+    difficulty: Type.Optional(Type.String({ description: "Task difficulty: easy, medium, hard" })),
+    instruction: Type.Optional(Type.String({ description: "Detailed implementation instructions" })),
+    verification: Type.Optional(Type.String({ description: "Comma-separated list of verification criteria" })),
+    context: Type.Optional(Type.String({ description: "Additional context or rationale for this task" })),
+    priority: Type.Optional(Type.String({ description: "Task priority: critical, high, normal, low" })),
+    source: Type.Optional(Type.String({ description: "Source of this task (e.g., 'goal-discovery-42')" })),
+  }),
   execute: async (
     _toolCallId: string,
     params: Record<string, unknown>,
@@ -694,26 +771,275 @@ export const addBacklogTaskTool: ToolDefinition = {
   ): Promise<AgentToolResult<unknown>> => {
     try {
       const title = (params.title as string).trim();
-      const content = existsSync(BACKLOG_PATH)
-        ? readFileSync(BACKLOG_PATH, "utf-8")
-        : "# Backlog\n\n## Pending\n\n## Done\n";
+      const category = params.category as string | undefined;
+      const difficulty = params.difficulty as "easy" | "medium" | "hard" | undefined;
+      const instruction = params.instruction as string | undefined;
+      const verificationStr = params.verification as string | undefined;
+      const context = params.context as string | undefined;
+      const priority = (params.priority as "critical" | "high" | "normal" | "low") || "normal";
+      const source = params.source as string | undefined;
 
-      const id = getNextBacklogId(content);
-      const taskLine = `- [ ] ${id}: ${title}`;
+      // Parse verification criteria
+      const verification = verificationStr
+        ? verificationStr.split(",").map(v => v.trim()).filter(Boolean)
+        : undefined;
 
-      // Insert after "## Pending" heading
-      const pendingIdx = content.indexOf("## Pending");
-      if (pendingIdx === -1) {
-        return textResult("Error: could not find '## Pending' section in backlog.md");
+      // Load existing backlog.json and get next ID
+      const backlog = loadBacklogJson();
+      const id = getNextBacklogIdFromJson(backlog);
+
+      // Create the task
+      const now = new Date().toISOString();
+      const task: BacklogTask = {
+        id,
+        title,
+        category,
+        difficulty,
+        instruction,
+        verification,
+        verificationCriteria: verification,
+        context,
+        dependencyValue: context,
+        priority,
+        status: "pending",
+        created: now,
+        createdAt: now,
+        updatedAt: now,
+        source,
+      };
+
+      // Remove undefined fields for cleaner JSON
+      for (const key of Object.keys(task)) {
+        if (task[key as keyof BacklogTask] === undefined) {
+          delete task[key as keyof BacklogTask];
+        }
       }
-      const afterHeading = content.indexOf("\n", pendingIdx) + 1;
-      const updated = content.slice(0, afterHeading) + taskLine + "\n" + content.slice(afterHeading);
 
-      writeFileSync(BACKLOG_PATH, updated);
-      return textResult(`Task added to backlog: ${id}: ${title}`);
+      // Add to backlog.json
+      backlog.tasks.push(task);
+      saveBacklogJson(backlog);
+
+      // Also add to TaskStore so loadNextTask() can pick it up
+      const taskStore = getTaskStore();
+      taskStore.add({
+        title,
+        priority,
+        source: source?.includes("neo") ? "neo" : "self",
+      });
+
+      // Also update backlog.md for compatibility
+      try {
+        let mdContent = existsSync(BACKLOG_MD_PATH)
+          ? readFileSync(BACKLOG_MD_PATH, "utf-8")
+          : "# Backlog\n\n## Pending\n\n## Done\n";
+
+        const pendingIdx = mdContent.indexOf("## Pending");
+        if (pendingIdx !== -1) {
+          const afterHeading = mdContent.indexOf("\n", pendingIdx) + 1;
+          const taskLine = `- [ ] ${id}: ${title}\n`;
+          mdContent = mdContent.slice(0, afterHeading) + taskLine + mdContent.slice(afterHeading);
+          writeFileSync(BACKLOG_MD_PATH, mdContent);
+        }
+      } catch {
+        // Ignore backlog.md errors - JSON is the source of truth
+      }
+
+      const lines = [
+        `✅ 任务已添加到 backlog`,
+        `ID: ${id}`,
+        `标题: ${title}`,
+        category ? `分类: ${category}` : null,
+        difficulty ? `难度: ${difficulty}` : null,
+        priority !== "normal" ? `优先级: ${priority}` : null,
+        source ? `来源: ${source}` : null,
+      ].filter(Boolean);
+
+      return textResult(lines.join("\n"));
     } catch (e) {
       return textResult(`Error adding task: ${(e as Error).message}`);
     }
+  },
+};
+
+// ── Structured Task Tools ──────────────────────────────────────────
+
+const taskListParams = Type.Object({});
+
+export const taskListTool: ToolDefinition = {
+  name: "task_list",
+  label: "List Tasks",
+  description:
+    "List pending and running tasks, sorted by priority then scheduled time. " +
+    "Shows task ID, title, priority, status, attempts, and scheduled time.",
+  parameters: taskListParams,
+  execute: async (): Promise<AgentToolResult<unknown>> => {
+    try {
+      const store = getTaskStore();
+      const tasks = store.listPending();
+      if (tasks.length === 0) return textResult("📋 没有待处理任务");
+
+      const lines = ["📋 任务列表：", ""];
+      for (const t of tasks) {
+        const pri = { critical: "🔴", high: "🟠", normal: "🔵", low: "⚪" }[t.priority];
+        const status = t.status === "running" ? "▶️" : "⏳";
+        const sched = t.scheduledAt ? ` (计划: ${new Date(t.scheduledAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })})` : "";
+        const attempts = t.attempts > 0 ? ` [尝试${t.attempts}/${t.maxAttempts}]` : "";
+        lines.push(`${status} ${pri} ${t.id}: ${t.title}${sched}${attempts}`);
+      }
+      return textResult(lines.join("\n"));
+    } catch (e) {
+      return textResult(`Error listing tasks: ${(e as Error).message}`);
+    }
+  },
+};
+
+const taskAddParams = Type.Object({
+  title: Type.String({ description: "Task title" }),
+  description: Type.Optional(Type.String({ description: "Detailed description" })),
+  priority: Type.Optional(Type.String({ description: "Priority: critical, high, normal, low" })),
+  scheduledAt: Type.Optional(Type.String({ description: "Scheduled time: ISO datetime or relative like '+3h', '+30m', '+1d'" })),
+  source: Type.Optional(Type.String({ description: "Source: 'neo' (owner) or 'self' (agent)" })),
+});
+
+export const taskAddTool: ToolDefinition = {
+  name: "task_add",
+  label: "Add Task",
+  description:
+    "Create a new task. Supports scheduledAt for future scheduling (e.g. '+3h' to check something later). " +
+    "Use source='self' when Jinx creates tasks for itself.",
+  parameters: taskAddParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const store = getTaskStore();
+      const task = store.add({
+        title: params.title as string,
+        description: params.description as string | undefined,
+        priority: (params.priority as "critical" | "high" | "normal" | "low") || "normal",
+        scheduledAt: params.scheduledAt as string | undefined,
+        source: (params.source as "neo" | "self") || "neo",
+      });
+      return textResult(`✅ 任务已创建: ${task.id}: ${task.title} [${task.priority}]${task.scheduledAt ? ` (计划: ${task.scheduledAt})` : ""}`);
+    } catch (e) {
+      return textResult(`Error adding task: ${(e as Error).message}`);
+    }
+  },
+};
+
+const taskDoneParams = Type.Object({
+  id: Type.String({ description: "Task ID (e.g. '#042')" }),
+  summary: Type.Optional(Type.String({ description: "Completion summary" })),
+});
+
+export const taskDoneTool: ToolDefinition = {
+  name: "task_done",
+  label: "Complete Task",
+  description: "Mark a task as done with an optional summary of what was accomplished.",
+  parameters: taskDoneParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const store = getTaskStore();
+      store.setDone(params.id as string, params.summary as string | undefined);
+      return textResult(`✅ 任务 ${params.id} 已完成`);
+    } catch (e) {
+      return textResult(`Error completing task: ${(e as Error).message}`);
+    }
+  },
+};
+
+const taskFailParams = Type.Object({
+  id: Type.String({ description: "Task ID (e.g. '#042')" }),
+  error: Type.String({ description: "Error message describing why the task failed" }),
+});
+
+export const taskFailTool: ToolDefinition = {
+  name: "task_fail",
+  label: "Fail Task",
+  description:
+    "Mark a task as failed with an error message. Automatically handles retry logic: " +
+    "if attempts < maxAttempts, reschedules with exponential backoff; otherwise escalates to Neo.",
+  parameters: taskFailParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const store = getTaskStore();
+      const id = params.id as string;
+      const error = params.error as string;
+      store.setFailed(id, error);
+
+      const task = store.findById(id);
+      if (!task) return textResult(`Task ${id} not found`);
+
+      if (task.attempts >= task.maxAttempts) {
+        return textResult(`❌ 任务 ${id} 失败 (${task.attempts}/${task.maxAttempts})，已达上限，上报 Neo`);
+      }
+      // Auto-reschedule with exponential backoff
+      const delayMs = Math.min(60_000 * Math.pow(2, task.attempts), 3_600_000);
+      store.reschedule(id, delayMs);
+      const minutes = Math.ceil(delayMs / 60_000);
+      return textResult(`🔄 任务 ${id} 失败 (${task.attempts}/${task.maxAttempts})，${minutes}分钟后重试`);
+    } catch (e) {
+      return textResult(`Error failing task: ${(e as Error).message}`);
+    }
+  },
+};
+
+const taskPostponeParams = Type.Object({
+  id: Type.String({ description: "Task ID (e.g. '#042')" }),
+  scheduledAt: Type.String({ description: "New scheduled time: ISO datetime or relative like '+3h'" }),
+});
+
+export const taskPostponeTool: ToolDefinition = {
+  name: "task_postpone",
+  label: "Postpone Task",
+  description: "Postpone a task to a later time. Accepts ISO datetime or relative time like '+3h', '+1d'.",
+  parameters: taskPostponeParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const store = getTaskStore();
+      store.postpone(params.id as string, params.scheduledAt as string);
+      const task = store.findById(params.id as string);
+      return textResult(`⏰ 任务 ${params.id} 已推迟到 ${task?.scheduledAt ?? params.scheduledAt}`);
+    } catch (e) {
+      return textResult(`Error postponing task: ${(e as Error).message}`);
+    }
+  },
+};
+
+// ── Set Next Wakeup Tool ──────────────────────────────────────────
+
+const setNextWakeupParams = Type.Object({
+  delayMs: Type.Number({ description: "Delay in milliseconds until next consciousness tick" }),
+  reason: Type.Optional(Type.String({ description: "Why this wakeup is scheduled (logged for debugging)" })),
+});
+
+export const setNextWakeupTool: ToolDefinition = {
+  name: "set_next_wakeup",
+  label: "Set Next Wakeup",
+  description:
+    "Override the next consciousness loop wakeup interval. Use this to wake up sooner " +
+    "(e.g. after scheduling a task that should run soon) or later (e.g. nothing to do for a while). " +
+    "This is a one-shot override — subsequent ticks revert to the default interval.",
+  parameters: setNextWakeupParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+  ): Promise<AgentToolResult<unknown>> => {
+    const delayMs = params.delayMs as number;
+    const reason = (params.reason as string) ?? undefined;
+    setNextWakeup(delayMs, reason);
+    const seconds = Math.round(delayMs / 1000);
+    return textResult(`⏰ Next wakeup in ${seconds}s${reason ? ` (${reason})` : ""}`);
   },
 };
 
@@ -1862,6 +2188,235 @@ export const rateLimitEventsTool: ToolDefinition = {
   },
 };
 
+// ── Tool Evolution Tools ───────────────────────────────────────────
+
+const analyzeToolNeedsParams = Type.Object({});
+
+const generateToolParams = Type.Object({
+  needId: Type.Optional(Type.String({ description: "ID of a specific need to generate a tool for" })),
+  template: Type.Optional(Type.String({ description: "Template to use for generation" })),
+});
+
+const createCustomToolParams = Type.Object({
+  name: Type.String({ description: "Name for the new tool" }),
+  description: Type.String({ description: "Description of what the tool does" }),
+  type: Type.String({ description: "Type of tool: 'tool', 'skill', or 'extension'" }),
+  template: Type.Optional(Type.String({ description: "Template to base the tool on" })),
+  category: Type.Optional(Type.String({ description: "Category for the tool" })),
+});
+
+const toolEvolutionStatusParams = Type.Object({});
+
+const listToolTemplatesParams = Type.Object({});
+
+const runToolEvolutionParams = Type.Object({});
+
+/**
+ * Analyze tool needs - identify gaps in current tool capabilities
+ */
+export const analyzeToolNeedsTool: ToolDefinition = {
+  name: "analyze_tool_needs",
+  label: "Analyze Tool Needs",
+  description:
+    "Analyze current tool capabilities and identify gaps where new tools could improve Jinx's abilities. " +
+    "Returns a list of identified needs with priority and suggested implementations.",
+  parameters: analyzeToolNeedsParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const needs = analyzeToolNeeds();
+      return textResult(formatToolNeeds(needs));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error analyzing tool needs: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Generate a new tool based on a need or template
+ */
+export const generateToolTool: ToolDefinition = {
+  name: "generate_tool",
+  label: "Generate Tool",
+  description:
+    "Generate a new tool, skill, or extension based on an identified need or a template. " +
+    "Use analyze_tool_needs first to identify gaps, or list_tool_templates to see available templates.",
+  parameters: generateToolParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const template = params.template as string | undefined;
+      
+      // Get the need if specified
+      const needs = analyzeToolNeeds();
+      const need = params.needId ? needs.find(n => n.id === params.needId) : needs.find(n => n.status === "identified");
+      
+      const tool = generateTool(need || null, template);
+      
+      if (!tool) {
+        return textResult("❌ Failed to generate tool. Check the need ID or template name.");
+      }
+      
+      const lines = [
+        `✅ Tool Generated Successfully`,
+        `Name: ${tool.name}`,
+        `Type: ${tool.type}`,
+        `ID: ${tool.id}`,
+        `Description: ${tool.description}`,
+        `Registered: ${tool.isRegistered ? "Yes" : "No"}`,
+        `File: ${tool.filePath}`,
+      ];
+      
+      return textResult(lines.join("\n"));
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error generating tool: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Create a custom tool with specific parameters
+ */
+export const createCustomToolTool: ToolDefinition = {
+  name: "create_custom_tool",
+  label: "Create Custom Tool",
+  description:
+    "Create a custom tool or skill with specified parameters. " +
+    "For skills, you can define parameters and steps. " +
+    "Use list_tool_templates to see available templates.",
+  parameters: createCustomToolParams,
+  execute: async (
+    _toolCallId: string,
+    params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const request: CreateToolRequest = {
+        name: params.name as string,
+        description: params.description as string,
+        type: params.type as "tool" | "skill" | "extension",
+        template: params.template as string | undefined,
+        category: params.category as string | undefined,
+      };
+      
+      // Validate type
+      if (!["tool", "skill", "extension"].includes(request.type)) {
+        return textResult(`❌ Invalid type: ${request.type}. Must be 'tool', 'skill', or 'extension'.`);
+      }
+      
+      const tool = createCustomTool(request);
+      
+      if (!tool) {
+        return textResult(`❌ Failed to create tool. A tool named "${request.name}" may already exist.`);
+      }
+      
+      return textResult(
+        `✅ Custom tool created\n` +
+        `Name: ${tool.name}\n` +
+        `Type: ${tool.type}\n` +
+        `ID: ${tool.id}\n` +
+        `Registered: ${tool.isRegistered ? "Yes" : "No"}`
+      );
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error creating custom tool: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Get tool evolution status
+ */
+export const toolEvolutionStatusTool: ToolDefinition = {
+  name: "get_tool_evolution_status",
+  label: "Get Tool Evolution Status",
+  description:
+    "Get the current status of the tool evolution system. " +
+    "Shows analysis count, generated tools, pending needs, and statistics.",
+  parameters: toolEvolutionStatusParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      return textResult(formatToolEvolutionStatus());
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error getting tool evolution status: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * List available tool templates
+ */
+export const listToolTemplatesTool: ToolDefinition = {
+  name: "list_tool_templates",
+  label: "List Tool Templates",
+  description:
+    "List all available tool templates that can be used for generating new tools. " +
+    "Each template provides a starting point for common tool types.",
+  parameters: listToolTemplatesParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      return textResult(formatToolTemplates());
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error listing tool templates: ${err.message}`);
+    }
+  },
+};
+
+/**
+ * Run full tool evolution cycle
+ */
+export const runToolEvolutionTool: ToolDefinition = {
+  name: "run_tool_evolution",
+  label: "Run Tool Evolution",
+  description:
+    "Run a complete tool evolution cycle: analyze needs, generate tools for high-priority needs, " +
+    "and register new tools. This is Jinx's self-extension mechanism.",
+  parameters: runToolEvolutionParams,
+  execute: async (
+    _toolCallId: string,
+    _params: Record<string, unknown>,
+    _signal?: AbortSignal,
+    _onUpdate?: AgentToolUpdateCallback,
+    _ctx?: ExtensionContext
+  ): Promise<AgentToolResult<unknown>> => {
+    try {
+      const result = runToolEvolution();
+      return textResult(result.summary);
+    } catch (e) {
+      const err = e as Error;
+      return textResult(`Error running tool evolution: ${err.message}`);
+    }
+  },
+};
+
 
 // ── Export all tools ───────────────────────────────────────────────
 
@@ -1875,6 +2430,12 @@ export const jinxTools: ToolDefinition[] = [
   fetchWebpageTool,
   createPrTool,
   addBacklogTaskTool,
+  taskListTool,
+  taskAddTool,
+  taskDoneTool,
+  taskFailTool,
+  taskPostponeTool,
+  setNextWakeupTool,
   getPerformanceReportTool,
   checkCodeQualityTool,
   webSearchTool,
@@ -1906,6 +2467,13 @@ export const jinxTools: ToolDefinition[] = [
   githubListCommitsTool,
   rateLimitStatusTool,
   rateLimitEventsTool,
+  // Tool Evolution Tools
+  analyzeToolNeedsTool,
+  generateToolTool,
+  createCustomToolTool,
+  toolEvolutionStatusTool,
+  listToolTemplatesTool,
+  runToolEvolutionTool,
   runSwarmTool,
 ];
 
@@ -1922,6 +2490,12 @@ const allTools = [
   fetchWebpageTool,
   createPrTool,
   addBacklogTaskTool,
+  taskListTool,
+  taskAddTool,
+  taskDoneTool,
+  taskFailTool,
+  taskPostponeTool,
+  setNextWakeupTool,
   getPerformanceReportTool,
   checkCodeQualityTool,
   webSearchTool,
@@ -1950,6 +2524,13 @@ const allTools = [
   githubAnalyzePRTool,
   githubRepoStatsTool,
   githubListCommitsTool,
+  // Tool Evolution Tools
+  analyzeToolNeedsTool,
+  generateToolTool,
+  createCustomToolTool,
+  toolEvolutionStatusTool,
+  listToolTemplatesTool,
+  runToolEvolutionTool,
   runSwarmTool,
   // Note: executeSkillTool is intentionally excluded to prevent recursive execution
 ];
